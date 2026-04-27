@@ -1,0 +1,31 @@
+name: web-admin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web-admin/**"
+      - ".github/workflows/web-admin.yml"
+  pull_request:
+    paths:
+      - "web-admin/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.24.x"
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter build web --release --dart-define=API_BASE=https://api.gokcetoptan.com/api/v1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-admin-build
+          path: web-admin/build/web

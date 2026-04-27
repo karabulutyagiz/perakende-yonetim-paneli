@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gokce-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gokce
+      POSTGRES_PASSWORD: gokce
+      POSTGRES_DB: gokce_toptan
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gokce -d gokce_toptan"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: gokce-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: development
+      APP_DEBUG: "true"
+      DATABASE_URL: postgresql+asyncpg://gokce:gokce@postgres:5432/gokce_toptan
+      DATABASE_SYNC_URL: postgresql+psycopg2://gokce:gokce@postgres:5432/gokce_toptan
+      JWT_SECRET: dev-only-secret-change-me
+      BACKEND_CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:8080,http://localhost:5173
+      AWS_REGION: eu-central-1
+      S3_BUCKET: gokce-toptan-products-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  adminer:
+    image: adminer:latest
+    container_name: gokce-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:

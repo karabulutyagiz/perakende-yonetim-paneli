@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Node / Flutter
+node_modules/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+*.lock
+!pubspec.lock
+!poetry.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# AWS CDK
+cdk.out/
+cdk.context.json
+
+# Logs
+*.log
+logs/
+
+# Uploads (local dev)
+uploads/

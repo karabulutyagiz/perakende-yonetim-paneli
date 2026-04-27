@@ -1,0 +1,36 @@
+name: backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: |
+          pip install --upgrade pip
+          pip install ".[dev]"
+      - name: Lint
+        run: ruff check .
+      - name: Test
+        env:
+          DATABASE_URL: sqlite+aiosqlite:///./test.db
+          DATABASE_SYNC_URL: sqlite:///./test.db
+          JWT_SECRET: ci-secret
+        run: pytest -q
