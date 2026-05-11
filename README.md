@@ -1,7 +1,53 @@
 # Gökçe Toptan Perakende
 
-Tek kullanıcılı (firma sahibi) toptan perakende takip uygulaması.
-Flutter mobil + Flutter web admin paneli + FastAPI backend + PostgreSQL + AWS.
+Toptan satış yapan küçük/orta ölçekli işletmeler için geliştirilmiş stok, müşteri,
+fatura, borç ve raporlama yönetim sistemi.
+
+Bu repo bir portfolyo projesi olarak uçtan uca ürün geliştirme yaklaşımını gösterir:
+Flutter mobil uygulama, Flutter web admin paneli, FastAPI backend, PostgreSQL veri modeli,
+JWT tabanlı auth, WebSocket ile canlı senkronizasyon, testler, Docker lokal geliştirme ortamı
+ve AWS üzerinde production altyapısı birlikte tasarlanmıştır.
+
+## Öne Çıkanlar
+
+- **Full-stack ürün:** Mobil uygulama, web admin paneli, REST API, veritabanı ve cloud altyapısı aynı repo içinde.
+- **Gerçek iş akışı:** Ürün/kategori/müşteri yönetimi, fatura kesme, stok düşme, borç takibi ve rapor ekranları.
+- **Canlı senkronizasyon:** Admin panelindeki değişiklikler WebSocket üzerinden mobil tarafa anlık yansır.
+- **Güvenli auth:** Access/refresh token, refresh rotation, `token_version` ile logout/parola değişimi sonrası eski token iptali, Argon2id parola hashleme.
+- **Çok kiracılı yapı:** Tenant izolasyonu, platform owner/sudo paneli ve tenant bazlı veri erişimi testlerle doğrulanır.
+- **Production odaklı altyapı:** AWS CDK ile ECS Fargate, RDS PostgreSQL, S3, CloudFront, Secrets Manager ve EventBridge cron tanımları.
+- **Test ve kalite:** Backend testleri, tenant izolasyon senaryoları, Alembic migrasyonları, Ruff/Mypy ayarları ve GitHub Actions CI.
+
+## Neden Bu Proje?
+
+Bu proje sadece CRUD ekranlarından oluşmaz; gerçek bir işletmenin günlük operasyonlarını
+modelleyen, frontend-backend-cloud bütünlüğü olan bir sistemdir. İş başvurularında özellikle
+aşağıdaki mühendislik becerilerini göstermek için hazırlanmıştır:
+
+- Ürün ihtiyacını veri modeli, API tasarımı ve kullanıcı arayüzüne dönüştürme
+- Mobil ve web istemcilerini aynı backend sözleşmesi üzerinde çalıştırma
+- Kimlik doğrulama, yetkilendirme, tenant izolasyonu ve rate limit gibi güvenlik konularını ele alma
+- SQLAlchemy 2.0, Alembic ve PostgreSQL ile sürdürülebilir backend mimarisi kurma
+- AWS üzerinde container, managed database, object storage, CDN ve scheduled task tasarlama
+- Test edilebilir servis katmanları ve kritik iş kuralları için otomasyon yazma
+
+## Demo Notu
+
+Repo public olarak incelenebilir. Production ortamına ait gerçek secret, `.env` veya özel anahtarlar
+repoya dahil edilmez; örnek değerler `.env.example` içinde placeholder olarak tutulur.
+
+## Kod İnceleme Rotası
+
+Projeyi hızlı değerlendirmek isteyenler için önerilen okuma sırası:
+
+- `backend/app/api/v1/endpoints/` — REST endpoint'leri ve auth/tenant kontrolleri
+- `backend/app/services/` — iş kuralları, borç hesaplama, rapor üretimi ve S3 upload akışı
+- `backend/app/models/` — SQLAlchemy veri modeli
+- `backend/app/db/migrations/versions/` — Alembic migration geçmişi
+- `backend/app/tests/` — auth, fatura, borç ve tenant izolasyon testleri
+- `web-admin/lib/features/` — web admin ekranları ve raporlama/sudo paneli
+- `mobile/lib/features/` — mobil ürün, fatura ve borç ekranları
+- `infra/stacks/` — AWS CDK ile production altyapı tanımları
 
 ## Mimari
 
