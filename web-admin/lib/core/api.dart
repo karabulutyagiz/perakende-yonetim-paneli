@@ -67,6 +67,47 @@ class AuthNotifier extends StateNotifier<AuthTokens> {
 final tokensProvider =
     StateNotifierProvider<AuthNotifier, AuthTokens>((_) => AuthNotifier());
 
+
+class MeInfo {
+  const MeInfo({
+    required this.email,
+    required this.fullName,
+    required this.role,
+    this.tenantId,
+    this.tenantName,
+    this.tenantLogoUrl,
+  });
+
+  final String email;
+  final String fullName;
+  final String role;
+  final String? tenantId;
+  final String? tenantName;
+  final String? tenantLogoUrl;
+
+  factory MeInfo.fromJson(Map<String, dynamic> j) {
+    final tenant = j['tenant'] as Map<String, dynamic>?;
+    return MeInfo(
+      email: j['email'] as String,
+      fullName: j['full_name'] as String,
+      role: j['role'] as String,
+      tenantId: tenant?['id'] as String?,
+      tenantName: tenant?['name'] as String?,
+      tenantLogoUrl: tenant?['logo_url'] as String?,
+    );
+  }
+}
+
+
+/// /auth/me'yi çağırır; tokensProvider değiştiğinde otomatik yenilenir.
+final meProvider = FutureProvider<MeInfo?>((ref) async {
+  final tokens = ref.watch(tokensProvider);
+  if (!tokens.isAuthenticated) return null;
+  final dio = ref.read(dioProvider);
+  final resp = await dio.get('/auth/me');
+  return MeInfo.fromJson(resp.data as Map<String, dynamic>);
+});
+
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(

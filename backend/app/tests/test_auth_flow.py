@@ -18,7 +18,7 @@ async def test_login_returns_token_pair(app_client, user):
 async def test_login_wrong_password(app_client, user):
     resp = await app_client.post(
         "/api/v1/auth/login",
-        json={"email": "admin@example.com", "password": "wrong"},
+        json={"email": "admin@example.com", "password": "wrong-password"},
     )
     assert resp.status_code == 401
 

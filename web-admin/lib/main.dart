@@ -33,7 +33,7 @@ class AdminApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
-      title: 'Toptan Perakende Paneli',
+      title: 'Toptan Panel',
       debugShowCheckedModeBanner: false,
       theme: adminTheme,
       routerConfig: router,

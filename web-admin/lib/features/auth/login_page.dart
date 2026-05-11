@@ -112,11 +112,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             child: CircularProgressIndicator(strokeWidth: 2))
                         : const Text('Giriş Yap'),
                   ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => context.go('/signup'),
-                    child: const Text('Yeni işletme kaydı oluştur'),
-                  ),
                 ],
               ),
             ),

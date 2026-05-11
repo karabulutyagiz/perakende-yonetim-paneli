@@ -19,6 +19,9 @@ router = APIRouter(prefix="/debts", tags=["debts"])
 
 def _to_out(view) -> DebtOut:  # type: ignore[no-untyped-def]
     d = view.debt
+    customer_out = (
+        CustomerOut.model_validate(d.customer) if getattr(d, "customer", None) else None
+    )
     return DebtOut(
         id=d.id,
         created_at=d.created_at,
@@ -32,6 +35,7 @@ def _to_out(view) -> DebtOut:  # type: ignore[no-untyped-def]
         due_on=d.due_on,
         days_left=view.days_left,
         status=d.status,
+        customer=customer_out,
     )
 
 

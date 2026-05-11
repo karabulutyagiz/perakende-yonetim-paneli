@@ -46,7 +46,7 @@ async def list_debts(
 ) -> list[DebtView]:
     stmt = (
         select(Debt)
-        .options(selectinload(Debt.payments))
+        .options(selectinload(Debt.payments), selectinload(Debt.customer))
         .where(Debt.tenant_id == tenant_id)
         .order_by(Debt.due_on.asc())
     )

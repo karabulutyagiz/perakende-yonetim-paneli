@@ -28,6 +28,7 @@ class Debt {
   Debt({
     required this.id,
     required this.customerId,
+    required this.customerName,
     required this.totalAmount,
     required this.paidAmount,
     required this.remaining,
@@ -39,6 +40,7 @@ class Debt {
 
   final String id;
   final String customerId;
+  final String customerName;
   final double totalAmount;
   final double paidAmount;
   final double remaining;
@@ -53,17 +55,21 @@ class Debt {
     return '$d gün gecikti';
   }
 
-  factory Debt.fromJson(Map<String, dynamic> json) => Debt(
-        id: json['id'] as String,
-        customerId: json['customer_id'] as String,
-        totalAmount: (json['total_amount'] as num).toDouble(),
-        paidAmount: (json['paid_amount'] as num).toDouble(),
-        remaining: (json['remaining'] as num).toDouble(),
-        issuedOn: DateTime.parse(json['issued_on'] as String),
-        dueOn: DateTime.parse(json['due_on'] as String),
-        daysLeft: json['days_left'] as int,
-        status: _parse(json['status'] as String),
-      );
+  factory Debt.fromJson(Map<String, dynamic> json) {
+    final customer = json['customer'] as Map<String, dynamic>?;
+    return Debt(
+      id: json['id'] as String,
+      customerId: json['customer_id'] as String,
+      customerName: (customer?['name'] as String?) ?? '—',
+      totalAmount: (json['total_amount'] as num).toDouble(),
+      paidAmount: (json['paid_amount'] as num).toDouble(),
+      remaining: (json['remaining'] as num).toDouble(),
+      issuedOn: DateTime.parse(json['issued_on'] as String),
+      dueOn: DateTime.parse(json['due_on'] as String),
+      daysLeft: json['days_left'] as int,
+      status: _parse(json['status'] as String),
+    );
+  }
 }
 
 class CustomerDebtSummary {

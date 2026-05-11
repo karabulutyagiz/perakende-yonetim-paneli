@@ -42,7 +42,11 @@ class WsClient {
     if (token == null || token.isEmpty) return;
     _disconnect();
     try {
-      final uri = Uri.parse('$wsBase?token=$token');
+      final parsed = Uri.parse('$wsBase?token=$token');
+      final port = parsed.hasPort && parsed.port != 0
+          ? parsed.port
+          : (parsed.scheme == 'wss' ? 443 : 80);
+      final uri = parsed.replace(port: port);
       final ch = WebSocketChannel.connect(uri);
       _channel = ch;
       _sub = ch.stream.listen(

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/formatters.dart';
+import '../../../core/ws/ws_client.dart';
 import '../../cart/providers/cart_provider.dart';
 import '../../customers/data/customer.dart';
 import '../../customers/data/customer_repository.dart';
@@ -20,6 +23,25 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
   Customer? _selectedCustomer;
   PaymentMethod _method = PaymentMethod.nakit;
   bool _saving = false;
+  StreamSubscription? _wsSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Web admin'den müşteri eklendiğinde / silindiğinde anında yenilensin
+    _wsSub = ref.read(wsClientProvider).stream.listen((event) {
+      if (!mounted) return;
+      if (event.event.startsWith('customer.')) {
+        ref.invalidate(customersProvider);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _wsSub?.cancel();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     final cart = ref.read(cartProvider);
@@ -64,20 +86,82 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
           customers.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Text('Müşteriler yüklenemedi: $e'),
-            data: (list) => DropdownButtonFormField<Customer>(
-              value: _selectedCustomer,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.person_outline),
-                hintText: 'Müşteri seçin',
+            data: (list) => Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: theme.colorScheme.outlineVariant),
+                borderRadius: BorderRadius.circular(8),
               ),
-              items: [
-                for (final c in list)
-                  DropdownMenuItem(value: c, child: Text(c.name)),
-              ],
-              onChanged: (c) => setState(() => _selectedCustomer = c),
+              child: ListTile(
+                leading: const Icon(Icons.person_outline),
+                title: Text(_selectedCustomer?.name ?? 'Müşteri seçin'),
+                subtitle: _selectedCustomer?.phone != null
+                    ? Text(_selectedCustomer!.phone!)
+                    : null,
+                trailing: const Icon(Icons.arrow_drop_down),
+                onTap: list.isEmpty
+                    ? null
+                    : () async {
+                        final picked = await showModalBottomSheet<Customer>(
+                          context: context,
+                          showDragHandle: true,
+                          isScrollControlled: true,
+                          builder: (ctx) => SafeArea(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: MediaQuery.of(ctx).size.height * 0.7,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: Text(
+                                      'Müşteri Seç',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  Flexible(
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      itemCount: list.length,
+                                      itemBuilder: (_, i) {
+                                        final c = list[i];
+                                        return ListTile(
+                                          leading: const Icon(Icons.person),
+                                          title: Text(c.name),
+                                          subtitle: c.phone != null
+                                              ? Text(c.phone!)
+                                              : null,
+                                          selected: _selectedCustomer?.id == c.id,
+                                          onTap: () => Navigator.pop(ctx, c),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                        if (picked != null) {
+                          setState(() => _selectedCustomer = picked);
+                        }
+                      },
+              ),
             ),
           ),
+          if (customers.value?.isEmpty ?? false)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                'Henüz müşteri yok. Web admin panelden müşteri ekleyin.',
+                style: TextStyle(color: Colors.orange),
+              ),
+            ),
           const SizedBox(height: 24),
           Text('Ödeme Yöntemi', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),

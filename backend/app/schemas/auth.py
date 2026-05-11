@@ -26,6 +26,7 @@ class TenantInfo(BaseModel):
     name: str
     status: str
     is_active: bool
+    logo_url: str | None = None
 
 
 class UserMe(BaseModel):

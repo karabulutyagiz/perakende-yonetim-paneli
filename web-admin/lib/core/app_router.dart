@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/login_page.dart';
-import '../features/auth/signup_page.dart';
 import '../features/categories/categories_page.dart';
 import '../features/customers/customers_page.dart';
 import '../features/debts/debts_page.dart';
@@ -22,7 +21,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final tokens = ref.read(tokensProvider);
       final authed = tokens.isAuthenticated;
       final loc = state.matchedLocation;
-      final publicRoutes = {'/login', '/signup'};
+      final publicRoutes = {'/login'};
       if (!authed) {
         return publicRoutes.contains(loc) ? null : '/login';
       }
@@ -37,7 +36,6 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
-      GoRoute(path: '/signup', builder: (_, __) => const SignupPage()),
       GoRoute(path: '/sudo', builder: (_, __) => const SudoPage()),
       ShellRoute(
         builder: (ctx, state, child) => AdminShell(child: child),
@@ -62,6 +60,61 @@ class _AuthListenable extends ChangeNotifier {
     ref.listen<AuthTokens>(tokensProvider, (_, __) => notifyListeners());
   }
 }
+
+class _ShellLeading extends StatelessWidget {
+  const _ShellLeading({required this.ref});
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    final me = ref.watch(meProvider);
+    final tenantName = me.maybeWhen(
+      data: (m) => m?.tenantName,
+      orElse: () => null,
+    );
+    final logoUrl = me.maybeWhen(
+      data: (m) => m?.tenantLogoUrl,
+      orElse: () => null,
+    );
+
+    Widget logo;
+    if (logoUrl != null && logoUrl.isNotEmpty) {
+      logo = ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          logoUrl,
+          width: 56,
+          height: 56,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) =>
+              const Icon(Icons.storefront_rounded, size: 42, color: Color(0xFF0E6E4E)),
+        ),
+      );
+    } else {
+      logo = const Icon(Icons.storefront_rounded, size: 42, color: Color(0xFF0E6E4E));
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      child: Column(
+        children: [
+          logo,
+          const SizedBox(height: 8),
+          Text(
+            tenantName ?? 'Toptan Panel',
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
+          const Text('Toptan Panel',
+              style: TextStyle(fontSize: 11, color: Colors.black54)),
+        ],
+      ),
+    );
+  }
+}
+
 
 class AdminShell extends ConsumerWidget {
   const AdminShell({super.key, required this.child});
@@ -89,19 +142,7 @@ class AdminShell extends ConsumerWidget {
             extended: true,
             selectedIndex: idx,
             onDestinationSelected: (i) => context.go(_destinations[i].$1),
-            leading: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Column(
-                children: [
-                  Icon(Icons.storefront_rounded, size: 42, color: Color(0xFF0E6E4E)),
-                  SizedBox(height: 8),
-                  Text('Toptan Perakende',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                  Text('Yönetim Paneli',
-                      style: TextStyle(fontSize: 11, color: Colors.black54)),
-                ],
-              ),
-            ),
+            leading: _ShellLeading(ref: ref),
             trailing: Padding(
               padding: const EdgeInsets.only(bottom: 24),
               child: IconButton(

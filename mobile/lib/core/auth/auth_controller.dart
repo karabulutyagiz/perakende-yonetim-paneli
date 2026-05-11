@@ -69,3 +69,44 @@ class AuthController extends StateNotifier<AuthState> {
 
 final authControllerProvider =
     StateNotifierProvider<AuthController, AuthState>((ref) => AuthController(ref));
+
+
+class MeInfo {
+  const MeInfo({
+    required this.email,
+    required this.fullName,
+    required this.role,
+    this.tenantId,
+    this.tenantName,
+    this.tenantLogoUrl,
+  });
+
+  final String email;
+  final String fullName;
+  final String role;
+  final String? tenantId;
+  final String? tenantName;
+  final String? tenantLogoUrl;
+
+  factory MeInfo.fromJson(Map<String, dynamic> j) {
+    final tenant = j['tenant'] as Map<String, dynamic>?;
+    return MeInfo(
+      email: j['email'] as String,
+      fullName: j['full_name'] as String,
+      role: j['role'] as String,
+      tenantId: tenant?['id'] as String?,
+      tenantName: tenant?['name'] as String?,
+      tenantLogoUrl: tenant?['logo_url'] as String?,
+    );
+  }
+}
+
+
+/// /auth/me'yi çağırır; auth state değiştiğinde otomatik yenilenir.
+final meProvider = FutureProvider<MeInfo?>((ref) async {
+  final auth = ref.watch(authControllerProvider);
+  if (auth.status != AuthStatus.authenticated) return null;
+  final dio = ref.read(apiClientProvider);
+  final resp = await dio.get('/auth/me');
+  return MeInfo.fromJson(resp.data as Map<String, dynamic>);
+});

@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, extract, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.category import Category
@@ -13,10 +13,14 @@ from app.models.invoice import Invoice, InvoiceItem, PaymentMethod
 from app.models.product import Product
 from app.schemas.report import (
     CategorySales,
+    CustomerProductStat,
     DailySales,
+    MonthlySales,
     PaymentBreakdown,
+    ProductCustomerStat,
     ReportSummary,
     TopCustomer,
+    TopProduct,
 )
 
 LOW_STOCK_THRESHOLD = Decimal("5")
@@ -151,6 +155,61 @@ async def build_summary(
     ).all()
     daily_sales = [DailySales(day=day, total=Decimal(total or 0)) for day, total in daily_rows]
 
+    # En çok satılan ürünler — top 20
+    prod_rows = (
+        await db.execute(
+            select(
+                Product.id,
+                InvoiceItem.product_name,
+                InvoiceItem.unit,
+                func.coalesce(func.sum(InvoiceItem.line_total), 0),
+                func.coalesce(func.sum(InvoiceItem.quantity), 0),
+            )
+            .select_from(InvoiceItem)
+            .join(Invoice, Invoice.id == InvoiceItem.invoice_id)
+            .join(Product, Product.id == InvoiceItem.product_id)
+            .where(range_filter)
+            .group_by(Product.id, InvoiceItem.product_name, InvoiceItem.unit)
+            .order_by(func.sum(InvoiceItem.line_total).desc())
+            .limit(20)
+        )
+    ).all()
+    top_products = [
+        TopProduct(
+            product_id=pid,
+            product_name=pname,
+            unit=unit,
+            total_revenue=Decimal(total or 0),
+            quantity_sold=Decimal(qty or 0),
+        )
+        for pid, pname, unit, total, qty in prod_rows
+    ]
+
+    # Aylık satış (tüm zamanlardan — genel trend için)
+    year_col = extract("year", Invoice.created_at)
+    month_col = extract("month", Invoice.created_at)
+    month_rows = (
+        await db.execute(
+            select(
+                year_col.label("y"),
+                month_col.label("m"),
+                func.coalesce(func.sum(Invoice.total), 0),
+                func.count(Invoice.id),
+            )
+            .where(Invoice.tenant_id == tenant_id)
+            .group_by("y", "m")
+            .order_by("y", "m")
+        )
+    ).all()
+    monthly_sales = [
+        MonthlySales(
+            month=f"{int(y):04d}-{int(m):02d}",
+            total=Decimal(total or 0),
+            invoice_count=int(cnt or 0),
+        )
+        for y, m, total, cnt in month_rows
+    ]
+
     # Düşük stok ürün sayısı
     low_stock = (
         await db.execute(
@@ -172,6 +231,80 @@ async def build_summary(
         overdue_debt=overdue_debt,
         category_breakdown=category_breakdown,
         top_customers=top_customers,
+        top_products=top_products,
         daily_sales=daily_sales,
+        monthly_sales=monthly_sales,
         low_stock_products=int(low_stock or 0),
     )
+
+
+async def top_customers_for_product(
+    db: AsyncSession, tenant_id: UUID, product_id: UUID, limit: int = 10
+) -> list[ProductCustomerStat]:
+    """Verilen ürünü en çok alan müşteriler — toplam miktar ve ciroya göre."""
+    rows = (
+        await db.execute(
+            select(
+                Customer.id,
+                Customer.name,
+                func.coalesce(func.sum(InvoiceItem.quantity), 0),
+                func.coalesce(func.sum(InvoiceItem.line_total), 0),
+            )
+            .select_from(InvoiceItem)
+            .join(Invoice, Invoice.id == InvoiceItem.invoice_id)
+            .join(Customer, Customer.id == Invoice.customer_id)
+            .where(
+                InvoiceItem.product_id == product_id,
+                Invoice.tenant_id == tenant_id,
+            )
+            .group_by(Customer.id, Customer.name)
+            .order_by(func.sum(InvoiceItem.line_total).desc())
+            .limit(limit)
+        )
+    ).all()
+    return [
+        ProductCustomerStat(
+            customer_id=cid,
+            customer_name=cname,
+            quantity=Decimal(qty or 0),
+            total=Decimal(total or 0),
+        )
+        for cid, cname, qty, total in rows
+    ]
+
+
+async def top_products_for_customer(
+    db: AsyncSession, tenant_id: UUID, customer_id: UUID, limit: int = 10
+) -> list[CustomerProductStat]:
+    """Verilen müşterinin en çok aldığı ürünler — toplam miktar ve ciroya göre."""
+    rows = (
+        await db.execute(
+            select(
+                Product.id,
+                InvoiceItem.product_name,
+                InvoiceItem.unit,
+                func.coalesce(func.sum(InvoiceItem.quantity), 0),
+                func.coalesce(func.sum(InvoiceItem.line_total), 0),
+            )
+            .select_from(InvoiceItem)
+            .join(Invoice, Invoice.id == InvoiceItem.invoice_id)
+            .join(Product, Product.id == InvoiceItem.product_id)
+            .where(
+                Invoice.customer_id == customer_id,
+                Invoice.tenant_id == tenant_id,
+            )
+            .group_by(Product.id, InvoiceItem.product_name, InvoiceItem.unit)
+            .order_by(func.sum(InvoiceItem.line_total).desc())
+            .limit(limit)
+        )
+    ).all()
+    return [
+        CustomerProductStat(
+            product_id=pid,
+            product_name=pname,
+            unit=unit,
+            quantity=Decimal(qty or 0),
+            total=Decimal(total or 0),
+        )
+        for pid, pname, unit, qty, total in rows
+    ]

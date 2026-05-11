@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -11,8 +13,10 @@ class TenantItem {
     required this.name,
     required this.contactEmail,
     required this.contactPhone,
+    required this.logoUrl,
     required this.status,
     required this.isActive,
+    required this.paidUntil,
     required this.createdAt,
   });
 
@@ -20,8 +24,10 @@ class TenantItem {
   final String name;
   final String? contactEmail;
   final String? contactPhone;
+  final String? logoUrl;
   final String status;
   final bool isActive;
+  final DateTime? paidUntil;
   final DateTime? createdAt;
 
   factory TenantItem.fromJson(Map<String, dynamic> j) => TenantItem(
@@ -29,8 +35,12 @@ class TenantItem {
         name: j['name'] as String,
         contactEmail: j['contact_email'] as String?,
         contactPhone: j['contact_phone'] as String?,
+        logoUrl: j['logo_url'] as String?,
         status: j['status'] as String,
         isActive: j['is_active'] as bool,
+        paidUntil: j['paid_until'] == null
+            ? null
+            : DateTime.tryParse(j['paid_until'] as String),
         createdAt: DateTime.tryParse((j['created_at'] ?? '') as String),
       );
 }
@@ -115,6 +125,465 @@ class _SudoPageState extends ConsumerState<SudoPage> {
     }
   }
 
+  Future<void> _openCreateTenantDialog() async {
+    final formKey = GlobalKey<FormState>();
+    final nameCtl = TextEditingController();
+    final emailCtl = TextEditingController();
+    final fullNameCtl = TextEditingController();
+    final phoneCtl = TextEditingController();
+    final logoCtl = TextEditingController();
+    bool submitting = false;
+    String? errorText;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            Future<void> submit() async {
+              if (!formKey.currentState!.validate()) return;
+              setLocal(() {
+                submitting = true;
+                errorText = null;
+              });
+              try {
+                final dio = ref.read(dioProvider);
+                final resp = await dio.post('/sudo/tenants', data: {
+                  'business_name': nameCtl.text.trim(),
+                  'owner_email': emailCtl.text.trim(),
+                  'owner_full_name': fullNameCtl.text.trim(),
+                  if (phoneCtl.text.trim().isNotEmpty)
+                    'contact_phone': phoneCtl.text.trim(),
+                  if (logoCtl.text.trim().isNotEmpty)
+                    'logo_url': logoCtl.text.trim(),
+                });
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+                final body = resp.data as Map<String, dynamic>;
+                await _showGeneratedPasswordDialog(
+                  tenantName: body['tenant']['name'] as String,
+                  ownerEmail: body['owner_email'] as String,
+                  password: body['generated_password'] as String,
+                );
+                await _load();
+              } on DioException catch (e) {
+                String msg = 'İşlem başarısız';
+                final data = e.response?.data;
+                if (data is Map && data['detail'] is String) {
+                  msg = data['detail'] as String;
+                } else if (e.response?.statusCode == 409) {
+                  msg = 'Bu e-posta zaten kayıtlı';
+                }
+                setLocal(() {
+                  submitting = false;
+                  errorText = msg;
+                });
+              } catch (_) {
+                setLocal(() {
+                  submitting = false;
+                  errorText = 'Beklenmeyen hata';
+                });
+              }
+            }
+
+            return AlertDialog(
+              title: const Text('Yeni İşletme'),
+              content: SizedBox(
+                width: 480,
+                child: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: nameCtl,
+                          decoration: const InputDecoration(
+                            labelText: 'İşletme adı',
+                            hintText: 'Ör: Yıldız Market',
+                          ),
+                          textInputAction: TextInputAction.next,
+                          validator: (v) {
+                            if (v == null || v.trim().length < 2) {
+                              return 'En az 2 karakter';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: fullNameCtl,
+                          decoration: const InputDecoration(
+                            labelText: 'Sahip ad-soyad',
+                          ),
+                          textInputAction: TextInputAction.next,
+                          validator: (v) {
+                            if (v == null || v.trim().length < 2) {
+                              return 'En az 2 karakter';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: emailCtl,
+                          decoration: const InputDecoration(
+                            labelText: 'Sahip e-posta',
+                            hintText: 'orn@firma.com',
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          validator: (v) {
+                            final s = (v ?? '').trim();
+                            if (!s.contains('@') || !s.contains('.')) {
+                              return 'Geçerli e-posta';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: phoneCtl,
+                          decoration: const InputDecoration(
+                            labelText: 'Telefon (opsiyonel)',
+                          ),
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: logoCtl,
+                          decoration: const InputDecoration(
+                            labelText: 'Logo URL (opsiyonel)',
+                            hintText: 'https://...',
+                          ),
+                          keyboardType: TextInputType.url,
+                        ),
+                        if (errorText != null) ...[
+                          const SizedBox(height: 12),
+                          Text(errorText!,
+                              style: const TextStyle(color: Colors.red)),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: submitting ? null : () => Navigator.of(ctx).pop(),
+                  child: const Text('Vazgeç'),
+                ),
+                FilledButton.icon(
+                  icon: submitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add),
+                  label: const Text('Oluştur'),
+                  onPressed: submitting ? null : submit,
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _showGeneratedPasswordDialog({
+    required String tenantName,
+    required String ownerEmail,
+    required String password,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: const [
+            Icon(Icons.check_circle, color: Color(0xFF0E6E4E)),
+            SizedBox(width: 8),
+            Text('İşletme oluşturuldu'),
+          ],
+        ),
+        content: SizedBox(
+          width: 480,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(tenantName,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 18)),
+              const SizedBox(height: 4),
+              Text('Sahip: $ownerEmail',
+                  style: const TextStyle(color: Colors.black54)),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E1),
+                  border: Border.all(color: const Color(0xFFFFB300)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        color: Color(0xFFFF8F00)),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Bu parola yalnızca BİR KEZ gösterilir. Şimdi kopyala ve müşteriye ilet.',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: SelectableText(
+                      password,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy),
+                    tooltip: 'Kopyala',
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(text: password));
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(
+                              content: Text('Parola panoya kopyalandı')),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Tamam'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _paidUntilBadge(DateTime paidUntil) {
+    final now = DateTime.now();
+    final remaining = paidUntil.difference(DateTime(now.year, now.month, now.day)).inDays;
+    Color bg;
+    Color fg;
+    String label;
+    if (remaining < 0) {
+      bg = const Color(0xFFFFEBEE);
+      fg = Colors.red.shade800;
+      label = 'Süresi doldu (${DateFormat('dd.MM.yyyy').format(paidUntil)})';
+    } else if (remaining <= 7) {
+      bg = const Color(0xFFFFF3E0);
+      fg = const Color(0xFFE65100);
+      label = '$remaining gün kaldı (${DateFormat('dd.MM.yyyy').format(paidUntil)})';
+    } else {
+      bg = const Color(0xFFE8F5E9);
+      fg = const Color(0xFF1B5E20);
+      label = 'Geçerli — ${DateFormat('dd.MM.yyyy').format(paidUntil)}';
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(label,
+          style: TextStyle(
+              color: fg, fontWeight: FontWeight.w600, fontSize: 11)),
+    );
+  }
+
+  Widget _logoThumb(String? url) {
+    const size = 44.0;
+    if (url == null || url.isEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFEFEF),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(Icons.storefront_outlined, color: Colors.black38),
+      );
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        url,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          width: size,
+          height: size,
+          color: const Color(0xFFFFEBEE),
+          child: const Icon(Icons.broken_image_outlined, color: Colors.red),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openEditTenantDialog(TenantItem t) async {
+    final formKey = GlobalKey<FormState>();
+    final nameCtl = TextEditingController(text: t.name);
+    final phoneCtl = TextEditingController(text: t.contactPhone ?? '');
+    final logoCtl = TextEditingController(text: t.logoUrl ?? '');
+    DateTime? paidUntil = t.paidUntil;
+    bool submitting = false;
+    String? errorText;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            Future<void> submit() async {
+              if (!formKey.currentState!.validate()) return;
+              setLocal(() {
+                submitting = true;
+                errorText = null;
+              });
+              try {
+                final dio = ref.read(dioProvider);
+                await dio.patch('/sudo/tenants/${t.id}', data: {
+                  'name': nameCtl.text.trim(),
+                  'contact_phone':
+                      phoneCtl.text.trim().isEmpty ? null : phoneCtl.text.trim(),
+                  'logo_url':
+                      logoCtl.text.trim().isEmpty ? null : logoCtl.text.trim(),
+                  'paid_until': paidUntil == null
+                      ? null
+                      : '${paidUntil!.year.toString().padLeft(4, '0')}-'
+                          '${paidUntil!.month.toString().padLeft(2, '0')}-'
+                          '${paidUntil!.day.toString().padLeft(2, '0')}',
+                });
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+                await _load();
+              } catch (_) {
+                setLocal(() {
+                  submitting = false;
+                  errorText = 'Güncelleme başarısız';
+                });
+              }
+            }
+
+            return AlertDialog(
+              title: Text('İşletme: ${t.name}'),
+              content: SizedBox(
+                width: 480,
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: nameCtl,
+                        decoration: const InputDecoration(labelText: 'İşletme adı'),
+                        validator: (v) =>
+                            (v == null || v.trim().length < 2) ? 'En az 2' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: phoneCtl,
+                        decoration: const InputDecoration(labelText: 'Telefon'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: logoCtl,
+                        decoration: const InputDecoration(
+                          labelText: 'Logo URL',
+                          hintText: 'https://...',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: 'Abonelik bitiş tarihi',
+                                hintText: 'YYYY-AA-GG',
+                              ),
+                              child: Text(
+                                paidUntil == null
+                                    ? 'Belirsiz (kontrolsüz)'
+                                    : DateFormat('dd.MM.yyyy').format(paidUntil!),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.calendar_today),
+                            tooltip: 'Tarih seç',
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: ctx,
+                                initialDate: paidUntil ??
+                                    DateTime.now().add(const Duration(days: 365)),
+                                firstDate: DateTime(2024),
+                                lastDate: DateTime(2035),
+                              );
+                              if (picked != null) {
+                                setLocal(() => paidUntil = picked);
+                              }
+                            },
+                          ),
+                          if (paidUntil != null)
+                            IconButton(
+                              icon: const Icon(Icons.clear),
+                              tooltip: 'Temizle',
+                              onPressed: () => setLocal(() => paidUntil = null),
+                            ),
+                        ],
+                      ),
+                      if (errorText != null) ...[
+                        const SizedBox(height: 12),
+                        Text(errorText!, style: const TextStyle(color: Colors.red)),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: submitting ? null : () => Navigator.of(ctx).pop(),
+                  child: const Text('Vazgeç'),
+                ),
+                FilledButton(
+                  onPressed: submitting ? null : submit,
+                  child: const Text('Kaydet'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Color _statusColor(String s) {
     switch (s) {
       case 'pending':
@@ -145,6 +614,11 @@ class _SudoPageState extends ConsumerState<SudoPage> {
   Widget build(BuildContext context) {
     final df = DateFormat('dd.MM.yyyy HH:mm');
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openCreateTenantDialog,
+        icon: const Icon(Icons.add_business),
+        label: const Text('Yeni İşletme'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -212,6 +686,8 @@ class _SudoPageState extends ConsumerState<SudoPage> {
                             padding: const EdgeInsets.all(16),
                             child: Row(
                               children: [
+                                _logoThumb(t.logoUrl),
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -261,9 +737,19 @@ class _SudoPageState extends ConsumerState<SudoPage> {
                                             color: Colors.black54,
                                             fontSize: 12),
                                       ),
+                                      if (t.paidUntil != null) ...[
+                                        const SizedBox(height: 4),
+                                        _paidUntilBadge(t.paidUntil!),
+                                      ],
                                     ],
                                   ),
                                 ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined),
+                                  tooltip: 'Düzenle',
+                                  onPressed: () => _openEditTenantDialog(t),
+                                ),
+                                const SizedBox(width: 4),
                                 if (t.status == 'pending')
                                   FilledButton.icon(
                                     icon: const Icon(Icons.check),

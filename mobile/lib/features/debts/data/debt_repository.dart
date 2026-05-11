@@ -42,3 +42,8 @@ final debtsProvider =
     FutureProvider.family<List<Debt>, String?>((ref, customerId) {
   return ref.watch(debtRepositoryProvider).list(customerId: customerId);
 });
+
+/// Tüm açık borçları, vade sırasına göre döndürür (en yakın = en üstte).
+final allDebtsProvider = FutureProvider<List<Debt>>((ref) async {
+  return ref.watch(debtRepositoryProvider).list();
+});

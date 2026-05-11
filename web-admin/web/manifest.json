@@ -1,6 +1,6 @@
 {
-    "name": "gokce_admin",
-    "short_name": "gokce_admin",
+    "name": "Toptan Panel — Yönetim",
+    "short_name": "Toptan Panel",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

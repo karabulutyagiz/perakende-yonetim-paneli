@@ -24,7 +24,13 @@ class WsClient {
   Future<void> connect() async {
     final token = await _ref.read(tokenStorageProvider).readAccessToken();
     if (token == null) return;
-    final uri = Uri.parse('${ApiConfig.wsUrl}?token=$token');
+    // Uri.parse bazı yapılandırmalarda port=0 ile dönebiliyor; port'u açıkça
+    // ws→80, wss→443 olarak set et.
+    final parsed = Uri.parse('${ApiConfig.wsUrl}?token=$token');
+    final port = parsed.hasPort && parsed.port != 0
+        ? parsed.port
+        : (parsed.scheme == 'wss' ? 443 : 80);
+    final uri = parsed.replace(port: port);
     _channel = WebSocketChannel.connect(uri);
     _channel!.stream.listen(
       (raw) {

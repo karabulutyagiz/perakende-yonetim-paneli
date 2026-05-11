@@ -24,9 +24,38 @@ class TopCustomer(ORMModel):
     invoice_count: int
 
 
+class TopProduct(ORMModel):
+    product_id: UUID
+    product_name: str
+    unit: str
+    total_revenue: MoneyDecimal
+    quantity_sold: MoneyDecimal
+
+
+class ProductCustomerStat(ORMModel):
+    customer_id: UUID
+    customer_name: str
+    quantity: MoneyDecimal
+    total: MoneyDecimal
+
+
+class CustomerProductStat(ORMModel):
+    product_id: UUID
+    product_name: str
+    unit: str
+    quantity: MoneyDecimal
+    total: MoneyDecimal
+
+
 class DailySales(ORMModel):
     day: date
     total: MoneyDecimal
+
+
+class MonthlySales(ORMModel):
+    month: str  # "YYYY-MM"
+    total: MoneyDecimal
+    invoice_count: int
 
 
 class ReportSummary(ORMModel):
@@ -40,5 +69,7 @@ class ReportSummary(ORMModel):
     overdue_debt: MoneyDecimal
     category_breakdown: list[CategorySales]
     top_customers: list[TopCustomer]
+    top_products: list[TopProduct]
     daily_sales: list[DailySales]
+    monthly_sales: list[MonthlySales]
     low_stock_products: int

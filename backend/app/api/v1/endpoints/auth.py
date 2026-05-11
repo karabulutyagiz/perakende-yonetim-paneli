@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, HTTPException, Request, status
 from slowapi.util import get_remote_address
 
@@ -16,8 +18,6 @@ from app.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
     RefreshRequest,
-    SignupRequest,
-    SignupResponse,
     TenantInfo,
     TokenPair,
     UserMe,
@@ -33,26 +33,6 @@ def _issue_tokens(user) -> TokenPair:
         access_token=create_access_token(str(user.id), user.token_version, tid, user.role.value),
         refresh_token=create_refresh_token(str(user.id), user.token_version, tid, user.role.value),
     )
-
-
-@router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
-@limiter.limit(settings.rate_limit_login, key_func=get_remote_address)
-async def signup(request: Request, payload: SignupRequest, db: DBSession) -> SignupResponse:
-    existing = await user_service.get_by_email(db, payload.email)
-    if existing is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Bu e-posta ile kayıt zaten var",
-        )
-    tenant, _ = await user_service.signup_tenant(
-        db,
-        business_name=payload.business_name,
-        email=payload.email,
-        full_name=payload.full_name,
-        password=payload.password,
-        contact_phone=payload.contact_phone,
-    )
-    return SignupResponse(tenant_id=str(tenant.id))
 
 
 @router.post("/login", response_model=TokenPair)
@@ -81,6 +61,15 @@ async def login(request: Request, payload: LoginRequest, db: DBSession) -> Token
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="İşletme hesabı askıya alınmış",
+            )
+        if tenant.paid_until is not None and tenant.paid_until < date.today():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "Aboneliğinizin süresi doldu "
+                    f"({tenant.paid_until.isoformat()}). "
+                    "Lütfen platform sahibi ile iletişime geçin."
+                ),
             )
     return _issue_tokens(user)
 
@@ -127,6 +116,7 @@ async def me(current_user: CurrentUser) -> UserMe:
             name=current_user.tenant.name,
             status=current_user.tenant.status.value,
             is_active=current_user.tenant.is_active,
+            logo_url=current_user.tenant.logo_url,
         )
     return UserMe(
         id=str(current_user.id),

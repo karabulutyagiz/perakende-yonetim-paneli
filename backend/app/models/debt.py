@@ -44,6 +44,7 @@ class Debt(Base, UUIDPKMixin, TimestampMixin):
     )
 
     invoice: Mapped["Invoice"] = relationship(back_populates="debt")  # noqa: F821
+    customer: Mapped["Customer"] = relationship()  # noqa: F821
     payments: Mapped[list["DebtPayment"]] = relationship(
         back_populates="debt", cascade="all, delete-orphan", order_by="DebtPayment.paid_on.desc()"
     )

@@ -14,7 +14,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = "Gokce Toptan"
+    app_name: str = "Toptan Panel"
     app_env: Literal["development", "staging", "production"] = "development"
     app_debug: bool = False
     app_timezone: str = "Europe/Istanbul"

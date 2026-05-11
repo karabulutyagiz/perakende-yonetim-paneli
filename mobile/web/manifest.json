@@ -1,6 +1,6 @@
 {
-    "name": "gokce_toptan",
-    "short_name": "gokce_toptan",
+    "name": "Toptan Panel",
+    "short_name": "Toptan Panel",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

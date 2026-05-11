@@ -1,6 +1,9 @@
+import re
+from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, Request, status
+from fastapi import APIRouter, HTTPException, Query, Request, Response, status
+from fastapi.responses import FileResponse
 from slowapi.util import get_remote_address
 
 from app.api.deps import CurrentTenantId, CurrentTenantUser, DBSession
@@ -17,6 +20,11 @@ from app.services import product_service, s3_service
 from app.websockets.hub import hub
 
 router = APIRouter(prefix="/products", tags=["products"])
+
+# Local dev için disk depolama
+_LOCAL_UPLOAD_DIR = Path("/app/uploads")
+# Key sanitize: products/<hex>.<ext> formatı dışındakileri reddet
+_KEY_RE = re.compile(r"^products/[a-z0-9]+\.[a-z0-9]+$")
 
 
 def _to_out(product) -> ProductOut:  # type: ignore[no-untyped-def]
@@ -99,3 +107,44 @@ async def presign_upload(
 ) -> PresignUploadResponse:
     url, key = s3_service.generate_upload_url(payload.filename, payload.content_type)
     return PresignUploadResponse(upload_url=url, key=key)
+
+
+# --- Local dev fallback (S3 yokken) ----------------------------------------
+# Key UUID-bazlı ve generate_upload_url içinde üretildiği için tahmini neredeyse
+# imkansız; auth gerektirmeyen presigned-URL eşdeğeri. Production'da S3
+# kullanıldığı için bu endpoint'lere zaten ihtiyaç olmaz.
+
+
+def _ensure_local_path(key: str) -> Path:
+    if not _KEY_RE.match(key):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Geçersiz key")
+    target = _LOCAL_UPLOAD_DIR / key
+    # Path traversal koruması
+    try:
+        target.resolve().relative_to(_LOCAL_UPLOAD_DIR.resolve())
+    except (ValueError, OSError):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Geçersiz key")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    return target
+
+
+@router.put("/local-upload/{key:path}", status_code=status.HTTP_204_NO_CONTENT)
+async def local_upload(key: str, request: Request) -> Response:
+    """S3 olmadığında binary upload — presigned URL'in local karşılığı."""
+    target = _ensure_local_path(key)
+    body = await request.body()
+    if not body:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Boş body")
+    if len(body) > 20 * 1024 * 1024:  # 20 MB sınır
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Dosya çok büyük")
+    target.write_bytes(body)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/local-upload/{key:path}")
+async def local_view(key: str) -> FileResponse:
+    """Yüklenen dosyayı serve et."""
+    target = _ensure_local_path(key)
+    if not target.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dosya bulunamadı")
+    return FileResponse(target)

@@ -6,17 +6,17 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
 void main() {
-  runApp(const ProviderScope(child: GokceApp()));
+  runApp(const ProviderScope(child: ToptanApp()));
 }
 
-class GokceApp extends ConsumerWidget {
-  const GokceApp({super.key});
+class ToptanApp extends ConsumerWidget {
+  const ToptanApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
-      title: 'Toptan Perakende Paneli',
+      title: 'Toptan Panel',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       themeMode: ThemeMode.light,
