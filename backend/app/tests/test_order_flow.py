@@ -61,7 +61,7 @@ async def test_customer_can_create_order(app_client, db, user):
 
 
 @pytest.mark.asyncio
-async def test_convert_order_to_invoice_reduces_stock(app_client, db, user):
+async def test_convert_order_to_invoice_reduces_stock(app_client, auth_client, db, user):
     customer, product, _ = await _seed_customer_account(db, user)
     login = await app_client.post(
         "/api/v1/auth/login",
@@ -80,7 +80,7 @@ async def test_convert_order_to_invoice_reduces_stock(app_client, db, user):
 
     converted = await app_client.post(
         f"/api/v1/orders/{order_id}/convert-to-invoice",
-        headers=app_client.headers,
+        headers=auth_client.headers,
         json={"payment_method": "nakit"},
     )
     assert converted.status_code == 200, converted.text

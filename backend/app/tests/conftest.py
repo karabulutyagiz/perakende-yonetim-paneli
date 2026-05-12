@@ -97,7 +97,7 @@ async def user(db, tenant) -> User:
     return await user_service.create_tenant_owner(
         db, tenant.id, "admin@example.com", "Test Admin", "StrongPass123!"
     )
- 
+
 
 
 @pytest_asyncio.fixture()
