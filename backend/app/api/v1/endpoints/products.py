@@ -6,7 +6,13 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse
 from slowapi.util import get_remote_address
 
-from app.api.deps import CurrentTenantId, CurrentTenantUser, DBSession
+from app.api.deps import (
+    CurrentScopedTenantId,
+    CurrentTenantId,
+    CurrentTenantScopedUser,
+    CurrentTenantUser,
+    DBSession,
+)
 from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.schemas.product import (
@@ -36,8 +42,8 @@ def _to_out(product) -> ProductOut:  # type: ignore[no-untyped-def]
 @router.get("", response_model=list[ProductOut])
 async def list_products(
     db: DBSession,
-    tenant_id: CurrentTenantId,
-    _: CurrentTenantUser,
+    tenant_id: CurrentScopedTenantId,
+    _: CurrentTenantScopedUser,
     search: str | None = None,
     category_id: UUID | None = None,
     limit: int = Query(200, le=500),
@@ -51,7 +57,7 @@ async def list_products(
 
 @router.get("/{product_id}", response_model=ProductOut)
 async def get_product(
-    product_id: UUID, db: DBSession, tenant_id: CurrentTenantId, _: CurrentTenantUser
+    product_id: UUID, db: DBSession, tenant_id: CurrentScopedTenantId, _: CurrentTenantScopedUser
 ) -> ProductOut:
     product = await product_service.get(db, product_id, tenant_id)
     if not product:

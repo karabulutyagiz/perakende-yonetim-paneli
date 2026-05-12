@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/auth/auth_controller.dart';
 import '../../../core/utils/formatters.dart';
+import '../../orders/data/order_repository.dart';
 import '../providers/cart_provider.dart';
 
 class CartScreen extends ConsumerWidget {
@@ -11,6 +13,7 @@ class CartScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(cartProvider);
+    final auth = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -121,9 +124,36 @@ class CartScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         FilledButton.icon(
-                          onPressed: () => context.push('/invoice/create'),
-                          icon: const Icon(Icons.receipt_long_rounded),
-                          label: const Text('Fatura Oluştur'),
+                          onPressed: () async {
+                            if (auth.isCustomer) {
+                              try {
+                                await ref.read(orderRepositoryProvider).create(cart);
+                                ref.read(cartProvider.notifier).clear();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Sipariş oluşturuldu')),
+                                  );
+                                  context.go('/orders');
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Hata: $e')),
+                                  );
+                                }
+                              }
+                              return;
+                            }
+                            context.push('/invoice/create');
+                          },
+                          icon: Icon(
+                            auth.isCustomer
+                                ? Icons.shopping_bag_outlined
+                                : Icons.receipt_long_rounded,
+                          ),
+                          label: Text(
+                            auth.isCustomer ? 'Sipariş Oluştur' : 'Fatura Oluştur',
+                          ),
                         ),
                       ],
                     ),

@@ -50,6 +50,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(productsProvider);
     final cart = ref.watch(cartProvider);
+    final auth = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
 
     final meAsync = ref.watch(meProvider);
@@ -104,16 +105,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.insights_rounded),
-            tooltip: 'Rapor',
-            onPressed: () => context.push('/reports'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.receipt_long_rounded),
-            tooltip: 'Borçlular',
-            onPressed: () => context.push('/debts'),
-          ),
+          if (auth.isTenantOwner)
+            IconButton(
+              icon: const Icon(Icons.insights_rounded),
+              tooltip: 'Rapor',
+              onPressed: () => context.push('/reports'),
+            ),
+          if (auth.isTenantOwner)
+            IconButton(
+              icon: const Icon(Icons.receipt_long_rounded),
+              tooltip: 'Borçlular',
+              onPressed: () => context.push('/debts'),
+            ),
+          if (auth.isCustomer)
+            IconButton(
+              icon: const Icon(Icons.shopping_bag_outlined),
+              tooltip: 'Siparişlerim',
+              onPressed: () => context.push('/orders'),
+            ),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
             tooltip: 'Çıkış',

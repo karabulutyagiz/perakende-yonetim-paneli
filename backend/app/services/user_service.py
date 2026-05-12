@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.security import hash_password, needs_rehash, verify_password
+from app.models.customer import Customer
 from app.models.tenant import Tenant, TenantStatus
 from app.models.user import User, UserRole
 
@@ -12,7 +13,7 @@ from app.models.user import User, UserRole
 async def get_by_id(db: AsyncSession, user_id: UUID) -> User | None:
     stmt = (
         select(User)
-        .options(selectinload(User.tenant))
+        .options(selectinload(User.tenant), selectinload(User.customer))
         .where(User.id == user_id)
     )
     return (await db.execute(stmt)).scalar_one_or_none()
@@ -24,7 +25,7 @@ async def get_by_email(db: AsyncSession, email: str) -> User | None:
     platform_owner tek + tenant_owner tenant başına tek. İlk eşleşme yeterli."""
     stmt = (
         select(User)
-        .options(selectinload(User.tenant))
+        .options(selectinload(User.tenant), selectinload(User.customer))
         .where(User.email == email.lower())
     )
     result = await db.execute(stmt)
@@ -78,6 +79,29 @@ async def create_platform_owner(
     db.add(user)
     await db.commit()
     await db.refresh(user)
+    return user
+
+
+async def create_customer_user(
+    db: AsyncSession,
+    *,
+    tenant_id: UUID,
+    customer: Customer,
+    email: str,
+    password: str,
+    is_active: bool = True,
+) -> User:
+    user = User(
+        email=email.lower(),
+        full_name=customer.name,
+        password_hash=hash_password(password),
+        is_active=is_active,
+        role=UserRole.CUSTOMER,
+        tenant_id=tenant_id,
+        customer_id=customer.id,
+    )
+    db.add(user)
+    await db.flush()
     return user
 
 

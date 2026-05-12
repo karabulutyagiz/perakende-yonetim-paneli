@@ -69,6 +69,47 @@ async def get_current_tenant_user(current_user: CurrentUser) -> User:
 CurrentTenantUser = Annotated[User, Depends(get_current_tenant_user)]
 
 
+async def get_current_tenant_scoped_user(current_user: CurrentUser) -> User:
+    if current_user.role not in {UserRole.TENANT_OWNER, UserRole.CUSTOMER}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="bu işlem işletme hesabı ister",
+        )
+    if current_user.tenant_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="işletme bağlamı bulunamadı",
+        )
+    tenant = current_user.tenant
+    if tenant is None or not tenant.is_active or tenant.status.value != "approved":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="işletme hesabı aktif değil (onay bekleniyor veya askıya alınmış)",
+        )
+    return current_user
+
+
+CurrentTenantScopedUser = Annotated[User, Depends(get_current_tenant_scoped_user)]
+
+
+async def get_current_customer_user(current_user: CurrentUser) -> User:
+    current_user = await get_current_tenant_scoped_user(current_user)
+    if current_user.role != UserRole.CUSTOMER or current_user.customer_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="müşteri hesabı gerekli",
+        )
+    if current_user.customer is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="müşteri hesabı ilişkilendirmesi eksik",
+        )
+    return current_user
+
+
+CurrentCustomerUser = Annotated[User, Depends(get_current_customer_user)]
+
+
 async def get_current_tenant_id(
     current_user: CurrentTenantUser,
 ) -> UUID:
@@ -77,6 +118,14 @@ async def get_current_tenant_id(
 
 
 CurrentTenantId = Annotated[UUID, Depends(get_current_tenant_id)]
+
+
+async def get_current_scoped_tenant_id(current_user: CurrentTenantScopedUser) -> UUID:
+    assert current_user.tenant_id is not None
+    return current_user.tenant_id
+
+
+CurrentScopedTenantId = Annotated[UUID, Depends(get_current_scoped_tenant_id)]
 
 
 async def get_current_platform_owner(current_user: CurrentUser) -> User:

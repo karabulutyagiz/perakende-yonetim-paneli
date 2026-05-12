@@ -10,6 +10,7 @@ from app.db.base import Base, TimestampMixin, UUIDPKMixin
 class UserRole(str, enum.Enum):
     PLATFORM_OWNER = "platform_owner"  # tenant_id = NULL; tüm tenantları yönetir
     TENANT_OWNER = "tenant_owner"      # bir tenant'a ait işletme sahibi
+    CUSTOMER = "customer"              # bir tenant içindeki müşteri hesabı
 
 
 class User(Base, UUIDPKMixin, TimestampMixin):
@@ -36,5 +37,9 @@ class User(Base, UUIDPKMixin, TimestampMixin):
     tenant_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True, index=True
     )
+    customer_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("customers.id", ondelete="CASCADE"), nullable=True, index=True
+    )
 
     tenant: Mapped["Tenant | None"] = relationship()  # noqa: F821
+    customer: Mapped["Customer | None"] = relationship(back_populates="account")  # noqa: F821

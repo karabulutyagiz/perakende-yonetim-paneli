@@ -39,6 +39,7 @@ class Invoice(Base, UUIDPKMixin, TimestampMixin):
     debt: Mapped["Debt | None"] = relationship(  # noqa: F821
         back_populates="invoice", uselist=False, cascade="all, delete-orphan"
     )
+    order: Mapped["Order | None"] = relationship(back_populates="invoice", uselist=False)  # noqa: F821
 
 
 class InvoiceItem(Base, UUIDPKMixin, TimestampMixin):

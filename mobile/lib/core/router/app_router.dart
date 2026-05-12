@@ -7,6 +7,7 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
 import '../../features/debts/presentation/debts_screen.dart';
 import '../../features/invoices/presentation/invoice_create_screen.dart';
+import '../../features/orders/presentation/orders_screen.dart';
 import '../../features/products/presentation/home_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
 
@@ -28,6 +29,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
       GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
       GoRoute(path: '/invoice/create', builder: (_, __) => const InvoiceCreateScreen()),
+      GoRoute(path: '/orders', builder: (_, __) => const OrdersScreen()),
       GoRoute(path: '/debts', builder: (_, __) => const DebtsScreen()),
       GoRoute(path: '/reports', builder: (_, __) => const ReportsScreen()),
     ],

@@ -21,3 +21,9 @@ class Customer(Base, UUIDPKMixin, TimestampMixin):
     invoices: Mapped[list["Invoice"]] = relationship(  # noqa: F821
         back_populates="customer", cascade="all, delete-orphan"
     )
+    account: Mapped["User | None"] = relationship(  # noqa: F821
+        back_populates="customer", uselist=False, cascade="all, delete-orphan"
+    )
+    orders: Mapped[list["Order"]] = relationship(  # noqa: F821
+        back_populates="customer", cascade="all, delete-orphan"
+    )

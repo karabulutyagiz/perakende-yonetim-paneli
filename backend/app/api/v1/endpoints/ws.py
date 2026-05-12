@@ -16,7 +16,8 @@ router = APIRouter(tags=["ws"])
 async def websocket_endpoint(ws: WebSocket, token: str) -> None:
     """Canlı senkronizasyon kanalı.
     İstemci `?token=<access_token>` query param ile bağlanır.
-    Yalnızca tenant_owner + approved+active tenant'ın bağlantısı kabul edilir."""
+    Yalnızca tenant_owner + approved+active tenant kabul edilir.
+    Customer hesapları tenant içindeki tüm canlı event'leri görmemesi için WS'e alınmaz."""
     try:
         payload = decode_token(token, "access")
     except ValueError:

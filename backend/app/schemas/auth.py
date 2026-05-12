@@ -29,6 +29,13 @@ class TenantInfo(BaseModel):
     logo_url: str | None = None
 
 
+class CustomerInfo(BaseModel):
+    id: str
+    name: str
+    phone: str | None = None
+    address: str | None = None
+
+
 class UserMe(BaseModel):
     id: str
     email: EmailStr
@@ -36,6 +43,7 @@ class UserMe(BaseModel):
     is_active: bool
     role: str
     tenant: TenantInfo | None = None
+    customer: CustomerInfo | None = None
 
 
 class SignupRequest(BaseModel):

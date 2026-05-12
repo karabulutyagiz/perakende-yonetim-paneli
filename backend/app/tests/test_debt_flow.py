@@ -7,9 +7,7 @@ import pytest
 from app.models import Customer, Debt, DebtStatus, Invoice, PaymentMethod
 
 
-async def _open_invoice_with_debt(
-    db, tenant_id, customer_id, amount: Decimal, days_left: int
-) -> Debt:
+async def _open_invoice_with_debt(db, tenant_id, customer_id, amount: Decimal, days_left: int) -> Debt:
     today = date.today()
     inv = Invoice(
         tenant_id=tenant_id,
@@ -20,8 +18,8 @@ async def _open_invoice_with_debt(
     db.add(inv)
     await db.flush()
     debt = Debt(
-        tenant_id=tenant_id,
         invoice_id=inv.id,
+        tenant_id=tenant_id,
         customer_id=customer_id,
         total_amount=amount,
         paid_amount=Decimal("0"),
@@ -36,15 +34,15 @@ async def _open_invoice_with_debt(
 
 
 @pytest.mark.asyncio
-async def test_payment_distributes_oldest_first(auth_client, db, tenant):
-    customer = Customer(name="Mehmet", tenant_id=tenant.id)
+async def test_payment_distributes_oldest_first(auth_client, db, user):
+    customer = Customer(name="Mehmet", tenant_id=user.tenant_id)
     db.add(customer)
     await db.commit()
     await db.refresh(customer)
 
     # en eski: vade 1 gün sonra, 100₺ — sonra: vade 10 gün sonra, 50₺
-    old = await _open_invoice_with_debt(db, tenant.id, customer.id, Decimal("100"), days_left=1)
-    new = await _open_invoice_with_debt(db, tenant.id, customer.id, Decimal("50"), days_left=10)
+    old = await _open_invoice_with_debt(db, user.tenant_id, customer.id, Decimal("100"), days_left=1)
+    new = await _open_invoice_with_debt(db, user.tenant_id, customer.id, Decimal("50"), days_left=10)
 
     resp = await auth_client.post(
         "/api/v1/debts/payments",
@@ -61,12 +59,12 @@ async def test_payment_distributes_oldest_first(auth_client, db, tenant):
 
 
 @pytest.mark.asyncio
-async def test_payment_exceeding_total_rejected(auth_client, db, tenant):
-    customer = Customer(name="Ayşe", tenant_id=tenant.id)
+async def test_payment_exceeding_total_rejected(auth_client, db, user):
+    customer = Customer(name="Ayşe", tenant_id=user.tenant_id)
     db.add(customer)
     await db.commit()
     await db.refresh(customer)
-    debt = await _open_invoice_with_debt(db, tenant.id, customer.id, Decimal("50"), days_left=5)
+    debt = await _open_invoice_with_debt(db, user.tenant_id, customer.id, Decimal("50"), days_left=5)
 
     resp = await auth_client.post(
         "/api/v1/debts/payments",
@@ -78,13 +76,13 @@ async def test_payment_exceeding_total_rejected(auth_client, db, tenant):
 
 
 @pytest.mark.asyncio
-async def test_summary_aggregates_remaining(auth_client, db, tenant):
-    customer = Customer(name="Fatma", tenant_id=tenant.id)
+async def test_summary_aggregates_remaining(auth_client, db, user):
+    customer = Customer(name="Fatma", tenant_id=user.tenant_id)
     db.add(customer)
     await db.commit()
     await db.refresh(customer)
-    await _open_invoice_with_debt(db, tenant.id, customer.id, Decimal("80"), days_left=5)
-    await _open_invoice_with_debt(db, tenant.id, customer.id, Decimal("40"), days_left=12)
+    await _open_invoice_with_debt(db, user.tenant_id, customer.id, Decimal("80"), days_left=5)
+    await _open_invoice_with_debt(db, user.tenant_id, customer.id, Decimal("40"), days_left=12)
 
     resp = await auth_client.get("/api/v1/debts/summary")
     assert resp.status_code == 200
@@ -96,12 +94,12 @@ async def test_summary_aggregates_remaining(auth_client, db, tenant):
 
 
 @pytest.mark.asyncio
-async def test_recompute_marks_overdue(auth_client, db, tenant):
-    customer = Customer(name="Kerem", tenant_id=tenant.id)
+async def test_recompute_marks_overdue(auth_client, db, user):
+    customer = Customer(name="Kerem", tenant_id=user.tenant_id)
     db.add(customer)
     await db.commit()
     await db.refresh(customer)
-    debt = await _open_invoice_with_debt(db, tenant.id, customer.id, Decimal("60"), days_left=-5)
+    debt = await _open_invoice_with_debt(db, user.tenant_id, customer.id, Decimal("60"), days_left=-5)
     # senaryo: _open_invoice_with_debt hep GREEN başlatıyor — recompute OVERDUE'ya çekmeli
     assert debt.status == DebtStatus.GREEN
 

@@ -66,9 +66,13 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                 return ListTile(
                   leading: CircleAvatar(child: Text((c['name'] as String)[0])),
                   title: Text(c['name'] as String),
-                  subtitle: Text([c['phone'], c['address']]
-                      .where((e) => e != null && (e as String).isNotEmpty)
-                      .join(' · ')),
+                  subtitle: Text([
+                    c['phone'],
+                    c['address'],
+                    if (c['has_account'] == true) c['account_email'],
+                    if (c['has_account'] == true)
+                      (c['account_is_active'] == true ? 'Hesap aktif' : 'Hesap pasif'),
+                  ].where((e) => e != null && (e as String).isNotEmpty).join(' · ')),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -100,9 +104,14 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     final phone = TextEditingController(text: (existing?['phone'] as String?) ?? '');
     final address =
         TextEditingController(text: (existing?['address'] as String?) ?? '');
+    final accountEmail =
+        TextEditingController(text: (existing?['account_email'] as String?) ?? '');
+    final accountPassword = TextEditingController();
+    bool accountEnabled = (existing?['account_is_active'] as bool?) ?? true;
     final ok = await showDialog<bool>(
       context: ctx,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
         title: Text(existing == null ? 'Yeni Müşteri' : 'Müşteri Düzenle'),
         content: SizedBox(
           width: 400,
@@ -124,6 +133,30 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                 decoration: const InputDecoration(labelText: 'Adres'),
                 maxLines: 2,
               ),
+              const SizedBox(height: 12),
+              const Divider(),
+              const SizedBox(height: 12),
+              TextField(
+                controller: accountEmail,
+                decoration: const InputDecoration(labelText: 'Hesap e-postasi (opsiyonel)'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: accountPassword,
+                decoration: InputDecoration(
+                  labelText: existing?['has_account'] == true
+                      ? 'Yeni sifre (opsiyonel)'
+                      : 'Hesap sifresi',
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Hesap aktif'),
+                value: accountEnabled,
+                onChanged: (value) => setState(() => accountEnabled = value),
+              ),
             ],
           ),
         ),
@@ -131,13 +164,17 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
           FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Kaydet')),
         ],
-      ),
+      )),
     );
     if (ok != true || name.text.trim().isEmpty) return;
     final data = {
       'name': name.text.trim(),
       'phone': phone.text.trim().isEmpty ? null : phone.text.trim(),
       'address': address.text.trim().isEmpty ? null : address.text.trim(),
+      if (accountEmail.text.trim().isNotEmpty) 'account_email': accountEmail.text.trim(),
+      if (accountPassword.text.trim().isNotEmpty) 'account_password': accountPassword.text.trim(),
+      if (accountEmail.text.trim().isNotEmpty || existing?['has_account'] == true)
+        'account_is_active': accountEnabled,
     };
     if (existing == null) {
       await ref.read(dioProvider).post('/customers', data: data);

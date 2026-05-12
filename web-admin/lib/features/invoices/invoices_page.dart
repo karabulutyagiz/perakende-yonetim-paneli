@@ -18,10 +18,9 @@ final _tl = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
 final _dt = DateFormat('dd.MM.yyyy HH:mm', 'tr_TR');
 
 const _paymentLabels = <String, String>{
-  'cash': 'Nakit',
-  'card': 'Kart',
-  'debt': 'Borç',
-  'transfer': 'Havale',
+  'nakit': 'Nakit',
+  'kart': 'Kart',
+  'borc': 'Borç',
 };
 
 class InvoicesPage extends ConsumerStatefulWidget {

@@ -30,6 +30,8 @@ from app.models import (  # noqa: F401  — ensure mappers configured
     DebtPayment,
     Invoice,
     InvoiceItem,
+    Order,
+    OrderItem,
     Product,
 )
 from app.models.tenant import Tenant, TenantStatus
@@ -95,6 +97,7 @@ async def user(db, tenant) -> User:
     return await user_service.create_tenant_owner(
         db, tenant.id, "admin@example.com", "Test Admin", "StrongPass123!"
     )
+ 
 
 
 @pytest_asyncio.fixture()

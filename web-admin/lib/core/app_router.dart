@@ -7,6 +7,7 @@ import '../features/categories/categories_page.dart';
 import '../features/customers/customers_page.dart';
 import '../features/debts/debts_page.dart';
 import '../features/invoices/invoices_page.dart';
+import '../features/orders/orders_page.dart';
 import '../features/products/products_page.dart';
 import '../features/reports/reports_page.dart';
 import '../features/sudo/sudo_page.dart';
@@ -44,6 +45,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/categories', builder: (_, __) => const CategoriesPage()),
           GoRoute(path: '/customers', builder: (_, __) => const CustomersPage()),
           GoRoute(path: '/invoices', builder: (_, __) => const InvoicesPage()),
+          GoRoute(path: '/orders', builder: (_, __) => const OrdersPage()),
           GoRoute(path: '/debts', builder: (_, __) => const DebtsPage()),
           GoRoute(path: '/reports', builder: (_, __) => const ReportsPage()),
         ],
@@ -124,6 +126,7 @@ class AdminShell extends ConsumerWidget {
     ('/products', Icons.inventory_2_outlined, Icons.inventory_2, 'Ürünler'),
     ('/categories', Icons.category_outlined, Icons.category, 'Kategoriler'),
     ('/customers', Icons.people_outline, Icons.people, 'Müşteriler'),
+    ('/orders', Icons.shopping_bag_outlined, Icons.shopping_bag, 'Siparişler'),
     ('/invoices', Icons.receipt_long_outlined, Icons.receipt_long, 'Faturalar'),
     ('/debts', Icons.schedule_outlined, Icons.schedule, 'Borçlar'),
     ('/reports', Icons.insights_outlined, Icons.insights, 'Rapor'),

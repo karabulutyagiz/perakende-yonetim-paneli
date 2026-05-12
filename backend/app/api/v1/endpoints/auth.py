@@ -16,6 +16,7 @@ from app.models.tenant import TenantStatus
 from app.models.user import UserRole
 from app.schemas.auth import (
     ChangePasswordRequest,
+    CustomerInfo,
     LoginRequest,
     RefreshRequest,
     TenantInfo,
@@ -45,7 +46,7 @@ async def login(request: Request, payload: LoginRequest, db: DBSession) -> Token
             detail="E-posta veya parola hatalı",
         )
     # Tenant kullanıcısıysa tenant'ın durumunu kontrol et
-    if user.role == UserRole.TENANT_OWNER:
+    if user.role in {UserRole.TENANT_OWNER, UserRole.CUSTOMER}:
         tenant = user.tenant
         if tenant is None or not tenant.is_active:
             raise HTTPException(
@@ -71,6 +72,11 @@ async def login(request: Request, payload: LoginRequest, db: DBSession) -> Token
                     "Lütfen platform sahibi ile iletişime geçin."
                 ),
             )
+    if user.role == UserRole.CUSTOMER and user.customer_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Müşteri hesabı ilişkilendirmesi eksik",
+        )
     return _issue_tokens(user)
 
 
@@ -110,6 +116,7 @@ async def logout(current_user: CurrentUser, db: DBSession) -> None:
 @router.get("/me", response_model=UserMe)
 async def me(current_user: CurrentUser) -> UserMe:
     tenant_info: TenantInfo | None = None
+    customer_info: CustomerInfo | None = None
     if current_user.tenant is not None:
         tenant_info = TenantInfo(
             id=str(current_user.tenant.id),
@@ -118,6 +125,13 @@ async def me(current_user: CurrentUser) -> UserMe:
             is_active=current_user.tenant.is_active,
             logo_url=current_user.tenant.logo_url,
         )
+    if current_user.customer is not None:
+        customer_info = CustomerInfo(
+            id=str(current_user.customer.id),
+            name=current_user.customer.name,
+            phone=current_user.customer.phone,
+            address=current_user.customer.address,
+        )
     return UserMe(
         id=str(current_user.id),
         email=current_user.email,
@@ -125,6 +139,7 @@ async def me(current_user: CurrentUser) -> UserMe:
         is_active=current_user.is_active,
         role=current_user.role.value,
         tenant=tenant_info,
+        customer=customer_info,
     )
 
 

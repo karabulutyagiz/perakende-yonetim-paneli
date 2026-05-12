@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,10 +8,16 @@ import 'token_storage.dart';
 
 enum AuthStatus { loading, unauthenticated, authenticated }
 
+enum AuthRole { tenantOwner, customer, platformOwner, unknown }
+
 class AuthState {
-  const AuthState(this.status, {this.errorMessage});
+  const AuthState(this.status, {this.role = AuthRole.unknown, this.errorMessage});
   final AuthStatus status;
+  final AuthRole role;
   final String? errorMessage;
+
+  bool get isCustomer => role == AuthRole.customer;
+  bool get isTenantOwner => role == AuthRole.tenantOwner;
 }
 
 class AuthController extends StateNotifier<AuthState> {
@@ -23,6 +31,7 @@ class AuthController extends StateNotifier<AuthState> {
     final token = await _ref.read(tokenStorageProvider).readAccessToken();
     state = AuthState(
       token != null && token.isNotEmpty ? AuthStatus.authenticated : AuthStatus.unauthenticated,
+      role: _roleFromToken(token),
     );
   }
 
@@ -37,7 +46,10 @@ class AuthController extends StateNotifier<AuthState> {
             access: resp.data['access_token'] as String,
             refresh: resp.data['refresh_token'] as String,
           );
-      state = const AuthState(AuthStatus.authenticated);
+      state = AuthState(
+        AuthStatus.authenticated,
+        role: _roleFromToken(resp.data['access_token'] as String?),
+      );
       return true;
     } on DioException catch (e) {
       String msg = 'Giriş başarısız: e-posta veya parola hatalı';
@@ -64,6 +76,26 @@ class AuthController extends StateNotifier<AuthState> {
     }
     await _ref.read(tokenStorageProvider).clear();
     state = const AuthState(AuthStatus.unauthenticated);
+  }
+
+  AuthRole _roleFromToken(String? token) {
+    if (token == null || token.isEmpty) return AuthRole.unknown;
+    final parts = token.split('.');
+    if (parts.length != 3) return AuthRole.unknown;
+    try {
+      var payload = parts[1];
+      payload += '=' * ((4 - payload.length % 4) % 4);
+      final data = jsonDecode(utf8.decode(base64Url.decode(payload)))
+          as Map<String, dynamic>;
+      return switch (data['role']) {
+        'tenant_owner' => AuthRole.tenantOwner,
+        'customer' => AuthRole.customer,
+        'platform_owner' => AuthRole.platformOwner,
+        _ => AuthRole.unknown,
+      };
+    } catch (_) {
+      return AuthRole.unknown;
+    }
   }
 }
 
