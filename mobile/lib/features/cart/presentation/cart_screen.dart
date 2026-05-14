@@ -62,6 +62,8 @@ class CartScreen extends ConsumerWidget {
                                   children: [
                                     Text(
                                       line.product.name,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                       style: theme.textTheme.titleMedium,
                                     ),
                                     const SizedBox(height: 4),
@@ -72,7 +74,8 @@ class CartScreen extends ConsumerWidget {
                                     const SizedBox(height: 6),
                                     Text(
                                       formatCurrency(line.total),
-                                      style: theme.textTheme.titleSmall?.copyWith(
+                                      style:
+                                          theme.textTheme.titleSmall?.copyWith(
                                         color: theme.colorScheme.primary,
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -113,11 +116,16 @@ class CartScreen extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('Toplam', style: theme.textTheme.titleMedium),
-                            Text(
-                              formatCurrency(cart.total),
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.w800,
+                            Flexible(
+                              child: Text(
+                                formatCurrency(cart.total),
+                                textAlign: TextAlign.end,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ],
@@ -127,18 +135,25 @@ class CartScreen extends ConsumerWidget {
                           onPressed: () async {
                             if (auth.isCustomer) {
                               try {
-                                await ref.read(orderRepositoryProvider).create(cart);
+                                await ref
+                                    .read(orderRepositoryProvider)
+                                    .create(cart);
                                 ref.read(cartProvider.notifier).clear();
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Sipariş oluşturuldu')),
+                                    const SnackBar(
+                                        content: Text('Sipariş oluşturuldu')),
                                   );
                                   context.go('/orders');
                                 }
                               } catch (e) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Hata: $e')),
+                                    const SnackBar(
+                                      content: Text(
+                                        'Sipariş oluşturulamadı. Lütfen tekrar deneyin.',
+                                      ),
+                                    ),
                                   );
                                 }
                               }
@@ -152,7 +167,9 @@ class CartScreen extends ConsumerWidget {
                                 : Icons.receipt_long_rounded,
                           ),
                           label: Text(
-                            auth.isCustomer ? 'Sipariş Oluştur' : 'Fatura Oluştur',
+                            auth.isCustomer
+                                ? 'Sipariş oluştur'
+                                : 'Fatura oluştur',
                           ),
                         ),
                       ],

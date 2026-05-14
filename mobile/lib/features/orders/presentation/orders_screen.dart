@@ -17,7 +17,9 @@ class OrdersScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Siparişlerim')),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Siparişler yüklenemedi: $e')),
+        error: (e, _) => const Center(
+          child: Text('Siparişler yüklenemedi. Lütfen tekrar deneyin.'),
+        ),
         data: (orders) {
           if (orders.isEmpty) {
             return const Center(child: Text('Henüz siparişiniz yok'));
@@ -30,28 +32,58 @@ class OrdersScreen extends ConsumerWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (_, i) {
                 final order = orders[i];
-                final createdAt = DateTime.tryParse(order['created_at'] as String? ?? '');
-                final items = (order['items'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
+                final createdAt =
+                    DateTime.tryParse(order['created_at'] as String? ?? '');
+                final items =
+                    (order['items'] as List?)?.cast<Map<String, dynamic>>() ??
+                        const [];
                 final total = (order['total'] as num).toDouble();
                 return Card(
                   child: ExpansionTile(
-                    title: Text('Sipariş #${order['id'].toString().substring(0, 8)}'),
-                    subtitle: Text([
-                      if (createdAt != null) _dt.format(createdAt.toLocal()),
-                      _statusLabel(order['status'] as String? ?? 'pending'),
-                    ].join(' · ')),
-                    trailing: Text(
-                      formatCurrency(total),
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    title: Text(
+                      'Sipariş #${order['id'].toString().substring(0, 8)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                        [
+                          if (createdAt != null)
+                            _dt.format(createdAt.toLocal()),
+                          _statusLabel(order['status'] as String? ?? 'pending'),
+                        ].join(' · '),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis),
+                    trailing: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 110),
+                      child: Text(
+                        formatCurrency(total),
+                        textAlign: TextAlign.end,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                     childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     children: [
                       for (final item in items)
                         ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: Text(item['product_name'] as String? ?? '—'),
+                          title: Text(
+                            item['product_name'] as String? ?? '—',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           subtitle: Text('${item['quantity']} ${item['unit']}'),
-                          trailing: Text(formatCurrency((item['line_total'] as num).toDouble())),
+                          trailing: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 110),
+                            child: Text(
+                              formatCurrency(
+                                  (item['line_total'] as num).toDouble()),
+                              textAlign: TextAlign.end,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ),
                     ],
                   ),
@@ -68,6 +100,6 @@ class OrdersScreen extends ConsumerWidget {
         'pending' => 'Bekliyor',
         'converted' => 'Faturaya dönüştü',
         'cancelled' => 'İptal edildi',
-        _ => status,
+        _ => 'Durum bilinmiyor',
       };
 }

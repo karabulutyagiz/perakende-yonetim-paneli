@@ -33,8 +33,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     setState(() => _loading = false);
     if (!ok) {
-      final msg = ref.read(authControllerProvider).errorMessage ??
-          'Giriş başarısız';
+      final msg =
+          ref.read(authControllerProvider).errorMessage ?? 'Giriş başarısız';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(msg)),
       );
@@ -61,7 +61,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         size: 72, color: theme.colorScheme.primary),
                     const SizedBox(height: 16),
                     Text(
-                      'Toptan Perakende Paneli',
+                      'Toptan perakende paneli',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w700,
@@ -69,7 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Satış Paneli',
+                      'Satış paneli',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -83,8 +83,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         labelText: 'E-posta',
                         prefixIcon: Icon(Icons.mail_outline),
                       ),
-                      validator: (v) =>
-                          (v == null || !v.contains('@')) ? 'Geçerli e-posta girin' : null,
+                      validator: (v) => (v == null || !v.contains('@'))
+                          ? 'Geçerli e-posta girin'
+                          : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -100,8 +101,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
-                      validator: (v) =>
-                          (v == null || v.length < 6) ? 'En az 6 karakter' : null,
+                      validator: (v) => (v == null || v.length < 6)
+                          ? 'En az 6 karakter'
+                          : null,
                     ),
                     const SizedBox(height: 24),
                     FilledButton(
@@ -110,9 +112,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? const SizedBox(
                               height: 22,
                               width: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5),
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2.5),
                             )
-                          : const Text('Giriş Yap'),
+                          : const Text('Giriş yap'),
                     ),
                   ],
                 ),

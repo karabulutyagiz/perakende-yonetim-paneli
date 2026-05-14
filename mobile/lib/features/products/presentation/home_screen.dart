@@ -37,8 +37,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         if (e.startsWith('customer.')) {
           ref.invalidate(customersProvider);
         }
-        if (e.startsWith('invoice.') ||
-            e.startsWith('debt.')) {
+        if (e.startsWith('invoice.') || e.startsWith('debt.')) {
           ref.invalidate(allDebtsProvider);
           ref.invalidate(debtSummaryProvider);
         }
@@ -51,7 +50,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final async = ref.watch(productsProvider);
     final cart = ref.watch(cartProvider);
     final auth = ref.watch(authControllerProvider);
-    final theme = Theme.of(context);
 
     final meAsync = ref.watch(meProvider);
     final tenantName = meAsync.maybeWhen(
@@ -88,7 +86,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    tenantName ?? 'Toptan Panel',
+                    tenantName ?? 'Toptan panel',
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
@@ -108,13 +106,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           if (auth.isTenantOwner)
             IconButton(
               icon: const Icon(Icons.insights_rounded),
-              tooltip: 'Rapor',
+              tooltip: 'Raporlar',
               onPressed: () => context.push('/reports'),
             ),
           if (auth.isTenantOwner)
             IconButton(
               icon: const Icon(Icons.receipt_long_rounded),
-              tooltip: 'Borçlular',
+              tooltip: 'Borçlar',
               onPressed: () => context.push('/debts'),
             ),
           if (auth.isCustomer)
@@ -126,7 +124,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout_rounded),
             tooltip: 'Çıkış',
-            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+            onPressed: () => _confirmLogout(context),
           ),
         ],
       ),
@@ -150,11 +148,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: [
                 const Icon(Icons.error_outline, size: 64),
                 const SizedBox(height: 12),
-                Text('Ürünler yüklenemedi: $e', textAlign: TextAlign.center),
+                const Text(
+                  'Ürünler yüklenemedi. Lütfen tekrar deneyin.',
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 12),
                 FilledButton(
                   onPressed: () => ref.invalidate(productsProvider),
-                  child: const Text('Tekrar Dene'),
+                  child: const Text('Tekrar dene'),
                 ),
               ],
             ),
@@ -197,6 +198,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Çıkış yap'),
+        content: const Text('Çıkış yapmak istediğinize emin misiniz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Hayır'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Evet'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true && mounted) {
+      await ref.read(authControllerProvider.notifier).logout();
+    }
+  }
 }
 
 class _ProductCard extends StatelessWidget {
@@ -221,8 +246,8 @@ class _ProductCard extends StatelessWidget {
                 : CachedNetworkImage(
                     imageUrl: product.imageUrl!,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) =>
-                        const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    placeholder: (_, __) => const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2)),
                     errorWidget: (_, __, ___) => Container(
                       color: theme.colorScheme.surfaceContainerHighest,
                       child: const Icon(Icons.broken_image_outlined, size: 40),
@@ -266,7 +291,7 @@ class _ProductCard extends StatelessWidget {
                 minimumSize: const Size.fromHeight(36),
                 shape: const RoundedRectangleBorder(),
               ),
-              child: Text(product.stock > 0 ? 'Sepete Ekle' : 'Stokta Yok'),
+              child: Text(product.stock > 0 ? 'Sepete ekle' : 'Stokta yok'),
             ),
           ),
         ],

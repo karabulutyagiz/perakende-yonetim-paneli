@@ -8,7 +8,7 @@ final apiClientProvider = Provider<Dio>((ref) {
   final storage = ref.watch(tokenStorageProvider);
   final dio = Dio(
     BaseOptions(
-      baseUrl: ApiConfig.baseUrl,
+      baseUrl: ApiConfig.resolvedBaseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 20),
       headers: {'Accept': 'application/json'},
@@ -30,7 +30,9 @@ final apiClientProvider = Provider<Dio>((ref) {
           final refresh = await storage.readRefreshToken();
           if (refresh != null) {
             try {
-              final resp = await Dio(BaseOptions(baseUrl: ApiConfig.baseUrl)).post(
+              final resp =
+                  await Dio(BaseOptions(baseUrl: ApiConfig.resolvedBaseUrl))
+                      .post(
                 '/auth/refresh',
                 data: {'refresh_token': refresh},
               );

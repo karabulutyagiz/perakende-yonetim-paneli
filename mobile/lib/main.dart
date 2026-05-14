@@ -16,7 +16,7 @@ class ToptanApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
-      title: 'Toptan Panel',
+      title: 'Toptan panel',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       themeMode: ThemeMode.light,

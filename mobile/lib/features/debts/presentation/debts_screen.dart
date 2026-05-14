@@ -16,15 +16,15 @@ class DebtsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Borçlar'),
         bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(36),
+          preferredSize: Size.fromHeight(52),
           child: Padding(
             padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Row(
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 6,
               children: [
                 _LegendDot(color: Color(0xFFE53935), label: '≤3 gün'),
-                SizedBox(width: 12),
                 _LegendDot(color: Color(0xFFFFB300), label: '≤7 gün'),
-                SizedBox(width: 12),
                 _LegendDot(color: Color(0xFF43A047), label: '>7 gün'),
               ],
             ),
@@ -33,12 +33,13 @@ class DebtsScreen extends ConsumerWidget {
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Hata: $e')),
+        error: (e, _) => const Center(
+          child: Text('Borçlar yüklenemedi. Lütfen tekrar deneyin.'),
+        ),
         data: (list) {
           if (list.isEmpty) {
-            return const Center(child: Text('Açık borç yok 🎉'));
+            return const Center(child: Text('Açık borç yok'));
           }
-          // Backend zaten due_on ASC ile sıralı; OVERDUE da en başta gelir.
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(allDebtsProvider),
             child: ListView.separated(
@@ -101,49 +102,69 @@ class _DebtCard extends ConsumerWidget {
         onTap: () => _openPayDialog(context, ref),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 6,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  debt.customerName,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                formatCurrency(debt.remaining),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFC62828),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  statusText,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      debt.customerName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
-                ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      formatCurrency(debt.remaining),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFC62828),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        statusText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -173,15 +194,23 @@ class _DebtCard extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Ödeme — ${debt.customerName}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(
+                'Ödeme - ${debt.customerName}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 4),
-              Text('Kalan: ${formatCurrency(debt.remaining)}',
-                  style: const TextStyle(color: Colors.black54)),
+              Text(
+                'Kalan: ${formatCurrency(debt.remaining)}',
+                style: const TextStyle(color: Colors.black54),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: amountCtl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 autofocus: true,
                 decoration: InputDecoration(
                   labelText: 'Ödenen tutar (₺)',
@@ -210,7 +239,8 @@ class _DebtCard extends ConsumerWidget {
                                   amountCtl.text.trim().replaceAll(',', '.');
                               final value = double.tryParse(raw);
                               if (value == null || value <= 0) {
-                                setLocal(() => errorText = 'Geçerli bir tutar girin');
+                                setLocal(() =>
+                                    errorText = 'Geçerli bir tutar girin');
                                 return;
                               }
                               if (value > debt.remaining + 0.005) {
@@ -223,15 +253,15 @@ class _DebtCard extends ConsumerWidget {
                                 errorText = null;
                               });
                               try {
-                                await ref
-                                    .read(debtRepositoryProvider)
-                                    .pay(customerId: debt.customerId, amount: value);
+                                await ref.read(debtRepositoryProvider).pay(
+                                    customerId: debt.customerId, amount: value);
                                 if (!ctx.mounted) return;
                                 Navigator.of(ctx).pop();
                                 ref.invalidate(allDebtsProvider);
                                 ref.invalidate(debtSummaryProvider);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Ödeme kaydedildi')),
+                                  const SnackBar(
+                                      content: Text('Ödeme kaydedildi')),
                                 );
                               } on DioException catch (e) {
                                 String msg = 'Ödeme kaydedilemedi';
@@ -246,7 +276,7 @@ class _DebtCard extends ConsumerWidget {
                               } catch (e) {
                                 setLocal(() {
                                   submitting = false;
-                                  errorText = 'Beklenmeyen hata: $e';
+                                  errorText = 'Beklenmeyen bir hata oluştu';
                                 });
                               }
                             },
@@ -256,7 +286,7 @@ class _DebtCard extends ConsumerWidget {
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Ödemeyi Kaydet'),
+                          : const Text('Ödemeyi kaydet'),
                     ),
                   ),
                 ],

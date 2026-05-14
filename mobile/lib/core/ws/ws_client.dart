@@ -26,7 +26,7 @@ class WsClient {
     if (token == null) return;
     // Uri.parse bazı yapılandırmalarda port=0 ile dönebiliyor; port'u açıkça
     // ws→80, wss→443 olarak set et.
-    final parsed = Uri.parse('${ApiConfig.wsUrl}?token=$token');
+    final parsed = Uri.parse('${ApiConfig.resolvedWsUrl}?token=$token');
     final port = parsed.hasPort && parsed.port != 0
         ? parsed.port
         : (parsed.scheme == 'wss' ? 443 : 80);

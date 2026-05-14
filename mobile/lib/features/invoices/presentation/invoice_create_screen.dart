@@ -16,7 +16,8 @@ class InvoiceCreateScreen extends ConsumerStatefulWidget {
   const InvoiceCreateScreen({super.key});
 
   @override
-  ConsumerState<InvoiceCreateScreen> createState() => _InvoiceCreateScreenState();
+  ConsumerState<InvoiceCreateScreen> createState() =>
+      _InvoiceCreateScreenState();
 }
 
 class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
@@ -63,7 +64,9 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hata: $e')),
+        const SnackBar(
+          content: Text('Fatura oluşturulamadı. Lütfen tekrar deneyin.'),
+        ),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -77,7 +80,7 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Fatura Oluştur')),
+      appBar: AppBar(title: const Text('Fatura oluştur')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -85,7 +88,9 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
           const SizedBox(height: 8),
           customers.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Müşteriler yüklenemedi: $e'),
+            error: (e, _) => const Text(
+              'Müşteriler yüklenemedi. Lütfen tekrar deneyin.',
+            ),
             data: (list) => Card(
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -94,9 +99,17 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
               ),
               child: ListTile(
                 leading: const Icon(Icons.person_outline),
-                title: Text(_selectedCustomer?.name ?? 'Müşteri seçin'),
+                title: Text(
+                  _selectedCustomer?.name ?? 'Müşteri seçin',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 subtitle: _selectedCustomer?.phone != null
-                    ? Text(_selectedCustomer!.phone!)
+                    ? Text(
+                        _selectedCustomer!.phone!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      )
                     : null,
                 trailing: const Icon(Icons.arrow_drop_down),
                 onTap: list.isEmpty
@@ -117,7 +130,7 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
                                   const Padding(
                                     padding: EdgeInsets.all(16),
                                     child: Text(
-                                      'Müşteri Seç',
+                                      'Müşteri seç',
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w700,
@@ -132,11 +145,21 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
                                         final c = list[i];
                                         return ListTile(
                                           leading: const Icon(Icons.person),
-                                          title: Text(c.name),
+                                          title: Text(
+                                            c.name,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                           subtitle: c.phone != null
-                                              ? Text(c.phone!)
+                                              ? Text(
+                                                  c.phone!,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                )
                                               : null,
-                                          selected: _selectedCustomer?.id == c.id,
+                                          selected:
+                                              _selectedCustomer?.id == c.id,
                                           onTap: () => Navigator.pop(ctx, c),
                                         );
                                       },
@@ -158,12 +181,12 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
             const Padding(
               padding: EdgeInsets.only(top: 8),
               child: Text(
-                'Henüz müşteri yok. Web admin panelden müşteri ekleyin.',
+                'Henüz müşteri yok. Web admin panelinden müşteri ekleyin.',
                 style: TextStyle(color: Colors.orange),
               ),
             ),
           const SizedBox(height: 24),
-          Text('Ödeme Yöntemi', style: theme.textTheme.titleMedium),
+          Text('Ödeme yöntemi', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           SegmentedButton<PaymentMethod>(
             segments: const [
@@ -200,9 +223,19 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
                           Expanded(
                             child: Text(
                               '${l.product.name} × ${l.quantity.toStringAsFixed(0)}',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Text(formatCurrency(l.total)),
+                          const SizedBox(width: 12),
+                          Flexible(
+                            child: Text(
+                              formatCurrency(l.total),
+                              textAlign: TextAlign.end,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -239,7 +272,7 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.check_circle_outline),
-            label: const Text('Faturayı Gönder'),
+            label: const Text('Faturayı gönder'),
           ),
         ],
       ),

@@ -14,10 +14,12 @@ class ReportsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Rapor')),
+      appBar: AppBar(title: const Text('Raporlar')),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Hata: $e')),
+        error: (e, _) => const Center(
+          child: Text('Raporlar yüklenemedi. Lütfen tekrar deneyin.'),
+        ),
         data: (r) => RefreshIndicator(
           onRefresh: () async => ref.invalidate(reportSummaryProvider),
           child: ListView(
@@ -25,14 +27,16 @@ class ReportsScreen extends ConsumerWidget {
             children: [
               _StatGrid(
                 items: [
-                  _Stat('Toplam Satış', formatCurrency(r.totalSales), Icons.trending_up),
+                  _Stat('Toplam satış', formatCurrency(r.totalSales),
+                      Icons.trending_up),
                   _Stat('Fatura', '${r.invoiceCount}', Icons.receipt_long),
-                  _Stat('Müşteri', '${r.uniqueCustomers}', Icons.people_outline),
-                  _Stat('Düşük Stok', '${r.lowStock}', Icons.warning_amber),
+                  _Stat(
+                      'Müşteri', '${r.uniqueCustomers}', Icons.people_outline),
+                  _Stat('Düşük stok', '${r.lowStock}', Icons.warning_amber),
                 ],
               ),
               const SizedBox(height: 16),
-              _SectionTitle('Ödeme Dağılımı'),
+              _SectionTitle('Ödeme dağılımı'),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -42,26 +46,16 @@ class ReportsScreen extends ConsumerWidget {
                       _paymentRow('Nakit', r.nakit, theme.colorScheme.tertiary),
                       _paymentRow('Borç', r.borc, theme.colorScheme.error),
                       const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Açık Toplam Borç'),
-                          Text(formatCurrency(r.outstandingDebt),
-                              style: const TextStyle(fontWeight: FontWeight.w700)),
-                        ],
+                      _summaryRow(
+                        context,
+                        label: 'Açık toplam borç',
+                        value: formatCurrency(r.outstandingDebt),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Geciken Borç'),
-                          Text(
-                            formatCurrency(r.overdueDebt),
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.error,
-                            ),
-                          ),
-                        ],
+                      _summaryRow(
+                        context,
+                        label: 'Geciken borç',
+                        value: formatCurrency(r.overdueDebt),
+                        valueColor: theme.colorScheme.error,
                       ),
                     ],
                   ),
@@ -69,7 +63,7 @@ class ReportsScreen extends ConsumerWidget {
               ),
               if (r.dailySales.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                _SectionTitle('Günlük Satış'),
+                _SectionTitle('Günlük satış'),
                 SizedBox(
                   height: 200,
                   child: Card(
@@ -88,7 +82,8 @@ class ReportsScreen extends ConsumerWidget {
                               dotData: const FlDotData(show: false),
                               belowBarData: BarAreaData(
                                 show: true,
-                                color: theme.colorScheme.primary.withOpacity(0.12),
+                                color:
+                                    theme.colorScheme.primary.withOpacity(0.12),
                               ),
                               spots: [
                                 for (var i = 0; i < r.dailySales.length; i++)
@@ -104,17 +99,17 @@ class ReportsScreen extends ConsumerWidget {
               ],
               if (r.topCustomers.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                _SectionTitle('En Çok Alan Müşteriler'),
+                _SectionTitle('En çok alışveriş yapan müşteriler'),
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(8),
                     child: Column(
                       children: [
                         for (final e in r.topCustomers.take(5))
-                          ListTile(
-                            leading: const Icon(Icons.person_outline),
-                            title: Text(e.key),
-                            trailing: Text(formatCurrency(e.value)),
+                          _listMetricTile(
+                            icon: Icons.person_outline,
+                            label: e.key,
+                            value: formatCurrency(e.value),
                           ),
                       ],
                     ),
@@ -123,17 +118,17 @@ class ReportsScreen extends ConsumerWidget {
               ],
               if (r.categoryBreakdown.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                _SectionTitle('Kategori Kırılımı'),
+                _SectionTitle('Kategori kırılımı'),
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(8),
                     child: Column(
                       children: [
                         for (final e in r.categoryBreakdown)
-                          ListTile(
-                            leading: const Icon(Icons.category_outlined),
-                            title: Text(e.key),
-                            trailing: Text(formatCurrency(e.value)),
+                          _listMetricTile(
+                            icon: Icons.category_outlined,
+                            label: e.key,
+                            value: formatCurrency(e.value),
                           ),
                       ],
                     ),
@@ -150,6 +145,7 @@ class ReportsScreen extends ConsumerWidget {
   Widget _paymentRow(String label, double value, Color color) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               width: 12,
@@ -157,12 +153,89 @@ class ReportsScreen extends ConsumerWidget {
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             const SizedBox(width: 8),
-            Expanded(child: Text(label)),
-            Text(formatCurrency(value),
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                formatCurrency(value),
+                textAlign: TextAlign.end,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
           ],
         ),
       );
+
+  Widget _summaryRow(
+    BuildContext context, {
+    required String label,
+    required String value,
+    Color? valueColor,
+  }) {
+    final valueStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: valueColor,
+        );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: valueStyle,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _listMetricTile({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return ListTile(
+      leading: Icon(icon),
+      minVerticalPadding: 10,
+      title: Text(
+        label,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 110),
+        child: Text(
+          value,
+          textAlign: TextAlign.end,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -195,35 +268,62 @@ class _StatGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.6,
-      children: [
-        for (final it in items)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(it.icon, color: theme.colorScheme.primary),
-                  const SizedBox(height: 8),
-                  Text(it.label, style: theme.textTheme.bodySmall),
-                  Text(
-                    it.value,
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w800),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 360;
+        final cardWidth =
+            isNarrow ? constraints.maxWidth : (constraints.maxWidth - 12) / 2;
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final it in items)
+              SizedBox(
+                width: cardWidth,
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(it.icon,
+                                color: theme.colorScheme.primary, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                it.label,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            it.value,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
