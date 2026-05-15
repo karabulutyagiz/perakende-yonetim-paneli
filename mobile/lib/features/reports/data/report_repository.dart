@@ -17,6 +17,7 @@ class ReportSummary {
     required this.topCustomers,
     required this.dailySales,
     required this.categoryBreakdown,
+    required this.topProducts,
   });
 
   final double totalSales;
@@ -31,6 +32,7 @@ class ReportSummary {
   final List<MapEntry<String, double>> topCustomers;
   final List<MapEntry<DateTime, double>> dailySales;
   final List<MapEntry<String, double>> categoryBreakdown;
+  final List<TopProductSummary> topProducts;
 
   factory ReportSummary.fromJson(Map<String, dynamic> json) {
     final pay = json['by_payment'] as Map<String, dynamic>;
@@ -46,7 +48,8 @@ class ReportSummary {
       lowStock: json['low_stock_products'] as int,
       topCustomers: [
         for (final e in (json['top_customers'] as List))
-          MapEntry(e['customer_name'] as String, (e['total'] as num).toDouble()),
+          MapEntry(
+              e['customer_name'] as String, (e['total'] as num).toDouble()),
       ],
       dailySales: [
         for (final e in (json['daily_sales'] as List))
@@ -57,8 +60,39 @@ class ReportSummary {
       ],
       categoryBreakdown: [
         for (final e in (json['category_breakdown'] as List))
-          MapEntry(e['category_name'] as String, (e['total'] as num).toDouble()),
+          MapEntry(
+              e['category_name'] as String, (e['total'] as num).toDouble()),
       ],
+      topProducts: [
+        for (final e in (json['top_products'] as List))
+          TopProductSummary.fromJson(e as Map<String, dynamic>),
+      ],
+    );
+  }
+}
+
+class TopProductSummary {
+  TopProductSummary({
+    required this.productId,
+    required this.productName,
+    required this.unit,
+    required this.totalRevenue,
+    required this.quantitySold,
+  });
+
+  final String productId;
+  final String productName;
+  final String unit;
+  final double totalRevenue;
+  final double quantitySold;
+
+  factory TopProductSummary.fromJson(Map<String, dynamic> json) {
+    return TopProductSummary(
+      productId: json['product_id'] as String,
+      productName: json['product_name'] as String,
+      unit: json['unit'] as String,
+      totalRevenue: (json['total_revenue'] as num).toDouble(),
+      quantitySold: (json['quantity_sold'] as num).toDouble(),
     );
   }
 }
@@ -67,16 +101,47 @@ class ReportRepository {
   ReportRepository(this._dio);
   final Dio _dio;
 
-  Future<ReportSummary> summary() async {
-    final resp = await _dio.get('/reports/summary');
+  Future<ReportSummary> summary({
+    required DateTime fromDate,
+    required DateTime toDate,
+  }) async {
+    final resp = await _dio.get(
+      '/reports/summary',
+      queryParameters: {
+        'from_date': _dateOnly(fromDate),
+        'to_date': _dateOnly(toDate),
+      },
+    );
     return ReportSummary.fromJson(resp.data as Map<String, dynamic>);
   }
+
+  String _dateOnly(DateTime date) => date.toIso8601String().split('T').first;
 }
 
 final reportRepositoryProvider = Provider<ReportRepository>(
   (ref) => ReportRepository(ref.watch(apiClientProvider)),
 );
 
-final reportSummaryProvider = FutureProvider<ReportSummary>(
-  (ref) => ref.watch(reportRepositoryProvider).summary(),
+class ReportQuery {
+  const ReportQuery({required this.fromDate, required this.toDate});
+
+  final DateTime fromDate;
+  final DateTime toDate;
+
+  @override
+  bool operator ==(Object other) {
+    return other is ReportQuery &&
+        other.fromDate == fromDate &&
+        other.toDate == toDate;
+  }
+
+  @override
+  int get hashCode => Object.hash(fromDate, toDate);
+}
+
+final reportSummaryProvider = FutureProvider.family<ReportSummary, ReportQuery>(
+  (ref, query) => ref.watch(reportRepositoryProvider).summary(
+        fromDate: query.fromDate,
+        toDate: query.toDate,
+      ),
 );

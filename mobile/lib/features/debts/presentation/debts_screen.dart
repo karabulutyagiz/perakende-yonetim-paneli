@@ -12,6 +12,7 @@ class DebtsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(allDebtsProvider);
+    final isTablet = MediaQuery.of(context).size.width >= 900;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Borçlar'),
@@ -42,12 +43,25 @@ class DebtsScreen extends ConsumerWidget {
           }
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(allDebtsProvider),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(12),
-              itemCount: list.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) => _DebtCard(debt: list[i]),
-            ),
+            child: isTablet
+                ? GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 420,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.55,
+                    ),
+                    itemCount: list.length,
+                    itemBuilder: (_, i) => _DebtCard(debt: list[i]),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, i) => _DebtCard(debt: list[i]),
+                  ),
           );
         },
       ),
@@ -92,10 +106,10 @@ class _DebtCard extends ConsumerWidget {
             : '${debt.daysLeft} gün';
 
     return Card(
-      color: color.withOpacity(0.10),
+      color: color.withValues(alpha: 0.10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: color.withOpacity(0.55), width: 1.4),
+        side: BorderSide(color: color.withValues(alpha: 0.55), width: 1.4),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
