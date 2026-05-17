@@ -104,7 +104,7 @@ class CartScreen extends ConsumerWidget {
                       color: theme.colorScheme.surface,
                       boxShadow: [
                         BoxShadow(
-                          color: theme.shadowColor.withOpacity(0.08),
+                          color: theme.shadowColor.withValues(alpha: 0.08),
                           blurRadius: 12,
                           offset: const Offset(0, -2),
                         ),
@@ -138,6 +138,7 @@ class CartScreen extends ConsumerWidget {
                                 await ref
                                     .read(orderRepositoryProvider)
                                     .create(cart);
+                                ref.invalidate(myOrdersProvider);
                                 ref.read(cartProvider.notifier).clear();
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -159,17 +160,26 @@ class CartScreen extends ConsumerWidget {
                               }
                               return;
                             }
-                            context.push('/invoice/create');
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Faturalar artık yalnızca gerçek siparişlerden oluşturuluyor.',
+                                  ),
+                                ),
+                              );
+                              context.go('/orders');
+                            }
                           },
                           icon: Icon(
                             auth.isCustomer
                                 ? Icons.shopping_bag_outlined
-                                : Icons.receipt_long_rounded,
+                                : Icons.list_alt_rounded,
                           ),
                           label: Text(
                             auth.isCustomer
                                 ? 'Sipariş oluştur'
-                                : 'Fatura oluştur',
+                                : 'Siparişlere git',
                           ),
                         ),
                       ],

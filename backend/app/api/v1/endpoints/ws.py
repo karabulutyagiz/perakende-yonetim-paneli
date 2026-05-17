@@ -1,10 +1,12 @@
 from uuid import UUID
 
+from sqlalchemy import select
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 
 from app.core.security import decode_token
 from app.db.session import AsyncSessionLocal
-from app.models.tenant import TenantStatus
+from app.models.tenant import Tenant, TenantStatus
 from app.models.user import UserRole
 from app.services import user_service
 from app.websockets.hub import hub
@@ -31,15 +33,20 @@ async def websocket_endpoint(ws: WebSocket, token: str) -> None:
         return
     async with AsyncSessionLocal() as db:
         user = await user_service.get_by_id(db, user_id)
+        tenant = None
+        if user and user.tenant_id is not None:
+            tenant = (
+                await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
+            ).scalar_one_or_none()
     if not user or not user.is_active or int(payload.get("v", -1)) != user.token_version:
         await ws.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     if (
         user.role != UserRole.TENANT_OWNER
         or user.tenant_id is None
-        or user.tenant is None
-        or not user.tenant.is_active
-        or user.tenant.status != TenantStatus.APPROVED
+        or tenant is None
+        or not tenant.is_active
+        or tenant.status != TenantStatus.APPROVED
     ):
         await ws.close(code=status.WS_1008_POLICY_VIOLATION)
         return

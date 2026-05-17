@@ -29,6 +29,7 @@ class Debt {
     required this.id,
     required this.customerId,
     required this.customerName,
+    required this.updatedAt,
     required this.totalAmount,
     required this.paidAmount,
     required this.remaining,
@@ -41,6 +42,7 @@ class Debt {
   final String id;
   final String customerId;
   final String customerName;
+  final DateTime updatedAt;
   final double totalAmount;
   final double paidAmount;
   final double remaining;
@@ -61,6 +63,7 @@ class Debt {
       id: json['id'] as String,
       customerId: json['customer_id'] as String,
       customerName: (customer?['name'] as String?) ?? '—',
+      updatedAt: DateTime.parse(json['updated_at'] as String),
       totalAmount: (json['total_amount'] as num).toDouble(),
       paidAmount: (json['paid_amount'] as num).toDouble(),
       remaining: (json['remaining'] as num).toDouble(),

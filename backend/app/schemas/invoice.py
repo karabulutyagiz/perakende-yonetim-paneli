@@ -16,6 +16,9 @@ class CartItemIn(ORMModel):
 class InvoiceCreate(ORMModel):
     customer_id: UUID
     payment_method: PaymentMethod
+    cash_amount: MoneyDecimal = Field(default=Decimal("0"), ge=Decimal("0"))
+    card_amount: MoneyDecimal = Field(default=Decimal("0"), ge=Decimal("0"))
+    debt_amount: MoneyDecimal = Field(default=Decimal("0"), ge=Decimal("0"))
     items: list[CartItemIn] = Field(min_length=1)
     note: str | None = Field(default=None, max_length=500)
 
@@ -30,8 +33,13 @@ class InvoiceItemOut(IDMixin):
 
 
 class InvoiceOut(IDMixin):
+    order_id: UUID | None = None
+    order_number: str | None = None
     customer_id: UUID
     total: MoneyDecimal
+    cash_amount: MoneyDecimal
+    card_amount: MoneyDecimal
+    debt_amount: MoneyDecimal
     payment_method: PaymentMethod
     note: str | None
     customer: CustomerOut | None = None

@@ -23,7 +23,10 @@ async def list_orders(
 ) -> list[Order]:
     stmt = (
         select(Order)
-        .options(selectinload(Order.customer), selectinload(Order.items))
+        .options(
+            selectinload(Order.customer).selectinload(Customer.account),
+            selectinload(Order.items),
+        )
         .where(Order.tenant_id == tenant_id)
         .order_by(Order.created_at.desc())
     )
@@ -37,7 +40,10 @@ async def list_orders(
 async def get(db: AsyncSession, order_id: UUID, tenant_id: UUID) -> Order | None:
     stmt = (
         select(Order)
-        .options(selectinload(Order.customer), selectinload(Order.items))
+        .options(
+            selectinload(Order.customer).selectinload(Customer.account),
+            selectinload(Order.items),
+        )
         .where(Order.id == order_id, Order.tenant_id == tenant_id)
     )
     return (await db.execute(stmt)).scalar_one_or_none()
@@ -126,11 +132,39 @@ async def convert_to_invoice(
             "Sadece bekleyen siparişler faturaya dönüştürülebilir",
         )
 
+    order_total = order.total.quantize(Decimal("0.01"))
+    cash_amount = payload.cash_amount.quantize(Decimal("0.01"))
+    card_amount = payload.card_amount.quantize(Decimal("0.01"))
+    debt_amount = payload.debt_amount.quantize(Decimal("0.01"))
+    if cash_amount == 0 and card_amount == 0 and debt_amount == 0:
+        method = payload.payment_method or invoice_service.PaymentMethod.CASH
+        if method == invoice_service.PaymentMethod.CARD:
+            card_amount = order_total
+        elif method == invoice_service.PaymentMethod.DEBT:
+            debt_amount = order_total
+        else:
+            cash_amount = order_total
+
+    payment_total = (cash_amount + card_amount + debt_amount).quantize(Decimal("0.01"))
+    if payment_total > order_total:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Odeme toplami siparis tutarindan fazla olamaz",
+        )
+    if payment_total != order_total:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Odeme toplami siparis tutari ile ayni olmali",
+        )
+
     invoice = await invoice_service.create_from_order(
         db,
         tenant_id=order.tenant_id,
         customer_id=order.customer_id,
-        payment_method=payload.payment_method,
+        payment_method=payload.payment_method or invoice_service.PaymentMethod.CASH,
+        cash_amount=cash_amount,
+        card_amount=card_amount,
+        debt_amount=debt_amount,
         note=payload.note if payload.note is not None else order.note,
         items=[
             invoice_service.InvoiceLineInput(

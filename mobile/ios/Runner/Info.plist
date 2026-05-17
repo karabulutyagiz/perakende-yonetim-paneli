@@ -65,6 +65,10 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Fatura dekontlarini fotograflariniza kaydetmek icin erisim gerekiyor.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Kaydedilen fatura dekontlarini galerinizde gosterebilmek icin erisim gerekiyor.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

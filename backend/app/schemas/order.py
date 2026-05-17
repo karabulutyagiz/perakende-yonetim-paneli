@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 
 from pydantic import Field
@@ -19,7 +20,10 @@ class OrderCreate(ORMModel):
 
 
 class ConvertOrderToInvoiceRequest(ORMModel):
-    payment_method: PaymentMethod
+    payment_method: PaymentMethod | None = None
+    cash_amount: MoneyDecimal = Field(default=Decimal("0"), ge=Decimal("0"))
+    card_amount: MoneyDecimal = Field(default=Decimal("0"), ge=Decimal("0"))
+    debt_amount: MoneyDecimal = Field(default=Decimal("0"), ge=Decimal("0"))
     note: str | None = Field(default=None, max_length=500)
 
 
@@ -33,6 +37,7 @@ class OrderItemOut(IDMixin):
 
 
 class OrderOut(IDMixin):
+    order_number: str
     customer_id: UUID
     created_by_user_id: UUID
     invoice_id: UUID | None = None

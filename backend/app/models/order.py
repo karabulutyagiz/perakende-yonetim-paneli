@@ -43,6 +43,11 @@ class Order(Base, UUIDPKMixin, TimestampMixin):
         back_populates="order", cascade="all, delete-orphan"
     )
 
+    @property
+    def order_number(self) -> str:
+        raw = self.id.hex
+        return str(int(raw, 16) % 100000000).zfill(8)
+
 
 class OrderItem(Base, UUIDPKMixin, TimestampMixin):
     __tablename__ = "order_items"

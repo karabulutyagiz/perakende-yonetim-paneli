@@ -19,13 +19,25 @@ class InvoiceRepository {
   InvoiceRepository(this._dio);
   final Dio _dio;
 
-  Future<void> create({
+  Future<List<Map<String, dynamic>>> list() async {
+    final resp = await _dio.get('/invoices', queryParameters: {
+      'only_order_backed': true,
+    });
+    return (resp.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> getById(String invoiceId) async {
+    final resp = await _dio.get('/invoices/$invoiceId');
+    return (resp.data as Map).cast<String, dynamic>();
+  }
+
+  Future<Map<String, dynamic>> create({
     required String customerId,
     required PaymentMethod method,
     required Cart cart,
     String? note,
   }) async {
-    await _dio.post('/invoices', data: {
+    final resp = await _dio.post('/invoices', data: {
       'customer_id': customerId,
       'payment_method': method.value,
       'note': note,
@@ -34,9 +46,14 @@ class InvoiceRepository {
           {'product_id': l.product.id, 'quantity': l.quantity},
       ],
     });
+    return (resp.data as Map).cast<String, dynamic>();
   }
 }
 
 final invoiceRepositoryProvider = Provider<InvoiceRepository>(
   (ref) => InvoiceRepository(ref.watch(apiClientProvider)),
 );
+
+final invoicesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(invoiceRepositoryProvider).list();
+});

@@ -1,10 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/utils/formatters.dart';
 import '../data/debt.dart';
 import '../data/debt_repository.dart';
+
+final _debtDt = DateFormat('dd.MM.yyyy HH:mm', 'tr_TR');
 
 class DebtsScreen extends ConsumerWidget {
   const DebtsScreen({super.key});
@@ -12,10 +15,16 @@ class DebtsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(allDebtsProvider);
+    final theme = Theme.of(context);
     final isTablet = MediaQuery.of(context).size.width >= 900;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Borçlar'),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: Colors.black,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.black, size: 32),
+        titleSpacing: 4,
+        title: const _SectionHeaderTitle(title: 'Borçlar'),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(52),
           child: Padding(
@@ -51,7 +60,7 @@ class DebtsScreen extends ConsumerWidget {
                       maxCrossAxisExtent: 420,
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
-                      childAspectRatio: 1.55,
+                      childAspectRatio: 1.18,
                     ),
                     itemCount: list.length,
                     itemBuilder: (_, i) => _DebtCard(debt: list[i]),
@@ -64,6 +73,26 @@ class DebtsScreen extends ConsumerWidget {
                   ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _SectionHeaderTitle extends StatelessWidget {
+  const _SectionHeaderTitle({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.titleLarge?.copyWith(
+        color: Colors.black,
+        fontWeight: FontWeight.w800,
       ),
     );
   }
@@ -98,19 +127,8 @@ class _DebtCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final color = debt.status.color;
-    final statusText = debt.status == DebtStatus.gecikti
-        ? '${-debt.daysLeft} gün geçti'
-        : debt.status == DebtStatus.odendi
-            ? 'Ödendi'
-            : '${debt.daysLeft} gün';
 
     return Card(
-      color: color.withValues(alpha: 0.10),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: color.withValues(alpha: 0.55), width: 1.4),
-      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: () => _openPayDialog(context, ref),
@@ -119,66 +137,41 @@ class _DebtCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 6,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      debt.customerName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
+              Text(
+                debt.customerName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      formatCurrency(debt.remaining),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFC62828),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        statusText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              Text(
+                'En baştaki borç: ${formatCurrency(debt.totalAmount)}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Ödenen tutar: ${formatCurrency(debt.paidAmount)}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Kalan borç: ${formatCurrency(debt.remaining)}',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Son güncelleme tarihi: ${_debtDt.format(debt.updatedAt.toLocal())}',
+                style: theme.textTheme.bodyMedium,
               ),
             ],
           ),

@@ -7,10 +7,15 @@ import 'package:intl/intl.dart';
 import '../../core/api.dart';
 import '../../core/ws.dart';
 
-final invoicesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final resp = await ref.watch(dioProvider).get('/invoices', queryParameters: {
-        'limit': 200,
-      });
+final invoicesProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final resp = await ref
+      .watch(dioProvider)
+      .get(
+        '/invoices',
+        queryParameters: {'limit': 200, 'only_order_backed': true},
+      );
   return (resp.data as List).cast<Map<String, dynamic>>();
 });
 
@@ -36,11 +41,11 @@ class _InvoicesPageState extends ConsumerState<InvoicesPage> {
   @override
   void initState() {
     super.initState();
-    _wsSub = listenWsEvents(
-      ref,
-      const ['invoice.', 'stock.', 'debt.'],
-      (_) => ref.invalidate(invoicesProvider),
-    );
+    _wsSub = listenWsEvents(ref, const [
+      'invoice.',
+      'stock.',
+      'debt.',
+    ], (_) => ref.invalidate(invoicesProvider));
   }
 
   @override
@@ -69,8 +74,10 @@ class _InvoicesPageState extends ConsumerState<InvoicesPage> {
         data: (list) {
           if (list.isEmpty) {
             return const Center(
-              child: Text('Henüz fatura yok',
-                  style: TextStyle(color: Colors.black54)),
+              child: Text(
+                'Henüz fatura yok',
+                style: TextStyle(color: Colors.black54),
+              ),
             );
           }
           return Padding(
@@ -82,26 +89,38 @@ class _InvoicesPageState extends ConsumerState<InvoicesPage> {
                 itemBuilder: (_, i) {
                   final inv = list[i];
                   final customer = inv['customer'] as Map<String, dynamic>?;
+                  final contactName = customer?['account_full_name'] as String?;
                   final method = inv['payment_method'] as String? ?? '';
-                  final createdAt =
-                      DateTime.tryParse(inv['created_at'] as String? ?? '');
+                  final createdAt = DateTime.tryParse(
+                    inv['created_at'] as String? ?? '',
+                  );
                   final items = (inv['items'] as List?) ?? const [];
+                  final orderNumber =
+                      inv['order_number']?.toString() ?? '--------';
                   return ExpansionTile(
                     leading: const Icon(Icons.receipt_long_outlined),
-                    title: Text(customer?['name'] as String? ?? '—',
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text([
-                      if (createdAt != null) _dt.format(createdAt.toLocal()),
-                      _paymentLabels[method] ?? method,
-                      '${items.length} kalem',
-                    ].join(' · ')),
+                    title: Text(
+                      customer?['name'] as String? ?? '—',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      [
+                        if (contactName != null && contactName.isNotEmpty)
+                          contactName,
+                        'Sipariş #$orderNumber',
+                        if (createdAt != null) _dt.format(createdAt.toLocal()),
+                        _paymentLabels[method] ?? method,
+                        '${items.length} kalem',
+                      ].join(' · '),
+                    ),
                     trailing: Text(
                       _tl.format((inv['total'] as num).toDouble()),
                       style: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 16),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
                     ),
-                    childrenPadding:
-                        const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     children: [
                       if (inv['note'] != null &&
                           (inv['note'] as String).isNotEmpty)
@@ -109,8 +128,10 @@ class _InvoicesPageState extends ConsumerState<InvoicesPage> {
                           alignment: Alignment.centerLeft,
                           child: Padding(
                             padding: const EdgeInsets.only(bottom: 8),
-                            child: Text('Not: ${inv['note']}',
-                                style: const TextStyle(color: Colors.black54)),
+                            child: Text(
+                              'Not: ${inv['note']}',
+                              style: const TextStyle(color: Colors.black54),
+                            ),
                           ),
                         ),
                       Table(
@@ -133,14 +154,22 @@ class _InvoicesPageState extends ConsumerState<InvoicesPage> {
                             ],
                           ),
                           for (final it in items.cast<Map<String, dynamic>>())
-                            TableRow(children: [
-                              _Cell(it['product_name'] as String? ?? '—'),
-                              _Cell('${it['quantity']} ${it['unit'] ?? ''}'),
-                              _Cell(_tl
-                                  .format((it['unit_price'] as num).toDouble())),
-                              _Cell(_tl
-                                  .format((it['line_total'] as num).toDouble())),
-                            ]),
+                            TableRow(
+                              children: [
+                                _Cell(it['product_name'] as String? ?? '—'),
+                                _Cell('${it['quantity']} ${it['unit'] ?? ''}'),
+                                _Cell(
+                                  _tl.format(
+                                    (it['unit_price'] as num).toDouble(),
+                                  ),
+                                ),
+                                _Cell(
+                                  _tl.format(
+                                    (it['line_total'] as num).toDouble(),
+                                  ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                     ],
@@ -160,10 +189,12 @@ class _CellHeader extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-        child: Text(text,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+    child: Text(
+      text,
+      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+    ),
+  );
 }
 
 class _Cell extends StatelessWidget {
@@ -171,7 +202,7 @@ class _Cell extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-        child: Text(text),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+    child: Text(text),
+  );
 }

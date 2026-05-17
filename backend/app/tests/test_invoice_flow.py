@@ -66,6 +66,27 @@ async def test_debt_invoice_creates_debt(auth_client, db, tenant):
 
 
 @pytest.mark.asyncio
+async def test_partial_payment_invoice_stores_breakdown(auth_client, db, tenant):
+    customer, product = await _seed(db, tenant)
+    resp = await auth_client.post(
+        "/api/v1/invoices",
+        json={
+            "customer_id": str(customer.id),
+            "payment_method": "borc",
+            "cash_amount": "100",
+            "card_amount": "20",
+            "debt_amount": "120",
+            "items": [{"product_id": str(product.id), "quantity": "2"}],
+        },
+    )
+    assert resp.status_code == 201, resp.text
+    body = resp.json()
+    assert float(body["cash_amount"]) == 100.0
+    assert float(body["card_amount"]) == 20.0
+    assert float(body["debt_amount"]) == 120.0
+
+
+@pytest.mark.asyncio
 async def test_insufficient_stock_rejected(auth_client, db, tenant):
     customer, product = await _seed(db, tenant, stock=Decimal("1"))
     resp = await auth_client.post(

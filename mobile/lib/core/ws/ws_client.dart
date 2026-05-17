@@ -15,9 +15,22 @@ class WsEvent {
 }
 
 class WsClient {
-  WsClient(this._ref);
+  WsClient(this._ref) {
+    _ref.listen<AuthState>(authControllerProvider, (prev, next) {
+      final shouldConnect =
+          next.status == AuthStatus.authenticated && next.isTenantOwner;
+      if (shouldConnect) {
+        connect();
+      } else {
+        _disconnect();
+      }
+    }, fireImmediately: true);
+  }
+
   final Ref _ref;
   WebSocketChannel? _channel;
+  StreamSubscription? _sub;
+  Timer? _retry;
   final _controller = StreamController<WsEvent>.broadcast();
   bool _disposed = false;
   bool _connecting = false;
@@ -42,7 +55,7 @@ class WsClient {
       final uri = parsed.replace(port: port);
       final channel = WebSocketChannel.connect(uri);
       _channel = channel;
-      channel.stream.listen(
+      _sub = channel.stream.listen(
         (raw) {
           try {
             final decoded = jsonDecode(raw as String) as Map<String, dynamic>;
@@ -65,23 +78,37 @@ class WsClient {
   }
 
   void _handleDisconnect() {
+    _sub?.cancel();
+    _sub = null;
     _channel = null;
     _reconnectSoon();
   }
 
   void _reconnectSoon() {
     if (_disposed) return;
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!_disposed) {
-        connect();
-      }
+    final auth = _ref.read(authControllerProvider);
+    if (auth.status != AuthStatus.authenticated || !auth.isTenantOwner) {
+      return;
+    }
+    _retry?.cancel();
+    _retry = Timer(const Duration(seconds: 3), () {
+      if (!_disposed) connect();
     });
+  }
+
+  void _disconnect() {
+    _retry?.cancel();
+    _retry = null;
+    _sub?.cancel();
+    _sub = null;
+    _channel?.sink.close();
+    _channel = null;
+    _connecting = false;
   }
 
   void dispose() {
     _disposed = true;
-    _channel?.sink.close();
-    _channel = null;
+    _disconnect();
     _controller.close();
   }
 }

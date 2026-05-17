@@ -49,18 +49,16 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
     if (_selectedCustomer == null || cart.isEmpty) return;
     setState(() => _saving = true);
     try {
-      await ref.read(invoiceRepositoryProvider).create(
+      final invoice = await ref.read(invoiceRepositoryProvider).create(
             customerId: _selectedCustomer!.id,
             method: _method,
             cart: cart,
           );
       ref.read(cartProvider.notifier).clear();
       ref.invalidate(productsProvider);
+      ref.invalidate(invoicesProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fatura oluşturuldu')),
-      );
-      context.go('/');
+      context.go('/invoices/${invoice['id']}');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -84,7 +82,7 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('Müşteri', style: theme.textTheme.titleMedium),
+          Text('Müşteri Seçimi', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           customers.when(
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -122,33 +120,92 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
                           builder: (ctx) => SafeArea(
                             child: ConstrainedBox(
                               constraints: BoxConstraints(
-                                maxHeight: MediaQuery.of(ctx).size.height * 0.7,
+                                maxHeight:
+                                    MediaQuery.of(ctx).size.height * 0.82,
                               ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Padding(
-                                    padding: EdgeInsets.all(16),
-                                    child: Text(
-                                      'Müşteri seç',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        20, 12, 20, 8),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.people_alt_outlined,
+                                          color: theme.colorScheme.primary,
+                                          size: 28,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            'Müşteri seçimi',
+                                            style: theme.textTheme.titleLarge
+                                                ?.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        'Fatura oluşturmak için bir müşteri seçin.',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant,
+                                        ),
                                       ),
                                     ),
                                   ),
                                   Flexible(
                                     child: ListView.builder(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          12, 4, 12, 16),
                                       shrinkWrap: true,
                                       itemCount: list.length,
                                       itemBuilder: (_, i) {
                                         final c = list[i];
+                                        final selected =
+                                            _selectedCustomer?.id == c.id;
                                         return ListTile(
-                                          leading: const Icon(Icons.person),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                          ),
+                                          tileColor: selected
+                                              ? theme
+                                                  .colorScheme.primaryContainer
+                                                  .withValues(alpha: 0.45)
+                                              : null,
+                                          leading: CircleAvatar(
+                                            radius: 22,
+                                            backgroundColor: theme
+                                                .colorScheme.primaryContainer,
+                                            child: Icon(
+                                              Icons.person,
+                                              color: theme.colorScheme.primary,
+                                            ),
+                                          ),
                                           title: Text(
                                             c.name,
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
+                                            style: theme.textTheme.titleSmall
+                                                ?.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                            ),
                                           ),
                                           subtitle: c.phone != null
                                               ? Text(
@@ -156,10 +213,11 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
                                                   maxLines: 1,
                                                   overflow:
                                                       TextOverflow.ellipsis,
+                                                  style: theme
+                                                      .textTheme.bodyMedium,
                                                 )
                                               : null,
-                                          selected:
-                                              _selectedCustomer?.id == c.id,
+                                          selected: selected,
                                           onTap: () => Navigator.pop(ctx, c),
                                         );
                                       },

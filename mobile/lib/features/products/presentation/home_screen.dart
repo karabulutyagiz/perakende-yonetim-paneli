@@ -5,10 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/auth_controller.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../core/ws/ws_client.dart';
 import '../../cart/providers/cart_provider.dart';
-import '../../customers/data/customer_repository.dart';
-import '../../debts/data/debt_repository.dart';
 import '../data/product.dart';
 import '../data/product_repository.dart';
 
@@ -23,37 +20,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _showTabletCartPanel = false;
 
   @override
-  void initState() {
-    super.initState();
-    // WS'e bağlan — global canlı senkronizasyon
-    Future.microtask(() async {
-      await ref.read(wsClientProvider).connect();
-      ref.read(wsClientProvider).stream.listen((event) {
-        if (!mounted) return;
-        final e = event.event;
-        if (e.startsWith('product.') ||
-            e == 'stock.changed' ||
-            e.startsWith('category.')) {
-          ref.invalidate(productsProvider);
-        }
-        if (e.startsWith('customer.')) {
-          ref.invalidate(customersProvider);
-        }
-        if (e.startsWith('invoice.') || e.startsWith('debt.')) {
-          ref.invalidate(allDebtsProvider);
-          ref.invalidate(debtSummaryProvider);
-        }
-      });
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final async = ref.watch(productsProvider);
-    final cart = ref.watch(cartProvider);
     final auth = ref.watch(authControllerProvider);
+    final cart = ref.watch(cartProvider);
     final width = MediaQuery.of(context).size.width;
     final isTablet = width >= 900;
+
+    if (auth.status == AuthStatus.loading) {
+      return const Scaffold(
+        appBar: _SectionAppBar(title: 'Ürünler'),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final async = ref.watch(productsProvider);
 
     if (!isTablet && _showTabletCartPanel) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -63,77 +43,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       });
     }
 
-    final meAsync = ref.watch(meProvider);
-    final tenantName = meAsync.maybeWhen(
-      data: (m) => m?.tenantName,
-      orElse: () => null,
-    );
-    final logoUrl = meAsync.maybeWhen(
-      data: (m) => m?.tenantLogoUrl,
-      orElse: () => null,
-    );
-
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Colors.black,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.black),
+        title: const Row(
           children: [
-            if (logoUrl != null && logoUrl.isNotEmpty) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: CachedNetworkImage(
-                  imageUrl: logoUrl,
-                  width: 32,
-                  height: 32,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) =>
-                      const Icon(Icons.storefront_rounded, size: 24),
-                ),
-              ),
-              const SizedBox(width: 10),
-            ],
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    tenantName ?? 'Toptan panel',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Text(
-                    'Ürünler',
-                    style: TextStyle(fontSize: 11, color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
+            Icon(Icons.storefront_rounded, size: 28, color: Colors.black),
+            SizedBox(width: 10),
+            Expanded(child: _SectionTitleBlock(title: 'Ürünler')),
           ],
         ),
         actions: [
           if (auth.isTenantOwner)
-            IconButton(
+            _TopActionButton(
+              icon: const Icon(Icons.receipt_rounded),
+              tooltip: 'Faturalar',
+              onPressed: () => context.push('/invoices'),
+            ),
+          if (auth.isTenantOwner)
+            _TopActionButton(
               icon: const Icon(Icons.insights_rounded),
               tooltip: 'Raporlar',
               onPressed: () => context.push('/reports'),
             ),
           if (auth.isTenantOwner)
-            IconButton(
+            _TopActionButton(
               icon: const Icon(Icons.receipt_long_rounded),
               tooltip: 'Borçlar',
               onPressed: () => context.push('/debts'),
             ),
           if (auth.isCustomer)
-            IconButton(
+            _TopActionButton(
               icon: const Icon(Icons.shopping_bag_outlined),
               tooltip: 'Siparişlerim',
               onPressed: () => context.push('/orders'),
             ),
-          IconButton(
+          _TopActionButton(
             icon: const Icon(Icons.logout_rounded),
             tooltip: 'Çıkış',
             onPressed: () => _confirmLogout(context),
@@ -186,6 +134,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             cart: cart,
                             showSummary: _showTabletCartPanel,
                             onToggleSummary: () {
+                              if (auth.isTenantOwner) {
+                                context.push('/orders');
+                                return;
+                              }
                               setState(
                                 () => _showTabletCartPanel =
                                     !_showTabletCartPanel,
@@ -273,6 +225,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
+class _SectionAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const _SectionAppBar({required this.title});
+
+  final String title;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: _SectionTitleBlock(title: title),
+    );
+  }
+}
+
+class _TopActionButton extends StatelessWidget {
+  const _TopActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final Widget icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: tooltip,
+        icon: IconTheme(
+          data: const IconThemeData(
+            size: 40,
+            color: Colors.black,
+          ),
+          child: icon,
+        ),
+        iconSize: 40,
+        padding: const EdgeInsets.all(16),
+        constraints: const BoxConstraints(minWidth: 76, minHeight: 76),
+      ),
+    );
+  }
+}
+
+class _SectionTitleBlock extends StatelessWidget {
+  const _SectionTitleBlock({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: Colors.black,
+            fontWeight: FontWeight.w800,
+          ),
+    );
+  }
+}
+
 class _TabletTopBar extends StatelessWidget {
   const _TabletTopBar({
     required this.auth,
@@ -319,19 +339,11 @@ class _TabletTopBar extends StatelessWidget {
             FilledButton.icon(
               onPressed: onToggleSummary,
               icon: Icon(
-                showSummary
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
+                auth.isTenantOwner
+                    ? Icons.shopping_bag_rounded
+                    : Icons.shopping_cart_rounded,
               ),
-              label: Text(
-                showSummary
-                    ? (auth.isCustomer
-                        ? 'Sipariş özetini gizle'
-                        : 'Sepet özetini gizle')
-                    : (auth.isCustomer
-                        ? 'Sipariş özetini göster'
-                        : 'Sepet özetini göster'),
-              ),
+              label: Text(auth.isTenantOwner ? 'Gelen Siparişler' : 'Sepetim'),
             ),
           ],
         ),
@@ -411,7 +423,7 @@ class _TabletCartPanel extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      auth.isCustomer ? 'Sipariş özeti' : 'Sepet özeti',
+                      'Sepet Özeti',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),

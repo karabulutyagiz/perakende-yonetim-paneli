@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../auth/auth_controller.dart';
 import '../auth/token_storage.dart';
 import 'api_config.dart';
 
@@ -38,14 +39,19 @@ final apiClientProvider = Provider<Dio>((ref) {
               );
               final newAccess = resp.data['access_token'] as String;
               final newRefresh = resp.data['refresh_token'] as String;
-              await storage.saveTokens(access: newAccess, refresh: newRefresh);
+              await ref.read(authControllerProvider.notifier).applyTokens(
+                    access: newAccess,
+                    refresh: newRefresh,
+                  );
               final req = err.requestOptions;
               req.headers['Authorization'] = 'Bearer $newAccess';
               final retry = await dio.fetch(req);
               return handler.resolve(retry);
             } catch (_) {
-              await storage.clear();
+              await ref.read(authControllerProvider.notifier).clearSession();
             }
+          } else {
+            await ref.read(authControllerProvider.notifier).clearSession();
           }
         }
         handler.next(err);

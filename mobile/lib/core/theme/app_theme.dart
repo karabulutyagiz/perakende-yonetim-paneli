@@ -27,14 +27,14 @@ class AppTheme {
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w800,
-          fontSize: 25,
+          fontSize: 28,
           color: Colors.white,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
         labelStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
         hintStyle: textTheme.bodyLarge?.copyWith(color: Colors.black54),
         border: OutlineInputBorder(
@@ -44,8 +44,8 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(0, 62),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+          minimumSize: const Size(0, 68),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
           textStyle:
               textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
           shape:
@@ -54,8 +54,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(0, 62),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+          minimumSize: const Size(0, 68),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
           textStyle:
               textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           shape:
@@ -64,26 +64,44 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          minimumSize: const Size(0, 54),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          minimumSize: const Size(0, 58),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           textStyle:
               textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          minimumSize: const Size(52, 52),
+          iconSize: 24,
+          padding: const EdgeInsets.all(12),
+        ),
+      ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        extendedSizeConstraints: BoxConstraints(minHeight: 66),
+        extendedSizeConstraints: BoxConstraints(minHeight: 72),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          textStyle: WidgetStatePropertyAll(
+            textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          minimumSize: const WidgetStatePropertyAll(Size(0, 60)),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          ),
+        ),
       ),
       chipTheme: base.chipTheme.copyWith(
         labelStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
       listTileTheme: ListTileThemeData(
         titleTextStyle:
             textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         subtitleTextStyle: textTheme.bodyMedium,
-        minVerticalPadding: 10,
+        minVerticalPadding: 12,
       ),
     );
   }
@@ -106,31 +124,31 @@ class AppTheme {
     return base
         .copyWith(
           displaySmall: base.displaySmall
-              ?.copyWith(fontSize: 44, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 46, fontWeight: FontWeight.w800),
           headlineLarge: base.headlineLarge
-              ?.copyWith(fontSize: 40, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 42, fontWeight: FontWeight.w800),
           headlineMedium: base.headlineMedium
-              ?.copyWith(fontSize: 36, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 38, fontWeight: FontWeight.w800),
           headlineSmall: base.headlineSmall
-              ?.copyWith(fontSize: 32, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 34, fontWeight: FontWeight.w800),
           titleLarge: base.titleLarge
-              ?.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 28, fontWeight: FontWeight.w800),
           titleMedium: base.titleMedium
-              ?.copyWith(fontSize: 23, fontWeight: FontWeight.w700),
+              ?.copyWith(fontSize: 24, fontWeight: FontWeight.w700),
           titleSmall: base.titleSmall
-              ?.copyWith(fontSize: 20, fontWeight: FontWeight.w700),
+              ?.copyWith(fontSize: 21, fontWeight: FontWeight.w700),
           bodyLarge: base.bodyLarge
-              ?.copyWith(fontSize: 20, fontWeight: FontWeight.w600),
+              ?.copyWith(fontSize: 21, fontWeight: FontWeight.w600),
           bodyMedium: base.bodyMedium
-              ?.copyWith(fontSize: 18, fontWeight: FontWeight.w600),
+              ?.copyWith(fontSize: 19, fontWeight: FontWeight.w600),
           bodySmall: base.bodySmall
-              ?.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
+              ?.copyWith(fontSize: 17, fontWeight: FontWeight.w600),
           labelLarge: base.labelLarge
-              ?.copyWith(fontSize: 19, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 20, fontWeight: FontWeight.w800),
           labelMedium: base.labelMedium
-              ?.copyWith(fontSize: 17, fontWeight: FontWeight.w700),
+              ?.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
           labelSmall: base.labelSmall
-              ?.copyWith(fontSize: 15, fontWeight: FontWeight.w700),
+              ?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
         )
         .apply(
           fontFamily: '.SF Pro Text',

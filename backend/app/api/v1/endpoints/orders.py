@@ -97,6 +97,13 @@ async def convert_order_to_invoice(
     out = _to_out(updated)
     await hub.broadcast("order.updated", out.model_dump(mode="json"), tenant_id)
     if updated.invoice_id is not None:
+        await hub.broadcast("invoice.created", {"invoice_id": str(updated.invoice_id)}, tenant_id)
+        if payload.debt_amount > 0:
+            await hub.broadcast(
+                "debt.created",
+                {"invoice_id": str(updated.invoice_id), "order_id": str(updated.id)},
+                tenant_id,
+            )
         await hub.broadcast("stock.changed", {"order_id": str(updated.id)}, tenant_id)
     return out
 

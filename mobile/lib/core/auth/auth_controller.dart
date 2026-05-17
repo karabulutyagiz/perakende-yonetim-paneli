@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../api/api_client.dart';
+import '../api/api_config.dart';
 import 'token_storage.dart';
 
 enum AuthStatus { loading, unauthenticated, authenticated }
@@ -11,7 +11,8 @@ enum AuthStatus { loading, unauthenticated, authenticated }
 enum AuthRole { tenantOwner, customer, platformOwner, unknown }
 
 class AuthState {
-  const AuthState(this.status, {this.role = AuthRole.unknown, this.errorMessage});
+  const AuthState(this.status,
+      {this.role = AuthRole.unknown, this.errorMessage});
   final AuthStatus status;
   final AuthRole role;
   final String? errorMessage;
@@ -27,28 +28,66 @@ class AuthController extends StateNotifier<AuthState> {
 
   final Ref _ref;
 
+  Dio _dio({String? accessToken}) {
+    return Dio(
+      BaseOptions(
+        baseUrl: ApiConfig.resolvedBaseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 20),
+        headers: {
+          'Accept': 'application/json',
+          if (accessToken != null && accessToken.isNotEmpty)
+            'Authorization': 'Bearer $accessToken',
+        },
+      ),
+    );
+  }
+
   Future<void> _bootstrap() async {
-    final token = await _ref.read(tokenStorageProvider).readAccessToken();
+    final storage = _ref.read(tokenStorageProvider);
+    final token = await storage.readAccessToken();
+    if (_isTokenUsable(token)) {
+      state = AuthState(
+        AuthStatus.authenticated,
+        role: _roleFromToken(token),
+      );
+      return;
+    }
+    await storage.clear();
+    state = const AuthState(AuthStatus.unauthenticated);
+  }
+
+  Future<void> applyTokens({
+    required String access,
+    required String refresh,
+  }) async {
+    await _ref.read(tokenStorageProvider).saveTokens(
+          access: access,
+          refresh: refresh,
+        );
     state = AuthState(
-      token != null && token.isNotEmpty ? AuthStatus.authenticated : AuthStatus.unauthenticated,
-      role: _roleFromToken(token),
+      AuthStatus.authenticated,
+      role: _roleFromToken(access),
+    );
+  }
+
+  Future<void> clearSession({String? errorMessage}) async {
+    await _ref.read(tokenStorageProvider).clear();
+    state = AuthState(
+      AuthStatus.unauthenticated,
+      errorMessage: errorMessage,
     );
   }
 
   Future<bool> login(String email, String password) async {
     try {
-      final dio = _ref.read(apiClientProvider);
-      final resp = await dio.post(
+      final resp = await _dio().post(
         '/auth/login',
         data: {'email': email, 'password': password},
       );
-      await _ref.read(tokenStorageProvider).saveTokens(
-            access: resp.data['access_token'] as String,
-            refresh: resp.data['refresh_token'] as String,
-          );
-      state = AuthState(
-        AuthStatus.authenticated,
-        role: _roleFromToken(resp.data['access_token'] as String?),
+      await applyTokens(
+        access: resp.data['access_token'] as String,
+        refresh: resp.data['refresh_token'] as String,
       );
       return true;
     } on DioException catch (e) {
@@ -69,24 +108,19 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    final accessToken = await _ref.read(tokenStorageProvider).readAccessToken();
     try {
-      await _ref.read(apiClientProvider).post('/auth/logout');
+      await _dio(accessToken: accessToken).post('/auth/logout');
     } catch (_) {
       // backend ulaşılamıyorsa bile lokal token'ı temizle
     }
-    await _ref.read(tokenStorageProvider).clear();
-    state = const AuthState(AuthStatus.unauthenticated);
+    await clearSession();
   }
 
   AuthRole _roleFromToken(String? token) {
-    if (token == null || token.isEmpty) return AuthRole.unknown;
-    final parts = token.split('.');
-    if (parts.length != 3) return AuthRole.unknown;
+    final data = _claimsFromToken(token);
+    if (data == null) return AuthRole.unknown;
     try {
-      var payload = parts[1];
-      payload += '=' * ((4 - payload.length % 4) % 4);
-      final data = jsonDecode(utf8.decode(base64Url.decode(payload)))
-          as Map<String, dynamic>;
       return switch (data['role']) {
         'tenant_owner' => AuthRole.tenantOwner,
         'customer' => AuthRole.customer,
@@ -97,11 +131,36 @@ class AuthController extends StateNotifier<AuthState> {
       return AuthRole.unknown;
     }
   }
+
+  Map<String, dynamic>? _claimsFromToken(String? token) {
+    if (token == null || token.isEmpty) return null;
+    final parts = token.split('.');
+    if (parts.length != 3) return null;
+    try {
+      var payload = parts[1];
+      payload += '=' * ((4 - payload.length % 4) % 4);
+      return jsonDecode(utf8.decode(base64Url.decode(payload)))
+          as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _isTokenUsable(String? token) {
+    final claims = _claimsFromToken(token);
+    if (claims == null) return false;
+    final exp = claims['exp'];
+    if (exp is! num) return false;
+    final expiry = DateTime.fromMillisecondsSinceEpoch(
+      exp.toInt() * 1000,
+      isUtc: true,
+    );
+    return expiry.isAfter(DateTime.now().toUtc());
+  }
 }
 
-final authControllerProvider =
-    StateNotifierProvider<AuthController, AuthState>((ref) => AuthController(ref));
-
+final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
+    (ref) => AuthController(ref));
 
 class MeInfo {
   const MeInfo({
@@ -133,12 +192,25 @@ class MeInfo {
   }
 }
 
-
 /// /auth/me'yi çağırır; auth state değiştiğinde otomatik yenilenir.
 final meProvider = FutureProvider<MeInfo?>((ref) async {
   final auth = ref.watch(authControllerProvider);
   if (auth.status != AuthStatus.authenticated) return null;
-  final dio = ref.read(apiClientProvider);
-  final resp = await dio.get('/auth/me');
-  return MeInfo.fromJson(resp.data as Map<String, dynamic>);
+  final token = await ref.read(tokenStorageProvider).readAccessToken();
+  if (token == null || token.isEmpty) return null;
+  try {
+    final resp = await Dio(
+      BaseOptions(
+        baseUrl: ApiConfig.resolvedBaseUrl,
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+    ).get('/auth/me');
+    return MeInfo.fromJson(resp.data as Map<String, dynamic>);
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 401) {
+      await ref.read(authControllerProvider.notifier).clearSession();
+      return null;
+    }
+    rethrow;
+  }
 });

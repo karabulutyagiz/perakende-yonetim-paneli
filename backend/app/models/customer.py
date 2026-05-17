@@ -27,3 +27,19 @@ class Customer(Base, UUIDPKMixin, TimestampMixin):
     orders: Mapped[list["Order"]] = relationship(  # noqa: F821
         back_populates="customer", cascade="all, delete-orphan"
     )
+
+    @property
+    def has_account(self) -> bool:
+        return self.account is not None
+
+    @property
+    def account_email(self) -> str | None:
+        return self.account.email if self.account is not None else None
+
+    @property
+    def account_is_active(self) -> bool | None:
+        return self.account.is_active if self.account is not None else None
+
+    @property
+    def account_full_name(self) -> str | None:
+        return self.account.full_name if self.account is not None else None

@@ -56,18 +56,31 @@ async def build_summary(
     unique_customers = int(head[2] or 0)
 
     # Ödeme yöntemi kırılımı
-    pay_rows = (
-        await db.execute(
-            select(Invoice.payment_method, func.coalesce(func.sum(Invoice.total), 0))
-            .where(range_filter)
-            .group_by(Invoice.payment_method)
-        )
-    ).all()
-    pay_map = {method: Decimal(total or 0) for method, total in pay_rows}
     by_payment = PaymentBreakdown(
-        kart=pay_map.get(PaymentMethod.CARD, Decimal("0")),
-        nakit=pay_map.get(PaymentMethod.CASH, Decimal("0")),
-        borc=pay_map.get(PaymentMethod.DEBT, Decimal("0")),
+        kart=Decimal(
+            (
+                await db.execute(
+                    select(func.coalesce(func.sum(Invoice.card_amount), 0)).where(range_filter)
+                )
+            ).scalar_one()
+            or 0
+        ),
+        nakit=Decimal(
+            (
+                await db.execute(
+                    select(func.coalesce(func.sum(Invoice.cash_amount), 0)).where(range_filter)
+                )
+            ).scalar_one()
+            or 0
+        ),
+        borc=Decimal(
+            (
+                await db.execute(
+                    select(func.coalesce(func.sum(Invoice.debt_amount), 0)).where(range_filter)
+                )
+            ).scalar_one()
+            or 0
+        ),
     )
 
     # Açık ve geciken borçlar (tarih filtresiz — güncel durum)

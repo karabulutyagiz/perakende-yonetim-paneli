@@ -46,7 +46,10 @@ async def list_debts(
 ) -> list[DebtView]:
     stmt = (
         select(Debt)
-        .options(selectinload(Debt.payments), selectinload(Debt.customer))
+        .options(
+            selectinload(Debt.payments),
+            selectinload(Debt.customer).selectinload(Customer.account),
+        )
         .where(Debt.tenant_id == tenant_id)
         .order_by(Debt.due_on.asc())
     )
@@ -61,7 +64,10 @@ async def list_debts(
 async def get(db: AsyncSession, debt_id: UUID, tenant_id: UUID) -> Debt | None:
     stmt = (
         select(Debt)
-        .options(selectinload(Debt.payments))
+        .options(
+            selectinload(Debt.payments),
+            selectinload(Debt.customer).selectinload(Customer.account),
+        )
         .where(Debt.id == debt_id, Debt.tenant_id == tenant_id)
     )
     return (await db.execute(stmt)).scalar_one_or_none()
@@ -76,6 +82,7 @@ async def customer_summary(db: AsyncSession, tenant_id: UUID) -> list[dict]:
             func.coalesce(func.sum(Debt.paid_amount), 0),
             func.count(Debt.id),
         )
+        .options(selectinload(Customer.account))
         .join(Debt, Debt.customer_id == Customer.id)
         .where(Debt.status != DebtStatus.PAID, Debt.tenant_id == tenant_id)
         .group_by(Customer.id)

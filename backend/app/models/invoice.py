@@ -26,6 +26,9 @@ class Invoice(Base, UUIDPKMixin, TimestampMixin):
         ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
     )
     total: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    cash_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
+    card_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
+    debt_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
     payment_method: Mapped[PaymentMethod] = mapped_column(
         Enum(PaymentMethod, name="payment_method", values_callable=lambda x: [e.value for e in x]),
         nullable=False,
@@ -40,6 +43,14 @@ class Invoice(Base, UUIDPKMixin, TimestampMixin):
         back_populates="invoice", uselist=False, cascade="all, delete-orphan"
     )
     order: Mapped["Order | None"] = relationship(back_populates="invoice", uselist=False)  # noqa: F821
+
+    @property
+    def order_id(self) -> UUID | None:
+        return self.order.id if self.order is not None else None
+
+    @property
+    def order_number(self) -> str | None:
+        return self.order.order_number if self.order is not None else None
 
 
 class InvoiceItem(Base, UUIDPKMixin, TimestampMixin):

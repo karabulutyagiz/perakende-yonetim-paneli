@@ -28,3 +28,4 @@ class CustomerOut(IDMixin, CustomerBase):
     has_account: bool = False
     account_email: EmailStr | None = None
     account_is_active: bool | None = None
+    account_full_name: str | None = None
