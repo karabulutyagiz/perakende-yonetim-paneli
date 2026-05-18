@@ -170,7 +170,7 @@ class _DebtCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Son güncelleme tarihi: ${_debtDt.format(debt.updatedAt.toLocal())}',
+                'Son güncelleme tarihi: ${_debtDt.format((debt.lastPaymentOn ?? debt.updatedAt).toLocal())}',
                 style: theme.textTheme.bodyMedium,
               ),
             ],

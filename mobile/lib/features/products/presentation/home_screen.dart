@@ -153,13 +153,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               products: products,
                               onAdd: (product) {
                                 ref.read(cartProvider.notifier).add(product);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    duration: const Duration(seconds: 1),
-                                    content:
-                                        Text('${product.name} sepete eklendi'),
-                                  ),
-                                );
                               },
                               maxCrossAxisExtent: 260,
                               padding: const EdgeInsets.all(16),
@@ -185,12 +178,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   products: products,
                   onAdd: (product) {
                     ref.read(cartProvider.notifier).add(product);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        duration: const Duration(seconds: 1),
-                        content: Text('${product.name} sepete eklendi'),
-                      ),
-                    );
                   },
                   maxCrossAxisExtent: 220,
                   padding: const EdgeInsets.all(12),

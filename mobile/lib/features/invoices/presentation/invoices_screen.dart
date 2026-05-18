@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/utils/formatters.dart';
+import '../../orders/data/order_repository.dart';
 import '../data/invoice_repository.dart';
 
 final _dt = DateFormat('dd.MM.yyyy HH:mm', 'tr_TR');
@@ -14,6 +15,7 @@ class InvoicesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(invoicesProvider);
+    final asyncOrders = ref.watch(allOrdersProvider);
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
@@ -34,6 +36,8 @@ class InvoicesScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => const Center(child: Text('Faturalar yüklenemedi.')),
         data: (invoices) {
+          final orders =
+              asyncOrders.valueOrNull ?? const <Map<String, dynamic>>[];
           if (invoices.isEmpty) {
             return const Center(
               child: Text('Henüz siparişten oluşmuş fatura yok'),
@@ -45,7 +49,10 @@ class InvoicesScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               itemCount: invoices.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, i) => _InvoiceCard(invoice: invoices[i]),
+              itemBuilder: (_, i) => _InvoiceCard(
+                invoice: invoices[i],
+                orders: orders,
+              ),
             ),
           );
         },
@@ -55,9 +62,10 @@ class InvoicesScreen extends ConsumerWidget {
 }
 
 class _InvoiceCard extends StatelessWidget {
-  const _InvoiceCard({required this.invoice});
+  const _InvoiceCard({required this.invoice, required this.orders});
 
   final Map<String, dynamic> invoice;
+  final List<Map<String, dynamic>> orders;
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +76,7 @@ class _InvoiceCard extends StatelessWidget {
       invoice['order_number']?.toString(),
       invoice['order_id']?.toString(),
       invoice['id']?.toString(),
+      orders,
     );
 
     return Card(
@@ -134,10 +143,28 @@ class _InvoiceCard extends StatelessWidget {
 }
 
 String _invoiceOrderNo(
-    String? orderNumber, String? orderId, String? invoiceId) {
+  String? orderNumber,
+  String? orderId,
+  String? invoiceId,
+  List<Map<String, dynamic>> orders,
+) {
   if (orderNumber != null && orderNumber.isNotEmpty) return orderNumber;
+  if (invoiceId != null && invoiceId.isNotEmpty) {
+    for (final order in orders) {
+      if (order['invoice_id']?.toString() == invoiceId) {
+        final explicit = order['order_number']?.toString();
+        if (explicit != null && explicit.isNotEmpty) return explicit;
+        final orderRaw = order['id']?.toString();
+        if (orderRaw != null && orderRaw.isNotEmpty) {
+          final value = BigInt.parse(orderRaw.replaceAll('-', ''), radix: 16);
+          final digits = (value % BigInt.from(100000000)).toString();
+          return digits.padLeft(8, '0');
+        }
+      }
+    }
+  }
   final raw = orderId;
-  if (raw == null || raw.isEmpty) return '00000000';
+  if (raw == null || raw.isEmpty) return '';
   final value = BigInt.parse(raw.replaceAll('-', ''), radix: 16);
   final digits = (value % BigInt.from(100000000)).toString();
   return digits.padLeft(8, '0');

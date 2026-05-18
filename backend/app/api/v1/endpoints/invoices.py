@@ -56,6 +56,20 @@ async def _order_meta_by_invoice_id(
     }
 
 
+async def _order_meta_for_invoice(
+    db: DBSession,
+    tenant_id: UUID,
+    invoice,
+) -> tuple[UUID | None, str | None]:  # type: ignore[no-untyped-def]
+    if getattr(invoice, "order", None) is not None:
+        return invoice.order.id, invoice.order.order_number
+    meta = await _order_meta_by_invoice_id(db, tenant_id, [invoice.id])
+    row = meta.get(invoice.id)
+    if row is None:
+        return None, None
+    return row
+
+
 @router.get("", response_model=list[InvoiceOut])
 async def list_invoices(
     db: DBSession,
@@ -74,13 +88,8 @@ async def list_invoices(
         offset,
         only_order_backed,
     )
-    order_meta = await _order_meta_by_invoice_id(db, tenant_id, [i.id for i in invoices])
     return [
-        _to_out(
-            i,
-            order_meta.get(i.id, (None, None))[0],
-            order_meta.get(i.id, (None, None))[1],
-        )
+        _to_out(i, i.order.id if i.order is not None else None, i.order.order_number if i.order is not None else None)
         for i in invoices
     ]
 
@@ -92,9 +101,8 @@ async def get_invoice(
     invoice = await invoice_service.get(db, invoice_id, tenant_id)
     if not invoice:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fatura bulunamadı")
-    order_meta = await _order_meta_by_invoice_id(db, tenant_id, [invoice.id])
-    meta = order_meta.get(invoice.id)
-    return _to_out(invoice, meta[0] if meta else None, meta[1] if meta else None)
+    order_id, order_number = await _order_meta_for_invoice(db, tenant_id, invoice)
+    return _to_out(invoice, order_id, order_number)
 
 
 @router.post("", response_model=InvoiceOut, status_code=status.HTTP_201_CREATED)
@@ -102,9 +110,8 @@ async def create_invoice(
     payload: InvoiceCreate, db: DBSession, tenant_id: CurrentTenantId, _: CurrentTenantUser
 ) -> InvoiceOut:
     invoice = await invoice_service.create(db, tenant_id, payload)
-    order_meta = await _order_meta_by_invoice_id(db, tenant_id, [invoice.id])
-    meta = order_meta.get(invoice.id)
-    out = _to_out(invoice, meta[0] if meta else None, meta[1] if meta else None)
+    order_id, order_number = await _order_meta_for_invoice(db, tenant_id, invoice)
+    out = _to_out(invoice, order_id, order_number)
     await hub.broadcast("invoice.created", out.model_dump(mode="json"), tenant_id)
     if invoice.debt_amount > 0:
         await hub.broadcast(

@@ -27,9 +27,11 @@ class DebtOut(IDMixin):
     customer_id: UUID
     total_amount: MoneyDecimal
     paid_amount: MoneyDecimal
+    last_payment_amount: MoneyDecimal
     remaining: MoneyDecimal
     issued_on: date
     due_on: date
+    last_payment_on: date | None = None
     days_left: int  # negatif olabilir (gecikti)
     status: DebtStatus
     customer: CustomerOut | None = None

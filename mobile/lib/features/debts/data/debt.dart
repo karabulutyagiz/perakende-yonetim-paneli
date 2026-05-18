@@ -32,9 +32,11 @@ class Debt {
     required this.updatedAt,
     required this.totalAmount,
     required this.paidAmount,
+    required this.lastPaymentAmount,
     required this.remaining,
     required this.issuedOn,
     required this.dueOn,
+    required this.lastPaymentOn,
     required this.daysLeft,
     required this.status,
   });
@@ -45,9 +47,11 @@ class Debt {
   final DateTime updatedAt;
   final double totalAmount;
   final double paidAmount;
+  final double lastPaymentAmount;
   final double remaining;
   final DateTime issuedOn;
   final DateTime dueOn;
+  final DateTime? lastPaymentOn;
   final int daysLeft;
   final DebtStatus status;
 
@@ -66,9 +70,13 @@ class Debt {
       updatedAt: DateTime.parse(json['updated_at'] as String),
       totalAmount: (json['total_amount'] as num).toDouble(),
       paidAmount: (json['paid_amount'] as num).toDouble(),
+      lastPaymentAmount: (json['last_payment_amount'] as num?)?.toDouble() ?? 0,
       remaining: (json['remaining'] as num).toDouble(),
       issuedOn: DateTime.parse(json['issued_on'] as String),
       dueOn: DateTime.parse(json['due_on'] as String),
+      lastPaymentOn: json['last_payment_on'] == null
+          ? null
+          : DateTime.parse(json['last_payment_on'] as String),
       daysLeft: json['days_left'] as int,
       status: _parse(json['status'] as String),
     );

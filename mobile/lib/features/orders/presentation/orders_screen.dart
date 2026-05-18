@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -75,62 +76,51 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           final filtered = search.isEmpty
               ? orders
               : orders
-                  .where((order) => _orderNo(order).contains(search))
+                  .where((order) => _orderNo(order).startsWith(search))
                   .toList();
 
           if (orders.isEmpty) {
             return const Center(child: Text('Henüz siparişiniz yok'));
           }
 
-          if (filtered.isEmpty) {
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _OrdersSearchField(
-                  controller: _searchController,
-                  focusNode: _searchFocusNode,
-                  onChanged: (_) {
-                    setState(() {});
-                    _keepSearchFocused();
+          final selected = filtered.isEmpty
+              ? null
+              : filtered.firstWhere(
+                  (order) => order['id'].toString() == _selectedOrderId,
+                  orElse: () {
+                    _selectedOrderId = filtered.first['id'].toString();
+                    return filtered.first;
                   },
-                ),
-                const SizedBox(height: 24),
-                const Center(child: Text('Aranan sipariş bulunamadı')),
-              ],
-            );
-          }
-
-          _selectedOrderId ??= filtered.first['id'].toString();
-          final selected = filtered.firstWhere(
-            (order) => order['id'].toString() == _selectedOrderId,
-            orElse: () => filtered.first,
-          );
+                );
 
           if (!isTablet) {
             return RefreshIndicator(
               onRefresh: () async => ref.invalidate(
                 auth.isTenantOwner ? allOrdersProvider : myOrdersProvider,
               ),
-              child: ListView.separated(
+              child: ListView(
                 padding: const EdgeInsets.all(16),
-                itemCount: filtered.length + 1,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (_, i) {
-                  if (i == 0) {
-                    return _OrdersSearchField(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      onChanged: (_) {
-                        setState(() {});
-                        _keepSearchFocused();
-                      },
-                    );
-                  }
-                  return _OrderExpansionCard(
-                    order: filtered[i - 1],
-                    onCreateInvoice: _openInvoiceDialog,
-                  );
-                },
+                children: [
+                  _OrdersSearchField(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+                  if (filtered.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 24),
+                      child: Center(child: Text('Aranan sipariş bulunamadı')),
+                    )
+                  else
+                    for (final order in filtered) ...[
+                      _OrderExpansionCard(
+                        order: order,
+                        onCreateInvoice: _openInvoiceDialog,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                ],
               ),
             );
           }
@@ -144,43 +134,49 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                       children: [
                         SizedBox(
                           width: 360,
-                          child: ListView.separated(
+                          child: ListView(
                             padding: const EdgeInsets.all(16),
-                            itemCount: filtered.length + 1,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 12),
-                            itemBuilder: (_, i) {
-                              if (i == 0) {
-                                return _OrdersSearchField(
-                                  controller: _searchController,
-                                  focusNode: _searchFocusNode,
-                                  onChanged: (_) {
-                                    setState(() {});
-                                    _keepSearchFocused();
-                                  },
-                                );
-                              }
-                              final order = filtered[i - 1];
-                              final isSelected =
-                                  order['id'].toString() == _selectedOrderId;
-                              return _OrderListCard(
-                                order: order,
-                                selected: isSelected,
-                                onTap: () => setState(() {
-                                  _selectedOrderId = order['id'].toString();
-                                }),
-                              );
-                            },
+                            children: [
+                              _OrdersSearchField(
+                                controller: _searchController,
+                                focusNode: _searchFocusNode,
+                                onChanged: (_) => setState(() {}),
+                              ),
+                              const SizedBox(height: 12),
+                              if (filtered.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 24),
+                                  child: Center(
+                                    child: Text('Aranan sipariş bulunamadı'),
+                                  ),
+                                )
+                              else
+                                for (final order in filtered) ...[
+                                  _OrderListCard(
+                                    order: order,
+                                    selected: order['id'].toString() ==
+                                        _selectedOrderId,
+                                    onTap: () => setState(() {
+                                      _selectedOrderId = order['id'].toString();
+                                    }),
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                            ],
                           ),
                         ),
                         const VerticalDivider(width: 1),
                         Expanded(
                           child: SizedBox(
                             height: constraints.maxHeight,
-                            child: _OrderDetailCard(
-                              order: selected,
-                              onCreateInvoice: _openInvoiceDialog,
-                            ),
+                            child: selected == null
+                                ? const Center(
+                                    child: Text('Aranan sipariş bulunamadı'),
+                                  )
+                                : _OrderDetailCard(
+                                    order: selected,
+                                    onCreateInvoice: _openInvoiceDialog,
+                                  ),
                           ),
                         ),
                       ],
@@ -203,14 +199,6 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       context.push('/invoices/$invoiceId');
     }
   }
-
-  void _keepSearchFocused() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_searchFocusNode.hasFocus) {
-        _searchFocusNode.requestFocus();
-      }
-    });
-  }
 }
 
 class _OrdersSearchField extends StatelessWidget {
@@ -227,12 +215,16 @@ class _OrdersSearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      key: const ValueKey('orders-search-field'),
       controller: controller,
       focusNode: focusNode,
       autofocus: true,
       keyboardType: TextInputType.number,
       onChanged: onChanged,
-      onTapOutside: (_) => focusNode.requestFocus(),
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(8),
+      ],
       decoration: const InputDecoration(
         labelText: 'Sipariş no ara',
         hintText: 'Örn. 12345678',

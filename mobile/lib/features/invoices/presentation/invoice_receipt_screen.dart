@@ -14,6 +14,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/utils/formatters.dart';
+import '../../orders/data/order_repository.dart';
 import '../data/invoice_repository.dart';
 
 final _receiptDt = DateFormat('dd.MM.yyyy HH:mm', 'tr_TR');
@@ -41,8 +42,21 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
   @override
   Widget build(BuildContext context) {
     final asyncInvoice = ref.watch(invoiceDetailProvider(widget.invoiceId));
+    final orders = ref.watch(allOrdersProvider).valueOrNull ??
+        const <Map<String, dynamic>>[];
     return Scaffold(
-      appBar: AppBar(title: const Text('Fatura dekontu')),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Colors.black,
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          'Fatura dekontu',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+      ),
       body: asyncInvoice.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => const Center(
@@ -59,8 +73,9 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
                     runSpacing: 12,
                     children: [
                       FilledButton.icon(
-                        onPressed:
-                            _savingImage ? null : () => _saveImage(invoice),
+                        onPressed: _savingImage
+                            ? null
+                            : () => _saveImage(invoice, orders),
                         icon: _savingImage
                             ? const SizedBox(
                                 width: 18,
@@ -72,8 +87,9 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
                         label: const Text('Fotoğraflara kaydet'),
                       ),
                       OutlinedButton.icon(
-                        onPressed:
-                            _sharingPdf ? null : () => _sharePdf(invoice),
+                        onPressed: _sharingPdf
+                            ? null
+                            : () => _sharePdf(invoice, orders),
                         icon: _sharingPdf
                             ? const SizedBox(
                                 width: 18,
@@ -96,7 +112,7 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
                       children: [
                         RepaintBoundary(
                           key: _receiptKey,
-                          child: _ReceiptCard(invoice: invoice),
+                          child: _ReceiptCard(invoice: invoice, orders: orders),
                         ),
                       ],
                     ),
@@ -110,7 +126,10 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
     );
   }
 
-  Future<void> _saveImage(Map<String, dynamic> invoice) async {
+  Future<void> _saveImage(
+    Map<String, dynamic> invoice,
+    List<Map<String, dynamic>> orders,
+  ) async {
     setState(() => _savingImage = true);
     try {
       final allowed = await _ensureGalleryPermission();
@@ -123,7 +142,7 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
         _showMessage('Dekont görseli hazırlanamadı');
         return;
       }
-      final orderNumber = _invoiceOrderNumber(invoice);
+      final orderNumber = _invoiceOrderNumber(invoice, orders);
       final result = await ImageGallerySaverPlus.saveImage(
         pngBytes,
         quality: 100,
@@ -141,7 +160,10 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
     }
   }
 
-  Future<void> _sharePdf(Map<String, dynamic> invoice) async {
+  Future<void> _sharePdf(
+    Map<String, dynamic> invoice,
+    List<Map<String, dynamic>> orders,
+  ) async {
     setState(() => _sharingPdf = true);
     try {
       final pngBytes = await _captureReceiptPng();
@@ -160,7 +182,7 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
         ),
       );
       final dir = await getTemporaryDirectory();
-      final orderNumber = _invoiceOrderNumber(invoice);
+      final orderNumber = _invoiceOrderNumber(invoice, orders);
       final file = File('${dir.path}/fatura-$orderNumber.pdf');
       await file.writeAsBytes(await doc.save(), flush: true);
       final shareOrigin = _shareOriginRect();
@@ -254,9 +276,10 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
 }
 
 class _ReceiptCard extends StatelessWidget {
-  const _ReceiptCard({required this.invoice});
+  const _ReceiptCard({required this.invoice, required this.orders});
 
   final Map<String, dynamic> invoice;
+  final List<Map<String, dynamic>> orders;
 
   @override
   Widget build(BuildContext context) {
@@ -265,7 +288,7 @@ class _ReceiptCard extends StatelessWidget {
     final items =
         (invoice['items'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
     final createdAt = DateTime.tryParse(invoice['created_at'] as String? ?? '');
-    final orderNumber = _invoiceOrderNumber(invoice);
+    final orderNumber = _invoiceOrderNumber(invoice, orders);
     final businessName = customer?['name'] as String? ?? 'Müşteri';
     final contactName = customer?['account_full_name'] as String?;
     final note = invoice['note'] as String?;
@@ -493,10 +516,28 @@ class _AmountSummaryRow extends StatelessWidget {
   }
 }
 
-String _invoiceOrderNumber(Map<String, dynamic> invoice) {
+String _invoiceOrderNumber(
+  Map<String, dynamic> invoice,
+  List<Map<String, dynamic>> orders,
+) {
   final orderNumber = invoice['order_number']?.toString();
   if (orderNumber != null && orderNumber.isNotEmpty) {
     return orderNumber;
+  }
+  final invoiceId = invoice['id']?.toString();
+  if (invoiceId != null && invoiceId.isNotEmpty) {
+    for (final order in orders) {
+      if (order['invoice_id']?.toString() == invoiceId) {
+        final explicit = order['order_number']?.toString();
+        if (explicit != null && explicit.isNotEmpty) return explicit;
+        final orderRaw = order['id']?.toString();
+        if (orderRaw != null && orderRaw.isNotEmpty) {
+          final value = BigInt.parse(orderRaw.replaceAll('-', ''), radix: 16);
+          final digits = (value % BigInt.from(100000000)).toString();
+          return digits.padLeft(8, '0');
+        }
+      }
+    }
   }
   final orderId = invoice['order_id']?.toString();
   if (orderId != null && orderId.isNotEmpty) {
@@ -504,11 +545,7 @@ String _invoiceOrderNumber(Map<String, dynamic> invoice) {
     final digits = (value % BigInt.from(100000000)).toString();
     return digits.padLeft(8, '0');
   }
-  final invoiceId = invoice['id']?.toString();
-  if (invoiceId == null || invoiceId.isEmpty) return '00000000';
-  final value = BigInt.parse(invoiceId.replaceAll('-', ''), radix: 16);
-  final digits = (value % BigInt.from(100000000)).toString();
-  return digits.padLeft(8, '0');
+  return '';
 }
 
 String _paymentLabel(String? method) => switch (method) {

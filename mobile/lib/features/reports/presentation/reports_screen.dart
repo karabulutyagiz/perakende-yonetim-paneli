@@ -74,15 +74,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           child: Text('Raporlar yüklenemedi. Lütfen tekrar deneyin.'),
         ),
         data: (r) {
-          final hasRealData = r.invoiceCount > 0 ||
-              r.totalSales > 0 ||
-              r.outstandingDebt > 0 ||
-              r.overdueDebt > 0 ||
-              r.topProducts.isNotEmpty ||
-              r.dailySales.isNotEmpty ||
-              r.topCustomers.isNotEmpty ||
-              r.categoryBreakdown.isNotEmpty;
-
           return RefreshIndicator(
             onRefresh: () async =>
                 ref.invalidate(reportSummaryProvider(_query)),
@@ -107,293 +98,267 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                if (!hasRealData)
-                  const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Column(
-                        children: [
-                          Icon(Icons.insights_outlined, size: 64),
-                          SizedBox(height: 12),
-                          Text(
-                            'Bu aralıkta gerçek rapor verisi yok.',
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            'Müşteri siparişi, fatura ve tahsilat oluştukça raporlar burada görünecek.',
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else ...[
-                  _StatGrid(
-                    items: [
-                      _Stat('Toplam satış', formatCurrency(r.totalSales),
-                          Icons.trending_up),
-                      _Stat('Fatura', '${r.invoiceCount}', Icons.receipt_long),
-                      _Stat('Müşteri', '${r.uniqueCustomers}',
-                          Icons.people_outline),
-                      _Stat('Düşük stok', '${r.lowStock}', Icons.warning_amber),
-                    ],
-                    columns: isTablet ? 4 : 2,
-                  ),
-                  const SizedBox(height: 16),
-                  if (isTablet)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _ReportCardSection(
-                            title: 'Ödeme dağılımı',
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _PaymentStatGrid(
-                                  items: [
-                                    _PaymentStat(
-                                      'Kart',
-                                      formatCurrency(r.kart),
-                                      theme.colorScheme.primary,
-                                      Icons.credit_card_rounded,
-                                    ),
-                                    _PaymentStat(
-                                      'Nakit',
-                                      formatCurrency(r.nakit),
-                                      theme.colorScheme.tertiary,
-                                      Icons.payments_rounded,
-                                    ),
-                                    _PaymentStat(
-                                      'Borç',
-                                      formatCurrency(r.borc),
-                                      theme.colorScheme.error,
-                                      Icons.schedule_rounded,
-                                    ),
-                                  ],
-                                  columns: 2,
-                                ),
-                                const SizedBox(height: 18),
-                                Text(
-                                  'Borçlar',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w800,
+                _StatGrid(
+                  items: [
+                    _Stat('Toplam satış', formatCurrency(r.totalSales),
+                        Icons.trending_up),
+                    _Stat('Fatura', '${r.invoiceCount}', Icons.receipt_long),
+                    _Stat('Müşteri', '${r.uniqueCustomers}',
+                        Icons.people_outline),
+                    _Stat('Düşük stok', '${r.lowStock}', Icons.warning_amber),
+                  ],
+                  columns: isTablet ? 4 : 2,
+                ),
+                const SizedBox(height: 16),
+                if (isTablet)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _ReportCardSection(
+                          title: 'Ödeme dağılımı',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _PaymentStatGrid(
+                                items: [
+                                  _PaymentStat(
+                                    'Kart',
+                                    formatCurrency(r.kart),
+                                    theme.colorScheme.primary,
+                                    Icons.credit_card_rounded,
                                   ),
+                                  _PaymentStat(
+                                    'Nakit',
+                                    formatCurrency(r.nakit),
+                                    theme.colorScheme.tertiary,
+                                    Icons.payments_rounded,
+                                  ),
+                                  _PaymentStat(
+                                    'Borç',
+                                    formatCurrency(r.borc),
+                                    theme.colorScheme.error,
+                                    Icons.schedule_rounded,
+                                  ),
+                                ],
+                                columns: 2,
+                              ),
+                              const SizedBox(height: 18),
+                              Text(
+                                'Borçlar',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
                                 ),
-                                const SizedBox(height: 10),
-                                _DebtSummaryCard(
-                                  outstandingDebt:
-                                      formatCurrency(r.outstandingDebt),
-                                  overdueDebt: formatCurrency(r.overdueDebt),
-                                  accentColor: theme.colorScheme.error,
-                                ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(height: 10),
+                              _DebtSummaryCard(
+                                outstandingDebt:
+                                    formatCurrency(r.outstandingDebt),
+                                overdueDebt: formatCurrency(r.overdueDebt),
+                                accentColor: theme.colorScheme.error,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _ReportCardSection(
-                            title: 'Satış akışı',
-                            child: SizedBox(
-                              height: 330,
-                              child: LineChart(
-                                LineChartData(
-                                  gridData: const FlGridData(show: false),
-                                  titlesData: const FlTitlesData(show: false),
-                                  borderData: FlBorderData(show: false),
-                                  lineBarsData: [
-                                    LineChartBarData(
-                                      isCurved: true,
-                                      color: theme.colorScheme.primary,
-                                      barWidth: 3,
-                                      dotData: const FlDotData(show: false),
-                                      belowBarData: BarAreaData(
-                                        show: true,
-                                        color: theme.colorScheme.primary
-                                            .withValues(alpha: 0.12),
-                                      ),
-                                      spots: [
-                                        for (var i = 0;
-                                            i < r.dailySales.length;
-                                            i++)
-                                          FlSpot(i.toDouble(),
-                                              r.dailySales[i].value),
-                                      ],
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _ReportCardSection(
+                          title: 'Satış akışı',
+                          child: SizedBox(
+                            height: 330,
+                            child: LineChart(
+                              LineChartData(
+                                gridData: const FlGridData(show: false),
+                                titlesData: const FlTitlesData(show: false),
+                                borderData: FlBorderData(show: false),
+                                lineBarsData: [
+                                  LineChartBarData(
+                                    isCurved: true,
+                                    color: theme.colorScheme.primary,
+                                    barWidth: 3,
+                                    dotData: const FlDotData(show: false),
+                                    belowBarData: BarAreaData(
+                                      show: true,
+                                      color: theme.colorScheme.primary
+                                          .withValues(alpha: 0.12),
                                     ),
-                                  ],
-                                ),
+                                    spots: [
+                                      for (var i = 0;
+                                          i < r.dailySales.length;
+                                          i++)
+                                        FlSpot(i.toDouble(),
+                                            r.dailySales[i].value),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ),
-                      ],
-                    )
-                  else ...[
-                    const _SectionTitle('Ödeme dağılımı'),
-                    _PaymentStatGrid(
-                      items: [
-                        _PaymentStat(
-                          'Kart',
-                          formatCurrency(r.kart),
-                          theme.colorScheme.primary,
-                          Icons.credit_card_rounded,
+                      ),
+                    ],
+                  )
+                else ...[
+                  const _SectionTitle('Ödeme dağılımı'),
+                  _PaymentStatGrid(
+                    items: [
+                      _PaymentStat(
+                        'Kart',
+                        formatCurrency(r.kart),
+                        theme.colorScheme.primary,
+                        Icons.credit_card_rounded,
+                      ),
+                      _PaymentStat(
+                        'Nakit',
+                        formatCurrency(r.nakit),
+                        theme.colorScheme.tertiary,
+                        Icons.payments_rounded,
+                      ),
+                      _PaymentStat(
+                        'Borç',
+                        formatCurrency(r.borc),
+                        theme.colorScheme.error,
+                        Icons.schedule_rounded,
+                      ),
+                    ],
+                    columns: 1,
+                  ),
+                  const SizedBox(height: 16),
+                  const _SectionTitle('Borçlar'),
+                  _DebtSummaryCard(
+                    outstandingDebt: formatCurrency(r.outstandingDebt),
+                    overdueDebt: formatCurrency(r.overdueDebt),
+                    accentColor: theme.colorScheme.error,
+                  ),
+                  const SizedBox(height: 16),
+                  const _SectionTitle('Satış akışı'),
+                  SizedBox(
+                    height: 220,
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: LineChart(
+                          LineChartData(
+                            gridData: const FlGridData(show: false),
+                            titlesData: const FlTitlesData(show: false),
+                            borderData: FlBorderData(show: false),
+                            lineBarsData: [
+                              LineChartBarData(
+                                isCurved: true,
+                                color: theme.colorScheme.primary,
+                                barWidth: 3,
+                                dotData: const FlDotData(show: false),
+                                belowBarData: BarAreaData(
+                                  show: true,
+                                  color: theme.colorScheme.primary
+                                      .withValues(alpha: 0.12),
+                                ),
+                                spots: [
+                                  for (var i = 0; i < r.dailySales.length; i++)
+                                    FlSpot(i.toDouble(), r.dailySales[i].value),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                        _PaymentStat(
-                          'Nakit',
-                          formatCurrency(r.nakit),
-                          theme.colorScheme.tertiary,
-                          Icons.payments_rounded,
-                        ),
-                        _PaymentStat(
-                          'Borç',
-                          formatCurrency(r.borc),
-                          theme.colorScheme.error,
-                          Icons.schedule_rounded,
-                        ),
-                      ],
-                      columns: 1,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    const _SectionTitle('Borçlar'),
-                    _DebtSummaryCard(
-                      outstandingDebt: formatCurrency(r.outstandingDebt),
-                      overdueDebt: formatCurrency(r.overdueDebt),
-                      accentColor: theme.colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    const _SectionTitle('Satış akışı'),
-                    SizedBox(
-                      height: 220,
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: LineChart(
-                            LineChartData(
-                              gridData: const FlGridData(show: false),
-                              titlesData: const FlTitlesData(show: false),
-                              borderData: FlBorderData(show: false),
-                              lineBarsData: [
-                                LineChartBarData(
-                                  isCurved: true,
-                                  color: theme.colorScheme.primary,
-                                  barWidth: 3,
-                                  dotData: const FlDotData(show: false),
-                                  belowBarData: BarAreaData(
-                                    show: true,
-                                    color: theme.colorScheme.primary
-                                        .withValues(alpha: 0.12),
-                                  ),
-                                  spots: [
-                                    for (var i = 0;
-                                        i < r.dailySales.length;
-                                        i++)
-                                      FlSpot(
-                                          i.toDouble(), r.dailySales[i].value),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                if (isTablet)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _SalesDetailsSection(
+                          products: r.topProducts,
+                          rangeLabel: _rangeLabel,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            if (r.topCustomers.isNotEmpty)
+                              _ReportCardSection(
+                                title: 'En çok alışveriş yapan müşteriler',
+                                child: Column(
+                                  children: [
+                                    for (final e in r.topCustomers.take(5))
+                                      _listMetricTile(
+                                        icon: Icons.person_outline,
+                                        label: e.key,
+                                        value: formatCurrency(e.value),
+                                      ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
+                            if (r.topCustomers.isNotEmpty &&
+                                r.categoryBreakdown.isNotEmpty)
+                              const SizedBox(height: 16),
+                            if (r.categoryBreakdown.isNotEmpty)
+                              _ReportCardSection(
+                                title: 'Kategori satış performansı',
+                                child: Column(
+                                  children: [
+                                    for (final e in r.categoryBreakdown)
+                                      _listMetricTile(
+                                        icon: Icons.category_outlined,
+                                        label: e.key,
+                                        value: formatCurrency(e.value),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                else ...[
+                  _SalesDetailsSection(
+                    products: r.topProducts,
+                    rangeLabel: _rangeLabel,
+                  ),
+                  if (r.topCustomers.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    const _SectionTitle('En çok alışveriş yapan müşteriler'),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          children: [
+                            for (final e in r.topCustomers.take(5))
+                              _listMetricTile(
+                                icon: Icons.person_outline,
+                                label: e.key,
+                                value: formatCurrency(e.value),
+                              ),
+                          ],
                         ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  if (isTablet)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _SalesDetailsSection(
-                            products: r.topProducts,
-                            rangeLabel: _rangeLabel,
-                          ),
+                  if (r.categoryBreakdown.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    const _SectionTitle('Kategori satış performansı'),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          children: [
+                            for (final e in r.categoryBreakdown)
+                              _listMetricTile(
+                                icon: Icons.category_outlined,
+                                label: e.key,
+                                value: formatCurrency(e.value),
+                              ),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              if (r.topCustomers.isNotEmpty)
-                                _ReportCardSection(
-                                  title: 'En çok alışveriş yapan müşteriler',
-                                  child: Column(
-                                    children: [
-                                      for (final e in r.topCustomers.take(5))
-                                        _listMetricTile(
-                                          icon: Icons.person_outline,
-                                          label: e.key,
-                                          value: formatCurrency(e.value),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              if (r.topCustomers.isNotEmpty &&
-                                  r.categoryBreakdown.isNotEmpty)
-                                const SizedBox(height: 16),
-                              if (r.categoryBreakdown.isNotEmpty)
-                                _ReportCardSection(
-                                  title: 'Kategori satış performansı',
-                                  child: Column(
-                                    children: [
-                                      for (final e in r.categoryBreakdown)
-                                        _listMetricTile(
-                                          icon: Icons.category_outlined,
-                                          label: e.key,
-                                          value: formatCurrency(e.value),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    )
-                  else ...[
-                    _SalesDetailsSection(
-                      products: r.topProducts,
-                      rangeLabel: _rangeLabel,
+                      ),
                     ),
-                    if (r.topCustomers.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      const _SectionTitle('En çok alışveriş yapan müşteriler'),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            children: [
-                              for (final e in r.topCustomers.take(5))
-                                _listMetricTile(
-                                  icon: Icons.person_outline,
-                                  label: e.key,
-                                  value: formatCurrency(e.value),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                    if (r.categoryBreakdown.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      const _SectionTitle('Kategori satış performansı'),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            children: [
-                              for (final e in r.categoryBreakdown)
-                                _listMetricTile(
-                                  icon: Icons.category_outlined,
-                                  label: e.key,
-                                  value: formatCurrency(e.value),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ],
               ],
@@ -536,48 +501,43 @@ class _SalesDetailsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (products.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return _ReportCardSection(
       title: 'Satış ayrıntıları',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Seçili dönemde en çok satan ürünler gösteriliyor: $rangeLabel.',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 12),
-          if (products.isEmpty)
-            const Text('Seçili dönemde satış verisi yok')
-          else
-            for (final product in products.take(8)) ...[
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  product.productName,
+          for (final product in products.take(8)) ...[
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                product.productName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              subtitle: Text(
+                '${_formatQuantity(product.quantitySold)} ${product.unit} satıldı',
+              ),
+              trailing: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 130),
+                child: Text(
+                  formatCurrency(product.totalRevenue),
+                  textAlign: TextAlign.end,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
                       ),
                 ),
-                subtitle: Text(
-                  '${_formatQuantity(product.quantitySold)} ${product.unit} satıldı',
-                ),
-                trailing: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 130),
-                  child: Text(
-                    formatCurrency(product.totalRevenue),
-                    textAlign: TextAlign.end,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                ),
               ),
-              if (product != products.take(8).last) const Divider(height: 1),
-            ],
+            ),
+            if (product != products.take(8).last) const Divider(height: 1),
+          ],
         ],
       ),
     );

@@ -138,6 +138,7 @@ class CartScreen extends ConsumerWidget {
                                 await ref
                                     .read(orderRepositoryProvider)
                                     .create(cart);
+                                ref.invalidate(allOrdersProvider);
                                 ref.invalidate(myOrdersProvider);
                                 ref.read(cartProvider.notifier).clear();
                                 if (context.mounted) {

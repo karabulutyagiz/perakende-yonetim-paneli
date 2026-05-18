@@ -31,6 +31,7 @@ class WsClient {
   WebSocketChannel? _channel;
   StreamSubscription? _sub;
   Timer? _retry;
+  Timer? _heartbeat;
   final _controller = StreamController<WsEvent>.broadcast();
   bool _disposed = false;
   bool _connecting = false;
@@ -55,6 +56,7 @@ class WsClient {
       final uri = parsed.replace(port: port);
       final channel = WebSocketChannel.connect(uri);
       _channel = channel;
+      _startHeartbeat();
       _sub = channel.stream.listen(
         (raw) {
           try {
@@ -78,10 +80,23 @@ class WsClient {
   }
 
   void _handleDisconnect() {
+    _heartbeat?.cancel();
+    _heartbeat = null;
     _sub?.cancel();
     _sub = null;
     _channel = null;
     _reconnectSoon();
+  }
+
+  void _startHeartbeat() {
+    _heartbeat?.cancel();
+    _heartbeat = Timer.periodic(const Duration(seconds: 20), (_) {
+      try {
+        _channel?.sink.add('ping');
+      } catch (_) {
+        _handleDisconnect();
+      }
+    });
   }
 
   void _reconnectSoon() {
@@ -99,6 +114,8 @@ class WsClient {
   void _disconnect() {
     _retry?.cancel();
     _retry = null;
+    _heartbeat?.cancel();
+    _heartbeat = null;
     _sub?.cancel();
     _sub = null;
     _channel?.sink.close();

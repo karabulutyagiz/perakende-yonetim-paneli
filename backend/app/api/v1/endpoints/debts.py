@@ -19,6 +19,7 @@ router = APIRouter(prefix="/debts", tags=["debts"])
 
 def _to_out(view) -> DebtOut:  # type: ignore[no-untyped-def]
     d = view.debt
+    latest_payment = d.payments[0] if getattr(d, "payments", None) else None
     customer_out = (
         CustomerOut.model_validate(d.customer) if getattr(d, "customer", None) else None
     )
@@ -30,9 +31,11 @@ def _to_out(view) -> DebtOut:  # type: ignore[no-untyped-def]
         customer_id=d.customer_id,
         total_amount=d.total_amount,
         paid_amount=d.paid_amount,
+        last_payment_amount=latest_payment.amount if latest_payment is not None else 0,
         remaining=d.total_amount - d.paid_amount,
         issued_on=d.issued_on,
         due_on=d.due_on,
+        last_payment_on=latest_payment.paid_on if latest_payment is not None else None,
         days_left=view.days_left,
         status=d.status,
         customer=customer_out,
