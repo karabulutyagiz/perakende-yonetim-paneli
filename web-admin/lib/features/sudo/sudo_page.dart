@@ -381,7 +381,7 @@ class _SudoPageState extends ConsumerState<SudoPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         DropdownButtonFormField<String>(
-                          initialValue: selectedWholesaler.id,
+                          value: selectedWholesaler.id,
                           decoration: const InputDecoration(
                             labelText: 'Bağlı toptancı',
                           ),
