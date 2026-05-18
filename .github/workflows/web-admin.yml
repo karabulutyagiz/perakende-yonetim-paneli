@@ -21,7 +21,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: "3.24.x"
+          flutter-version: "3.27.x"
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter build web --release --dart-define=API_BASE=https://api.gokcetoptan.com/api/v1
