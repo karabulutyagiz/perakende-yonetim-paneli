@@ -127,6 +127,12 @@ class _DebtCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final daysLeft = debt.daysLeft < 0 ? 0 : debt.daysLeft;
+    final daysColor = daysLeft >= 8
+        ? const Color(0xFF2E7D32)
+        : daysLeft >= 4
+            ? const Color(0xFFF9A825)
+            : const Color(0xFFC62828);
 
     return Card(
       child: InkWell(
@@ -137,13 +143,28 @@ class _DebtCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                debt.customerName,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      debt.customerName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '$daysLeft',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: daysColor,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
               Text(

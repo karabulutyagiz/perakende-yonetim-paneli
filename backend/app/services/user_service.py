@@ -90,10 +90,11 @@ async def create_customer_user(
     email: str,
     password: str,
     is_active: bool = True,
+    full_name: str | None = None,
 ) -> User:
     user = User(
         email=email.lower(),
-        full_name=customer.name,
+        full_name=full_name or customer.name,
         password_hash=hash_password(password),
         is_active=is_active,
         role=UserRole.CUSTOMER,

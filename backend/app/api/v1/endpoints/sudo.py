@@ -9,6 +9,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 
 from app.api.deps import CurrentPlatformOwner, DBSession
+from app.models.customer import Customer
 from app.models.tenant import Tenant, TenantStatus
 from app.services import user_service
 
@@ -57,6 +58,24 @@ class CreateTenantResponse(BaseModel):
     tenant: TenantOut
     owner_email: str
     generated_password: str  # SADECE BU YANITTA döner — tekrar gösterilmez
+
+
+class CreateMarketRequest(BaseModel):
+    market_name: str = Field(min_length=2, max_length=255)
+    wholesaler_tenant_id: UUID
+    owner_email: EmailStr
+    owner_full_name: str = Field(min_length=2, max_length=255)
+    contact_phone: str | None = Field(default=None, max_length=32)
+    address: str | None = Field(default=None, max_length=2000)
+
+
+class CreateMarketResponse(BaseModel):
+    customer_id: str
+    market_name: str
+    wholesaler_tenant_id: str
+    wholesaler_name: str
+    owner_email: str
+    generated_password: str
 
 
 def _to_out(t: Tenant) -> TenantOut:
@@ -115,6 +134,66 @@ async def create_tenant(
     await db.refresh(tenant)
     return CreateTenantResponse(
         tenant=_to_out(tenant),
+        owner_email=payload.owner_email.lower(),
+        generated_password=password,
+    )
+
+
+@router.post(
+    "/markets",
+    response_model=CreateMarketResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_market(
+    payload: CreateMarketRequest,
+    db: DBSession,
+    _: CurrentPlatformOwner,
+) -> CreateMarketResponse:
+    existing = await user_service.get_by_email(db, payload.owner_email)
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Bu e-posta zaten kayıtlı",
+        )
+
+    wholesaler = await db.get(Tenant, payload.wholesaler_tenant_id)
+    if wholesaler is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Toptancı bulunamadı",
+        )
+    if wholesaler.status != TenantStatus.APPROVED or not wholesaler.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Seçilen toptancı aktif ve onaylı olmalı",
+        )
+
+    customer = Customer(
+        tenant_id=wholesaler.id,
+        name=payload.market_name,
+        phone=payload.contact_phone,
+        address=payload.address,
+    )
+    db.add(customer)
+    await db.flush()
+
+    password = _generate_password()
+    await user_service.create_customer_user(
+        db,
+        tenant_id=wholesaler.id,
+        customer=customer,
+        email=payload.owner_email,
+        password=password,
+        full_name=payload.owner_full_name,
+    )
+    await db.commit()
+    await db.refresh(customer)
+
+    return CreateMarketResponse(
+        customer_id=str(customer.id),
+        market_name=customer.name,
+        wholesaler_tenant_id=str(wholesaler.id),
+        wholesaler_name=wholesaler.name,
         owner_email=payload.owner_email.lower(),
         generated_password=password,
     )
