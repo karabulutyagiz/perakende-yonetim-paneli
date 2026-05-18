@@ -27,7 +27,7 @@ class AppTheme {
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w800,
-          fontSize: 28,
+          fontSize: 30,
           color: Colors.white,
         ),
       ),
@@ -124,36 +124,36 @@ class AppTheme {
     return base
         .copyWith(
           displaySmall: base.displaySmall
-              ?.copyWith(fontSize: 46, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 48, fontWeight: FontWeight.w900),
           headlineLarge: base.headlineLarge
-              ?.copyWith(fontSize: 42, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 44, fontWeight: FontWeight.w900),
           headlineMedium: base.headlineMedium
-              ?.copyWith(fontSize: 38, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 40, fontWeight: FontWeight.w900),
           headlineSmall: base.headlineSmall
-              ?.copyWith(fontSize: 34, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 36, fontWeight: FontWeight.w900),
           titleLarge: base.titleLarge
-              ?.copyWith(fontSize: 28, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 30, fontWeight: FontWeight.w900),
           titleMedium: base.titleMedium
-              ?.copyWith(fontSize: 24, fontWeight: FontWeight.w700),
+              ?.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
           titleSmall: base.titleSmall
-              ?.copyWith(fontSize: 21, fontWeight: FontWeight.w700),
+              ?.copyWith(fontSize: 23, fontWeight: FontWeight.w800),
           bodyLarge: base.bodyLarge
-              ?.copyWith(fontSize: 21, fontWeight: FontWeight.w600),
+              ?.copyWith(fontSize: 23, fontWeight: FontWeight.w700),
           bodyMedium: base.bodyMedium
-              ?.copyWith(fontSize: 19, fontWeight: FontWeight.w600),
+              ?.copyWith(fontSize: 21, fontWeight: FontWeight.w700),
           bodySmall: base.bodySmall
-              ?.copyWith(fontSize: 17, fontWeight: FontWeight.w600),
+              ?.copyWith(fontSize: 19, fontWeight: FontWeight.w700),
           labelLarge: base.labelLarge
-              ?.copyWith(fontSize: 20, fontWeight: FontWeight.w800),
+              ?.copyWith(fontSize: 22, fontWeight: FontWeight.w900),
           labelMedium: base.labelMedium
-              ?.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
+              ?.copyWith(fontSize: 20, fontWeight: FontWeight.w800),
           labelSmall: base.labelSmall
-              ?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
+              ?.copyWith(fontSize: 18, fontWeight: FontWeight.w800),
         )
         .apply(
           fontFamily: '.SF Pro Text',
-          bodyColor: const Color(0xFF111827),
-          displayColor: const Color(0xFF111827),
+          bodyColor: const Color(0xFF0A0A0A),
+          displayColor: const Color(0xFF0A0A0A),
         );
   }
 }

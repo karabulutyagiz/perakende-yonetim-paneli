@@ -137,7 +137,7 @@ String _invoiceOrderNo(
     String? orderNumber, String? orderId, String? invoiceId) {
   if (orderNumber != null && orderNumber.isNotEmpty) return orderNumber;
   final raw = orderId;
-  if (raw == null || raw.isEmpty) return 'Sipariş no yok';
+  if (raw == null || raw.isEmpty) return '00000000';
   final value = BigInt.parse(raw.replaceAll('-', ''), radix: 16);
   final digits = (value % BigInt.from(100000000)).toString();
   return digits.padLeft(8, '0');

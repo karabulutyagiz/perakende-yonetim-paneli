@@ -192,8 +192,18 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
 
   Future<bool> _ensureGalleryPermission() async {
     if (Platform.isIOS) {
-      final status = await Permission.photos.request();
-      return status.isGranted || status.isLimited;
+      var status = await Permission.photosAddOnly.status;
+      if (!status.isGranted && !status.isLimited) {
+        status = await Permission.photosAddOnly.request();
+      }
+      if (status.isGranted || status.isLimited) {
+        return true;
+      }
+      final fullStatus = await Permission.photos.request();
+      if (fullStatus.isGranted || fullStatus.isLimited) {
+        return true;
+      }
+      return true;
     }
     if (Platform.isAndroid) {
       final sdk = await _androidSdkInt();

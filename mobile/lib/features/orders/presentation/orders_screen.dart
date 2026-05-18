@@ -139,50 +139,52 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
             onRefresh: () async => ref.invalidate(
               auth.isTenantOwner ? allOrdersProvider : myOrdersProvider,
             ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 360,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filtered.length + 1,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) {
-                      if (i == 0) {
-                        return _OrdersSearchField(
-                          controller: _searchController,
-                          focusNode: _searchFocusNode,
-                          onChanged: (_) {
-                            setState(() {});
-                            _keepSearchFocused();
-                          },
-                        );
-                      }
-                      final order = filtered[i - 1];
-                      final isSelected =
-                          order['id'].toString() == _selectedOrderId;
-                      return _OrderListCard(
-                        order: order,
-                        selected: isSelected,
-                        onTap: () => setState(() {
-                          _selectedOrderId = order['id'].toString();
-                        }),
-                      );
-                    },
-                  ),
-                ),
-                const VerticalDivider(width: 1),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: _OrderDetailCard(
-                      order: selected,
-                      onCreateInvoice: _openInvoiceDialog,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            child: LayoutBuilder(
+                builder: (context, constraints) => Row(
+                      children: [
+                        SizedBox(
+                          width: 360,
+                          child: ListView.separated(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: filtered.length + 1,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (_, i) {
+                              if (i == 0) {
+                                return _OrdersSearchField(
+                                  controller: _searchController,
+                                  focusNode: _searchFocusNode,
+                                  onChanged: (_) {
+                                    setState(() {});
+                                    _keepSearchFocused();
+                                  },
+                                );
+                              }
+                              final order = filtered[i - 1];
+                              final isSelected =
+                                  order['id'].toString() == _selectedOrderId;
+                              return _OrderListCard(
+                                order: order,
+                                selected: isSelected,
+                                onTap: () => setState(() {
+                                  _selectedOrderId = order['id'].toString();
+                                }),
+                              );
+                            },
+                          ),
+                        ),
+                        const VerticalDivider(width: 1),
+                        Expanded(
+                          child: SizedBox(
+                            height: constraints.maxHeight,
+                            child: _OrderDetailCard(
+                              order: selected,
+                              onCreateInvoice: _openInvoiceDialog,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )),
           );
         },
       ),
@@ -241,6 +243,8 @@ class _OrdersSearchField extends StatelessWidget {
 }
 
 String _orderNo(Map<String, dynamic> order) {
+  final explicit = order['order_number']?.toString();
+  if (explicit != null && explicit.isNotEmpty) return explicit;
   final raw = order['id']?.toString() ?? '';
   if (raw.isEmpty) return '00000000';
   final value = BigInt.parse(raw.replaceAll('-', ''), radix: 16);
@@ -428,88 +432,105 @@ class _OrderDetailCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
+    final theme = Theme.of(context);
     final items =
         (order['items'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
     final customer = order['customer'] as Map<String, dynamic>?;
     final contactName = customer?['account_full_name'] as String?;
     final createdAt = DateTime.tryParse(order['created_at'] as String? ?? '');
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Sipariş ayrıntısı',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),
+      color: theme.colorScheme.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Sipariş ayrıntısı',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Sipariş no: ${_orderNo(order)}',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            if (customer?['name'] != null) ...[
-              const SizedBox(height: 4),
-              Text('Dükkan: ${customer!['name']}'),
-            ],
-            if (contactName != null && contactName.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text('Yetkili: $contactName'),
-            ],
-            if (createdAt != null) ...[
-              const SizedBox(height: 4),
-              Text('Tarih: ${_dt.format(createdAt.toLocal())}'),
-            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Sipariş no: ${_orderNo(order)}',
+            style: theme.textTheme.titleMedium,
+          ),
+          if (customer?['name'] != null) ...[
             const SizedBox(height: 4),
-            Text(
-                'Durum: ${_statusLabel(order['status'] as String? ?? 'pending')}'),
-            if (auth.isTenantOwner &&
-                (order['status'] as String? ?? 'pending') == 'pending') ...[
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () => onCreateInvoice(order),
-                icon: const Icon(Icons.receipt_long_rounded),
-                label: const Text('Bu siparişten fatura oluştur'),
-              ),
-            ],
-            const SizedBox(height: 20),
-            Text(
-              'Ürünler',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            Text('Dükkan: ${customer!['name']}'),
+          ],
+          if (contactName != null && contactName.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text('Yetkili: $contactName'),
+          ],
+          if (createdAt != null) ...[
+            const SizedBox(height: 4),
+            Text('Tarih: ${_dt.format(createdAt.toLocal())}'),
+          ],
+          const SizedBox(height: 4),
+          Text(
+            'Durum: ${_statusLabel(order['status'] as String? ?? 'pending')}',
+          ),
+          if (auth.isTenantOwner &&
+              (order['status'] as String? ?? 'pending') == 'pending') ...[
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => onCreateInvoice(order),
+              icon: const Icon(Icons.receipt_long_rounded),
+              label: const Text('Bu siparişten fatura oluştur'),
             ),
-            const SizedBox(height: 8),
-            for (final item in items)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(item['product_name'] as String? ?? '—'),
-                subtitle: Text('${item['quantity']} ${item['unit']}'),
-                trailing: Text(
-                  formatCurrency((item['line_total'] as num).toDouble()),
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            const Divider(height: 28),
-            Row(
+          ],
+          const SizedBox(height: 20),
+          Text(
+            'Ürünler',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                for (final item in items)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(item['product_name'] as String? ?? '—'),
+                    subtitle: Text('${item['quantity']} ${item['unit']}'),
+                    trailing: Text(
+                      formatCurrency((item['line_total'] as num).toDouble()),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
               children: [
                 Text(
                   'Toplam',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: theme.textTheme.titleMedium,
                 ),
                 const Spacer(),
                 Text(
                   formatCurrency((order['total'] as num).toDouble()),
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
