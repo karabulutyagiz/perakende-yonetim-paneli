@@ -417,6 +417,7 @@ class _RangeFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPhone = MediaQuery.of(context).size.width < 600;
     final options = <ReportRangePreset, String>{
       ReportRangePreset.sevenDays: 'Son 7 gün',
       ReportRangePreset.thirtyDays: 'Son 30 gün',
@@ -427,42 +428,46 @@ class _RangeFilterBar extends StatelessWidget {
     };
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(isPhone ? 12 : 20),
         child: Wrap(
-          spacing: 16,
-          runSpacing: 16,
+          spacing: isPhone ? 8 : 16,
+          runSpacing: isPhone ? 8 : 16,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
               'Dönem filtresi',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    fontSize: 20,
+                    fontSize: isPhone ? 14 : 20,
                   ),
             ),
             for (final entry in options.entries)
               ChoiceChip(
                 label: Text(entry.value),
-                labelStyle: const TextStyle(
-                  fontSize: 17,
+                labelStyle: TextStyle(
+                  fontSize: isPhone ? 11 : 17,
                   fontWeight: FontWeight.w700,
                 ),
                 selected: selectedPreset == entry.key,
                 onSelected: (_) => onPresetChanged(entry.key),
                 avatarBoxConstraints:
                     const BoxConstraints(minWidth: 0, minHeight: 0),
-                materialTapTargetSize: MaterialTapTargetSize.padded,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isPhone ? 10 : 18,
+                  vertical: isPhone ? 8 : 16,
+                ),
               ),
             OutlinedButton.icon(
               onPressed: onClear,
               icon: const Icon(Icons.restart_alt_rounded),
               label: const Text('Temizle'),
               style: OutlinedButton.styleFrom(
-                minimumSize: const Size(0, 64),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+                minimumSize: Size(0, isPhone ? 36 : 64),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isPhone ? 10 : 22,
+                  vertical: isPhone ? 8 : 18,
+                ),
               ),
             ),
           ],

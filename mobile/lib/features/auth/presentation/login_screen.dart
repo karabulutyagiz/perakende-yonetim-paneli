@@ -44,6 +44,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final width = MediaQuery.of(context).size.width;
+    final isPhone = width < 600;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -56,10 +58,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 32),
+                    SizedBox(height: isPhone ? 12 : 32),
                     Icon(Icons.storefront_rounded,
-                        size: 72, color: theme.colorScheme.primary),
-                    const SizedBox(height: 16),
+                        size: isPhone ? 40 : 72,
+                        color: theme.colorScheme.primary),
+                    SizedBox(height: isPhone ? 10 : 16),
                     Text(
                       'Toptan perakende paneli',
                       textAlign: TextAlign.center,
@@ -67,7 +70,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       'Satış paneli',
                       textAlign: TextAlign.center,
@@ -75,7 +78,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    SizedBox(height: isPhone ? 22 : 40),
                     TextFormField(
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
@@ -87,7 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? 'Geçerli e-posta girin'
                           : null,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: isPhone ? 12 : 16),
                     TextFormField(
                       controller: _password,
                       obscureText: _obscure,
@@ -105,7 +108,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? 'En az 6 karakter'
                           : null,
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: isPhone ? 18 : 24),
                     FilledButton(
                       onPressed: _loading ? null : _submit,
                       child: _loading

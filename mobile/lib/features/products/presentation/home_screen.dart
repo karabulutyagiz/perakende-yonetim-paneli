@@ -25,6 +25,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final cart = ref.watch(cartProvider);
     final width = MediaQuery.of(context).size.width;
     final isTablet = width >= 900;
+    final isPhone = width < 600;
 
     if (auth.status == AuthStatus.loading) {
       return const Scaffold(
@@ -48,12 +49,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Colors.black,
         surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Row(
+        iconTheme: IconThemeData(color: Colors.black, size: isPhone ? 20 : 24),
+        title: Row(
           children: [
-            Icon(Icons.storefront_rounded, size: 28, color: Colors.black),
-            SizedBox(width: 10),
-            Expanded(child: _SectionTitleBlock(title: 'Ürünler')),
+            Icon(Icons.storefront_rounded,
+                size: isPhone ? 22 : 28, color: Colors.black),
+            SizedBox(width: isPhone ? 6 : 10),
+            const Expanded(child: _SectionTitleBlock(title: 'Ürünler')),
           ],
         ),
         actions: [
@@ -241,21 +243,25 @@ class _TopActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPhone = MediaQuery.of(context).size.width < 600;
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: EdgeInsets.only(right: isPhone ? 2 : 8),
       child: IconButton(
         onPressed: onPressed,
         tooltip: tooltip,
         icon: IconTheme(
-          data: const IconThemeData(
-            size: 40,
+          data: IconThemeData(
+            size: isPhone ? 22 : 40,
             color: Colors.black,
           ),
           child: icon,
         ),
-        iconSize: 40,
-        padding: const EdgeInsets.all(16),
-        constraints: const BoxConstraints(minWidth: 76, minHeight: 76),
+        iconSize: isPhone ? 22 : 40,
+        padding: EdgeInsets.all(isPhone ? 8 : 16),
+        constraints: BoxConstraints(
+          minWidth: isPhone ? 40 : 76,
+          minHeight: isPhone ? 40 : 76,
+        ),
       ),
     );
   }

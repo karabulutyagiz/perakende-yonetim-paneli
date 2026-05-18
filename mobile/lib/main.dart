@@ -20,9 +20,16 @@ class ToptanApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Toptan panel',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+      theme: AppTheme.light(),
       themeMode: ThemeMode.light,
       routerConfig: router,
+      builder: (context, child) {
+        final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
+        return Theme(
+          data: AppTheme.light(isTablet: isTablet),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       locale: const Locale('tr', 'TR'),
       supportedLocales: const [Locale('tr', 'TR')],
       localizationsDelegates: const [
