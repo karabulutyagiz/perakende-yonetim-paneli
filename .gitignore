@@ -21,6 +21,7 @@ node_modules/
 .flutter-plugins
 .flutter-plugins-dependencies
 build/
+store-builds/
 *.lock
 !pubspec.lock
 !poetry.lock
