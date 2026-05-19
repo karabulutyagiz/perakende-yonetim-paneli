@@ -9,6 +9,7 @@ on:
   pull_request:
     paths:
       - "mobile/**"
+  workflow_dispatch:
 
 jobs:
   build:
