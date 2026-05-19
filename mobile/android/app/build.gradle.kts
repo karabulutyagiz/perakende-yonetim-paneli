@@ -1,5 +1,6 @@
 import java.io.FileInputStream
 import java.util.Properties
+import org.gradle.api.GradleException
 
 plugins {
     id("com.android.application")
@@ -16,6 +17,18 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 val hasReleaseSigning = keystorePropertiesFile.exists()
+
+gradle.taskGraph.whenReady {
+    val isReleaseBuild = allTasks.any { task ->
+        task.name in listOf("assembleRelease", "bundleRelease", "packageRelease")
+    }
+    if (isReleaseBuild && !hasReleaseSigning) {
+        throw GradleException(
+            "Release build icin android/key.properties ve release keystore gerekli. " +
+                "Debug imzali release uretilmesi engellendi."
+        )
+    }
+}
 
 android {
     namespace = "com.parasende.app"
@@ -53,10 +66,8 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (hasReleaseSigning) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
     }

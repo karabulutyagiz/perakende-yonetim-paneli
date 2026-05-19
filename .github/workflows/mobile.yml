@@ -41,9 +41,14 @@ jobs:
       - name: Generate launcher icons
         run: dart run flutter_launcher_icons
 
-      # Release keystore — sadece push to main / workflow_dispatch durumunda
-      # GitHub Secrets'tan çözülüp android/key.properties oluşturulur.
-      # PR build'lerinde secret olmadığı için bu adım atlanır → debug imzalı APK çıkar.
+      - name: Validate release signing secrets
+        if: github.event_name != 'pull_request' && env.ANDROID_KEYSTORE_BASE64 == ''
+        run: |
+          echo "ANDROID_KEYSTORE_BASE64 secret eksik; signed release AAB/APK uretilemez."
+          exit 1
+
+      # Release keystore — GitHub Secrets'tan çözülüp android/key.properties oluşturulur.
+      # PR build'lerinde secret olmadığı için release build yerine debug APK doğrulaması yapılır.
       - name: Decode release keystore
         if: env.ANDROID_KEYSTORE_BASE64 != ''
         run: |
@@ -57,24 +62,32 @@ jobs:
           echo "Release signing hazır"
 
       - name: Build release AAB (Play Store)
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
         run: |
           flutter build appbundle --release \
             --dart-define=API_BASE=https://toptanperakende.online/api/v1 \
             --dart-define=WS_BASE=wss://toptanperakende.online/api/v1/ws
 
       - name: Build release APK (direkt indirme / yan yükleme)
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
         run: |
           flutter build apk --release \
             --dart-define=API_BASE=https://toptanperakende.online/api/v1 \
             --dart-define=WS_BASE=wss://toptanperakende.online/api/v1/ws
 
+      - name: Build debug APK (PR validation)
+        if: github.event_name == 'pull_request'
+        run: flutter build apk --debug
+
       - uses: actions/upload-artifact@v4
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
         with:
           name: mobile-aab
           path: mobile/build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
         with:
           name: mobile-apk
           path: mobile/build/app/outputs/flutter-apk/app-release.apk
