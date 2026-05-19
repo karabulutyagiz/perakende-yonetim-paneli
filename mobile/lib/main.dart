@@ -18,7 +18,7 @@ class ToptanApp extends ConsumerWidget {
     ref.watch(liveSyncProvider);
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
-      title: 'Toptan panel',
+      title: 'ParaSende',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       themeMode: ThemeMode.light,

@@ -1,4 +1,4 @@
-package com.toptanpanel.gokce_toptan
+package com.parasende.app
 
 import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
