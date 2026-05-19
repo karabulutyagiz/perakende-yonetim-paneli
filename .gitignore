@@ -41,3 +41,8 @@ logs/
 
 # Uploads (local dev)
 uploads/
+
+# Android signing — ASLA REPO'YA GIRMEZ
+**/key.properties
+*.jks
+*.keystore
