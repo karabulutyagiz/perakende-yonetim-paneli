@@ -47,7 +47,7 @@ jobs:
       - name: Decode release keystore
         if: env.ANDROID_KEYSTORE_BASE64 != ''
         run: |
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/parasende.jks
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/parasende.jks
           cat > android/key.properties <<EOF
           storeFile=parasende.jks
           storePassword=$ANDROID_KEYSTORE_PASSWORD

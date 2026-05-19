@@ -20,7 +20,8 @@ val hasReleaseSigning = keystorePropertiesFile.exists()
 android {
     namespace = "com.parasende.app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Plugin'ler 27.0.12077973 talep ediyor; en yükseğe set et (geriye uyumlu).
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
