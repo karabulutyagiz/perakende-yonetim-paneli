@@ -31,6 +31,22 @@ Apple Distribution sertifikası + App Store provisioning profili oluştur
 
 Build + TestFlight'a yükle
 
+### ios upload_metadata
+
+```sh
+[bundle exec] fastlane ios upload_metadata
+```
+
+App Store metadata + screenshot yükle (review'a göndermez)
+
+### ios submit
+
+```sh
+[bundle exec] fastlane ios submit
+```
+
+App Store review'a gönder (App Privacy doldurulduktan sonra)
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.

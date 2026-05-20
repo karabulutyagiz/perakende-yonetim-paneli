@@ -1,0 +1,7 @@
+ParaSende ilk sürümüyle yayında.
+
+- Toptancınızın canlı ürün kataloğu
+- Tek dokunuşla sipariş gönderme
+- Anlık fatura ve PDF makbuz
+- Renk kodlu borç takibi (15 günlük vade)
+- Günlük ve aylık satış raporları

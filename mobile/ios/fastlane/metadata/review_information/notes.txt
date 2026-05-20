@@ -1,0 +1,12 @@
+ParaSende is a B2B wholesale order-management app for Turkish retail businesses.
+
+HOW TO TEST
+1. Launch the app and sign in with the demo account below (a wholesale business owner account).
+   Email: review@parasende.app
+   Password: ParaSendeDemo2026
+2. After login you can browse the product catalog, build a cart, create an invoice, track customer debts (color-coded by due date) and view sales reports.
+3. The demo tenant is pre-populated with sample products, customers and invoices.
+
+The app talks to our production backend over HTTPS (https://toptanperakende.online). The app is in Turkish. There are no in-app purchases and no ads.
+
+Support: destek@toptanperakende.online

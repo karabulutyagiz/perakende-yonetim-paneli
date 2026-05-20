@@ -1,0 +1,34 @@
+ParaSende, marketler ve toptancı işletmeler için tasarlanmış uçtan uca sipariş, fatura ve borç yönetim uygulamasıdır. Bağlı olduğunuz toptancının ürün kataloğuna anında erişin, sepeti hazırlayın, siparişi gönderin — gerisi otomatik takip edilir.
+
+Hızlı sipariş
+- Toptancınızın canlı ürün listesi her zaman güncel
+- Kategori bazlı arama ve filtreleme
+- Sepete ekle, miktarı belirle, tek dokunuşla sipariş gönder
+- Sipariş durumu (beklemede, faturalandı, iptal) anlık takip
+
+Fatura ve makbuz
+- Her satış için detaylı fatura otomatik oluşur
+- Nakit, kart, borç dağılımı tek ekranda
+- PDF makbuz indirme ve paylaşma
+
+Akıllı borç takibi
+- 15 günlük vade hesabı, yeşil/sarı/kırmızı uyarı sistemi
+- Kalan gün gösterimi
+- Kısmi ödeme desteği, toplam borçtan parça parça düşüm
+- Gecikmiş borçlar net şekilde işaretlenir
+
+Detaylı raporlar
+- Günlük ve aylık satış grafiği
+- En çok alınan ürünler ve toplam ciro
+- Müşteri bazlı satış analizi
+- Düşük stok uyarıları
+- Ödeme yöntemi kırılımı (kart, nakit, borç)
+
+Güvenli ve hızlı
+- JWT tabanlı güvenli oturum
+- İşletme bazlı izole veri, her toptancı yalnızca kendi verisini görür
+- Anlık senkronizasyon, değişiklikler tüm cihazlara yansır
+
+ParaSende ile elinizdeki defterleri unutun. Toptancı ve market arasındaki sipariş akışı tek bir yerden, hatasız ve şeffaf şekilde yönetilsin.
+
+İletişim: destek@toptanperakende.online

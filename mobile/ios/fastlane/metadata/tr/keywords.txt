@@ -1,0 +1,1 @@
+toptan,sipariş,fatura,borç,stok,market,bakkal,tahsilat,b2b,ticaret,perakende
