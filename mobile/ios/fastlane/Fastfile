@@ -1,0 +1,63 @@
+default_platform(:ios)
+
+# App Store Connect API key — .p8 dosyası repoya GIRMEZ, standart konumda tutulur.
+APP_IDENTIFIER = "com.parasende.app"
+TEAM_ID = "5C2NRK938T"
+API_KEY_ID = ENV["ASC_KEY_ID"] || "K3YS3S4G5T"
+API_ISSUER_ID = ENV["ASC_ISSUER_ID"] || "a9daba92-43c7-4471-b81c-689e1f17357e"
+API_KEY_PATH = File.expand_path(
+  ENV["ASC_KEY_PATH"] || "~/.appstoreconnect/private_keys/AuthKey_#{API_KEY_ID}.p8"
+)
+
+def asc_api_key
+  app_store_connect_api_key(
+    key_id: API_KEY_ID,
+    issuer_id: API_ISSUER_ID,
+    key_filepath: API_KEY_PATH,
+    in_house: false,
+  )
+end
+
+platform :ios do
+  desc "Apple Distribution sertifikası + App Store provisioning profili oluştur"
+  lane :signing do
+    api_key = asc_api_key
+
+    # Apple Distribution sertifikası — varsa indirir, yoksa oluşturur.
+    cert(
+      api_key: api_key,
+      development: false,
+      output_path: "./certs",
+    )
+
+    # App Store provisioning profili — com.parasende.app
+    sigh(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      provisioning_name: "ParaSende App Store",
+      force: true,
+    )
+
+    # Xcode projesini manuel imzalamaya çevir (headless build için güvenli).
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "Runner.xcodeproj",
+      team_id: TEAM_ID,
+      code_sign_identity: "Apple Distribution",
+      profile_name: lane_context[SharedValues::SIGH_NAME],
+      bundle_identifier: APP_IDENTIFIER,
+      targets: ["Runner"],
+    )
+  end
+
+  desc "Build + TestFlight'a yükle"
+  lane :beta do
+    api_key = asc_api_key
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: "../build/ios/ipa/ParaSende.ipa",
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+    )
+  end
+end

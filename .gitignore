@@ -47,3 +47,15 @@ uploads/
 **/key.properties
 *.jks
 *.keystore
+
+# iOS signing — ASLA REPO'YA GIRMEZ
+*.mobileprovision
+*.p8
+*.p12
+*.cer
+*.certSigningRequest
+mobile/ios/certs/
+
+# fastlane geçici çıktıları
+mobile/ios/fastlane/report.xml
+mobile/ios/fastlane/test_output/
