@@ -32,7 +32,8 @@ gradle.taskGraph.whenReady {
 
 android {
     namespace = "com.parasende.app"
-    compileSdk = flutter.compileSdkVersion
+    // Play Store 31 Ağu 2025'ten itibaren targetSdk>=35 istiyor; sabitliyoruz.
+    compileSdk = 35
     // Plugin'ler 27.0.12077973 talep ediyor; en yükseğe set et (geriye uyumlu).
     ndkVersion = "27.0.12077973"
 
@@ -48,7 +49,7 @@ android {
     defaultConfig {
         applicationId = "com.parasende.app"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
