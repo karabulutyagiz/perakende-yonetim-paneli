@@ -17,11 +17,28 @@ htmlcov/
 
 # Node / Flutter
 node_modules/
+.next/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 build/
-store-builds/
+# Binary store artifact'leri ignore — ama rehber/metadata text dosyaları repo'da kalsın
+store-builds/**
+!store-builds/
+!store-builds/app-store-text/
+!store-builds/app-store-text/**
+!store-builds/play-store-text/
+!store-builds/play-store-text/**
+!store-builds/play-store-assets/
+!store-builds/play-store-assets/*.md
+!store-builds/play-store-assets/*.py
+store-builds/**/*.aab
+store-builds/**/*.apk
+store-builds/**/*.ipa
+store-builds/**/*.png
+store-builds/**/*.jpg
+store-builds/**/*.zip
+store-builds/ios-export/
 *.lock
 !pubspec.lock
 !poetry.lock

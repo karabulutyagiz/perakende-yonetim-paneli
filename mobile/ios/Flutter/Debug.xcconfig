@@ -1,2 +1,8 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
+
+// Simulator-only: imza zorunluluğunu kapat (fastlane Apple Distribution'a sabitlediği için
+// simulator build aksi halde Flutter.framework codesign hatası verir). Sadece debug.
+CODE_SIGN_IDENTITY[sdk=iphonesimulator*] =
+CODE_SIGNING_REQUIRED[sdk=iphonesimulator*] = NO
+CODE_SIGNING_ALLOWED[sdk=iphonesimulator*] = NO

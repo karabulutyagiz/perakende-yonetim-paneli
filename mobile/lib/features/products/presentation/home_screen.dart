@@ -27,13 +27,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isTablet = width >= 900;
     final isPhone = width < 600;
 
-    if (auth.status == AuthStatus.loading) {
-      return const Scaffold(
-        appBar: _SectionAppBar(title: 'Ürünler'),
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     final async = ref.watch(productsProvider);
 
     if (!isTablet && _showTabletCartPanel) {
@@ -84,9 +77,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onPressed: () => context.push('/orders'),
             ),
           _TopActionButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Çıkış',
-            onPressed: () => _confirmLogout(context),
+            icon: const Icon(Icons.account_circle_rounded),
+            tooltip: 'Hesabım',
+            onPressed: () => context.push('/account'),
           ),
         ],
       ),
@@ -189,45 +182,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Future<void> _confirmLogout(BuildContext context) async {
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Çıkış yap'),
-        content: const Text('Çıkış yapmak istediğinize emin misiniz?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Hayır'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Evet'),
-          ),
-        ],
-      ),
-    );
-
-    if (shouldLogout == true && mounted) {
-      await ref.read(authControllerProvider.notifier).logout();
-    }
-  }
-}
-
-class _SectionAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _SectionAppBar({required this.title});
-
-  final String title;
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      title: _SectionTitleBlock(title: title),
-    );
-  }
 }
 
 class _TopActionButton extends StatelessWidget {
@@ -378,7 +332,7 @@ class _ProductsGrid extends StatelessWidget {
         maxCrossAxisExtent: maxCrossAxisExtent,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 0.72,
+        childAspectRatio: 0.62,
       ),
       itemCount: products.length,
       itemBuilder: (_, i) => _ProductCard(

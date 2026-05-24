@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../auth/auth_controller.dart';
+import '../../features/auth/presentation/account_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
 import '../../features/debts/presentation/debts_screen.dart';
@@ -15,7 +16,7 @@ import '../../features/reports/presentation/reports_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final auth = ref.watch(authControllerProvider);
-  const customerAllowedRoutes = {'/', '/cart', '/orders'};
+  const customerAllowedRoutes = {'/', '/cart', '/orders', '/account'};
   const tenantOwnerBlockedRoutes = <String>{};
 
   return GoRouter(
@@ -61,6 +62,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/orders', builder: (_, __) => const OrdersScreen()),
       GoRoute(path: '/debts', builder: (_, __) => const DebtsScreen()),
       GoRoute(path: '/reports', builder: (_, __) => const ReportsScreen()),
+      GoRoute(path: '/account', builder: (_, __) => const AccountScreen()),
     ],
   );
 });

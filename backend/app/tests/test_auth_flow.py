@@ -81,6 +81,55 @@ async def test_logout_invalidates_old_tokens(app_client, user):
 
 
 @pytest.mark.asyncio
+async def test_delete_account_requires_password_and_confirm(auth_client):
+    # Yanlış onay
+    bad_confirm = await auth_client.request(
+        "DELETE",
+        "/api/v1/auth/account",
+        json={"password": "StrongPass123!", "confirm": "EVET"},
+    )
+    assert bad_confirm.status_code == 400
+
+    # Yanlış parola
+    bad_pw = await auth_client.request(
+        "DELETE",
+        "/api/v1/auth/account",
+        json={"password": "wrong", "confirm": "SİL"},
+    )
+    assert bad_pw.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_delete_account_tenant_owner_wipes_tenant(app_client, user, tenant):
+    login = await app_client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@example.com", "password": "StrongPass123!"},
+    )
+    access = login.json()["access_token"]
+    resp = await app_client.request(
+        "DELETE",
+        "/api/v1/auth/account",
+        headers={"Authorization": f"Bearer {access}"},
+        json={"password": "StrongPass123!", "confirm": "SİL"},
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["scope"] == "tenant"
+
+    # Eski token artık çalışmamalı
+    me = await app_client.get(
+        "/api/v1/auth/me", headers={"Authorization": f"Bearer {access}"}
+    )
+    assert me.status_code == 401
+
+    # Aynı e-posta ile login imkansız
+    relogin = await app_client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@example.com", "password": "StrongPass123!"},
+    )
+    assert relogin.status_code == 401
+
+
+@pytest.mark.asyncio
 async def test_change_password_invalidates_old_tokens(app_client, user):
     login = await app_client.post(
         "/api/v1/auth/login",

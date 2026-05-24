@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_config.dart';
+import '../marketing/marketing_capture.dart';
 import 'token_storage.dart';
 
 enum AuthStatus { loading, unauthenticated, authenticated }
@@ -26,7 +27,14 @@ class AuthController extends StateNotifier<AuthState> {
     _bootstrap();
   }
 
-  final Ref _ref;
+  AuthController.marketing()
+      : _ref = null,
+        super(const AuthState(
+          AuthStatus.authenticated,
+          role: AuthRole.tenantOwner,
+        ));
+
+  final Ref? _ref;
 
   Dio _dio({String? accessToken}) {
     return Dio(
@@ -44,16 +52,32 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> _bootstrap() async {
-    final storage = _ref.read(tokenStorageProvider);
-    final token = await storage.readAccessToken();
-    if (_isTokenUsable(token)) {
-      state = AuthState(
+    if (kMarketingCapture) {
+      state = const AuthState(
         AuthStatus.authenticated,
-        role: _roleFromToken(token),
+        role: AuthRole.tenantOwner,
       );
       return;
     }
-    await storage.clear();
+    try {
+      final storage = _ref!.read(tokenStorageProvider);
+      final token = await storage
+          .readAccessToken()
+          .timeout(const Duration(seconds: 3), onTimeout: () => null);
+      if (_isTokenUsable(token)) {
+        state = AuthState(
+          AuthStatus.authenticated,
+          role: _roleFromToken(token),
+        );
+        return;
+      }
+      try {
+        await storage.clear().timeout(const Duration(seconds: 2));
+      } catch (_) {}
+    } catch (_) {
+      // Keychain/SharedPreferences erişimi başarısız olursa bile login'e düş;
+      // aksi halde app açılışında sonsuza kadar loading'de takılır.
+    }
     state = const AuthState(AuthStatus.unauthenticated);
   }
 
@@ -61,7 +85,7 @@ class AuthController extends StateNotifier<AuthState> {
     required String access,
     required String refresh,
   }) async {
-    await _ref.read(tokenStorageProvider).saveTokens(
+    await _ref!.read(tokenStorageProvider).saveTokens(
           access: access,
           refresh: refresh,
         );
@@ -72,7 +96,7 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> clearSession({String? errorMessage}) async {
-    await _ref.read(tokenStorageProvider).clear();
+    await _ref!.read(tokenStorageProvider).clear();
     state = AuthState(
       AuthStatus.unauthenticated,
       errorMessage: errorMessage,
@@ -108,13 +132,42 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    final accessToken = await _ref.read(tokenStorageProvider).readAccessToken();
+    final accessToken =
+        await _ref!.read(tokenStorageProvider).readAccessToken();
     try {
       await _dio(accessToken: accessToken).post('/auth/logout');
     } catch (_) {
       // backend ulaşılamıyorsa bile lokal token'ı temizle
     }
     await clearSession();
+  }
+
+  /// Apple 5.1.1(v) + Google Play account deletion gereği uygulama içinden
+  /// kalıcı hesap silme. TENANT_OWNER ise tüm tenant verisi silinir.
+  /// Başarıda lokal oturum temizlenir ve true döner.
+  Future<({bool ok, String? error})> deleteAccount({
+    required String password,
+    required String confirm,
+  }) async {
+    final accessToken =
+        await _ref!.read(tokenStorageProvider).readAccessToken();
+    try {
+      await _dio(accessToken: accessToken).delete(
+        '/auth/account',
+        data: {'password': password, 'confirm': confirm},
+      );
+      await clearSession();
+      return (ok: true, error: null);
+    } on DioException catch (e) {
+      String msg = 'Hesap silinemedi';
+      final data = e.response?.data;
+      if (data is Map && data['detail'] is String) {
+        msg = data['detail'] as String;
+      }
+      return (ok: false, error: msg);
+    } catch (_) {
+      return (ok: false, error: 'Sunucuya ulaşılamadı');
+    }
   }
 
   AuthRole _roleFromToken(String? token) {

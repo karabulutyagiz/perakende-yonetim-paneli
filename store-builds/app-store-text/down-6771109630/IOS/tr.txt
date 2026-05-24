@@ -1,0 +1,17 @@
+"description" = "ParaSende, toptan ve perakende satış yapan işletmeler için geliştirilen stok, müşteri, sipariş, fatura, borç ve raporlama yönetim uygulamasıdır.
+
+Öne çıkan özellikler:
+
+- Ürün ve stok takibi
+- Müşteri kayıtları ve hesap yönetimi
+- Sipariş oluşturma ve takip
+- Fatura ve dekont işlemleri
+- Borç ve ödeme takibi
+- Satış ve borç raporları
+- Web panel ile canlı senkronizasyon
+
+ParaSende, işletme sahiplerinin günlük operasyonlarını daha düzenli ve hızlı yönetmesine yardımcı olur. Uygulama, yetkili kullanıcı hesabı ile çalışır.";
+"keywords" = "stok,sipariş,fatura,borç,müşteri,toptan,perakende,rapor,satış,işletme";
+"marketingUrl" = "https://toptanperakende.online";
+"promotionalText" = "ParaSende ile ürün, müşteri, sipariş, fatura ve borç takibini tek uygulamadan yönetin.";
+"supportUrl" = "https://toptanperakende.online/legal/support.html";

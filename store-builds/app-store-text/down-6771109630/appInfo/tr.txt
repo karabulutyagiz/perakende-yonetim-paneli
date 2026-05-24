@@ -1,0 +1,3 @@
+"name" = "ParaSende";
+"privacyPolicyUrl" = "https://toptanperakende.online/legal/privacy.html";
+"subtitle" = "Stok ve sipariş yönetimi";

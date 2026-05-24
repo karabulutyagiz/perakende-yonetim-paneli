@@ -17,6 +17,8 @@ from app.models.user import UserRole
 from app.schemas.auth import (
     ChangePasswordRequest,
     CustomerInfo,
+    DeleteAccountRequest,
+    DeleteAccountResponse,
     LoginRequest,
     RefreshRequest,
     TenantInfo,
@@ -154,3 +156,53 @@ async def change_password(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Mevcut parola hatalı"
         )
     await user_service.change_password(db, current_user, payload.new_password)
+
+
+@router.delete("/account", response_model=DeleteAccountResponse)
+async def delete_account(
+    payload: DeleteAccountRequest,
+    current_user: CurrentUser,
+    db: DBSession,
+) -> DeleteAccountResponse:
+    """Apple App Store Guideline 5.1.1(v) ve Google Play User Data politikası
+    gereği kullanıcının kendi hesabını uygulama içinden silmesini sağlar.
+
+    - TENANT_OWNER: tenant + tüm operasyonel veri + bağlı kullanıcılar silinir.
+    - CUSTOMER: sadece kendi login kaydı silinir; CRM kaydı (Customer) tenant'ta kalır.
+    - PLATFORM_OWNER: bu uçtan silinemez (manuel platform owner devri gerekir).
+    """
+    if payload.confirm.strip().upper() != "SİL":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Onay metni 'SİL' olmalı",
+        )
+    if not verify_password(payload.password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Parola hatalı",
+        )
+    if current_user.role == UserRole.PLATFORM_OWNER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "Platform sahibi hesabı uygulamadan silinemez. "
+                "Devir/silme için lütfen destek ile iletişime geçin."
+            ),
+        )
+    if current_user.role == UserRole.TENANT_OWNER:
+        if current_user.tenant_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Tenant bilgisi bulunamadı",
+            )
+        await user_service.delete_tenant_cascade(db, current_user.tenant_id)
+        return DeleteAccountResponse(
+            scope="tenant",
+            message="İşletme hesabınız ve tüm verileriniz kalıcı olarak silindi.",
+        )
+    # CUSTOMER
+    await user_service.delete_customer_account(db, current_user)
+    return DeleteAccountResponse(
+        scope="customer_account",
+        message="Hesabınız silindi.",
+    )

@@ -1,11 +1,16 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.security import hash_password, needs_rehash, verify_password
+from app.models.category import Category
 from app.models.customer import Customer
+from app.models.debt import Debt, DebtPayment
+from app.models.invoice import Invoice, InvoiceItem
+from app.models.order import Order, OrderItem
+from app.models.product import Product
 from app.models.tenant import Tenant, TenantStatus
 from app.models.user import User, UserRole
 
@@ -149,4 +154,43 @@ async def change_password(db: AsyncSession, user: User, new_password: str) -> No
 async def bump_token_version(db: AsyncSession, user: User) -> None:
     """Logout / parola değişimi sonrası eski tüm token'ları geçersizleştirir."""
     user.token_version = (user.token_version or 0) + 1
+    await db.commit()
+
+
+async def delete_tenant_cascade(db: AsyncSession, tenant_id: UUID) -> None:
+    """Tenant'a bağlı tüm operasyonel veriyi RESTRICT FK'lere takılmayacak
+    sırada manuel siler, sonra tenant'ı düşürür.
+
+    invoice.customer_id ve debt.customer_id RESTRICT olduğu için
+    tenant CASCADE'i tek başına yetmez."""
+    # Önce ödeme/borç (debts → debt_payments CASCADE)
+    await db.execute(delete(DebtPayment).where(
+        DebtPayment.debt_id.in_(select(Debt.id).where(Debt.tenant_id == tenant_id))
+    ))
+    await db.execute(delete(Debt).where(Debt.tenant_id == tenant_id))
+    # Fatura kalemleri → fatura
+    await db.execute(delete(InvoiceItem).where(
+        InvoiceItem.invoice_id.in_(select(Invoice.id).where(Invoice.tenant_id == tenant_id))
+    ))
+    await db.execute(delete(Invoice).where(Invoice.tenant_id == tenant_id))
+    # Sipariş kalemleri → sipariş
+    await db.execute(delete(OrderItem).where(
+        OrderItem.order_id.in_(select(Order.id).where(Order.tenant_id == tenant_id))
+    ))
+    await db.execute(delete(Order).where(Order.tenant_id == tenant_id))
+    # Ürünler, kategoriler, müşteriler (artık FK referansı kalmadı)
+    await db.execute(delete(Product).where(Product.tenant_id == tenant_id))
+    await db.execute(delete(Category).where(Category.tenant_id == tenant_id))
+    await db.execute(delete(Customer).where(Customer.tenant_id == tenant_id))
+    # Kullanıcılar (tenant_owner + customer hesapları)
+    await db.execute(delete(User).where(User.tenant_id == tenant_id))
+    # Son: tenant
+    await db.execute(delete(Tenant).where(Tenant.id == tenant_id))
+    await db.commit()
+
+
+async def delete_customer_account(db: AsyncSession, user: User) -> None:
+    """CUSTOMER rolü için: sadece kullanıcının login satırını siler.
+    Müşteri kaydı (Customer) tenant_owner'ın CRM verisi olduğu için tenant'ta kalır."""
+    await db.execute(delete(User).where(User.id == user.id))
     await db.commit()

@@ -59,12 +59,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SizedBox(height: isPhone ? 12 : 32),
-                    Icon(Icons.storefront_rounded,
-                        size: isPhone ? 40 : 72,
-                        color: theme.colorScheme.primary),
+                    Image.asset(
+                      'assets/icon/parasende.png',
+                      width: isPhone ? 72 : 112,
+                      height: isPhone ? 72 : 112,
+                      fit: BoxFit.contain,
+                    ),
                     SizedBox(height: isPhone ? 10 : 16),
                     Text(
-                      'Toptan perakende paneli',
+                      'ParaSende',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w700,
@@ -72,7 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Satış paneli',
+                      'Stok ve sipariş yönetimi',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,

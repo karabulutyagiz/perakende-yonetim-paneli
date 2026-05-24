@@ -57,3 +57,19 @@ class SignupRequest(BaseModel):
 class SignupResponse(BaseModel):
     tenant_id: str
     message: str = "Kayıt alındı. Platform yöneticisi onayından sonra giriş yapabilirsiniz."
+
+
+class DeleteAccountRequest(BaseModel):
+    """Apple 5.1.1(v) ve Google Play hesap silme zorunluluğu için.
+    Şifre + 'SİL' onayı ile kullanıcı kendi hesabını kalıcı siler."""
+
+    password: str = Field(min_length=6, max_length=128)
+    confirm: str = Field(
+        description="Yanlışlıkla silmeyi engellemek için 'SİL' yazılmalı.",
+    )
+
+
+class DeleteAccountResponse(BaseModel):
+    deleted: bool = True
+    scope: str  # "tenant" | "customer_account"
+    message: str

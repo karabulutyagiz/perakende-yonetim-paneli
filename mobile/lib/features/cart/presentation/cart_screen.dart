@@ -18,7 +18,17 @@ class CartScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sepet'),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: Colors.black,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.black, size: 32),
+        title: Text(
+          'Sepet',
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: Colors.black,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         actions: [
           if (!cart.isEmpty)
             IconButton(
