@@ -21,10 +21,9 @@ void main() {
   const size = Size(430, 932);
   const selected = String.fromEnvironment('CAPTURE_SCREEN', defaultValue: '01');
 
+  // macOS-only — _loadRealFonts uses /System/Library/Fonts/Helvetica.ttc.
   testWidgets('captures marketing screenshots from real app screens',
-      skip: !Platform.isMacOS
-          ? 'macOS-only — uses /System/Library/Fonts/Helvetica.ttc'
-          : false, (tester) async {
+      skip: !Platform.isMacOS, (tester) async {
     await _loadRealFonts();
     await tester.binding.setSurfaceSize(size);
 
