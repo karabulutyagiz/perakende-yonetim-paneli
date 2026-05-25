@@ -14,6 +14,19 @@ class CustomerRepository {
         .map((e) => Customer.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  Future<Customer> create({
+    required String name,
+    String? phone,
+    String? address,
+  }) async {
+    final resp = await _dio.post('/customers', data: {
+      'name': name,
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
+      if (address != null && address.isNotEmpty) 'address': address,
+    });
+    return Customer.fromJson((resp.data as Map).cast<String, dynamic>());
+  }
 }
 
 final customerRepositoryProvider = Provider<CustomerRepository>(
