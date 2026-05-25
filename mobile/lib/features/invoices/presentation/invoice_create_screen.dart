@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -59,12 +60,18 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
       ref.invalidate(invoicesProvider);
       if (!mounted) return;
       context.go('/invoices/${invoice['id']}');
+    } on DioException catch (e) {
+      if (!mounted) return;
+      String msg = 'Fatura oluşturulamadı. Lütfen tekrar deneyin.';
+      final data = e.response?.data;
+      if (data is Map && data['detail'] is String) {
+        msg = data['detail'] as String;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Fatura oluşturulamadı. Lütfen tekrar deneyin.'),
-        ),
+        SnackBar(content: Text('Fatura oluşturulamadı: $e')),
       );
     } finally {
       if (mounted) setState(() => _saving = false);

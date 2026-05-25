@@ -171,26 +171,22 @@ class CartScreen extends ConsumerWidget {
                               }
                               return;
                             }
+                            // Tenant_owner: kendi adına bir müşteri seçip
+                            // fatura keser (geçmişte siparişe zorlanıyordu —
+                            // şimdi doğrudan akış da var).
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Faturalar artık yalnızca gerçek siparişlerden oluşturuluyor.',
-                                  ),
-                                ),
-                              );
-                              context.go('/orders');
+                              context.push('/invoice/create');
                             }
                           },
                           icon: Icon(
                             auth.isCustomer
                                 ? Icons.shopping_bag_outlined
-                                : Icons.list_alt_rounded,
+                                : Icons.receipt_long_rounded,
                           ),
                           label: Text(
                             auth.isCustomer
                                 ? 'Sipariş oluştur'
-                                : 'Siparişlere git',
+                                : 'Faturayı oluştur',
                           ),
                         ),
                       ],

@@ -54,6 +54,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           if (auth.isTenantOwner)
             _TopActionButton(
+              icon: const Icon(Icons.shopping_bag_outlined),
+              tooltip: 'Gelen siparişler',
+              onPressed: () => context.push('/orders'),
+            ),
+          if (auth.isTenantOwner)
+            _TopActionButton(
               icon: const Icon(Icons.receipt_rounded),
               tooltip: 'Faturalar',
               onPressed: () => context.push('/invoices'),

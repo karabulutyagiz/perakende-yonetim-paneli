@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,6 +43,17 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 4,
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                tooltip: 'Geri',
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : IconButton(
+                icon: const Icon(Icons.home_rounded),
+                tooltip: 'Ana sayfa',
+                onPressed: () => context.go('/'),
+              ),
         title: _SectionHeaderTitle(
           title: auth.isTenantOwner ? 'Gelen Siparişler' : 'Siparişlerim',
         ),
@@ -558,8 +570,9 @@ class _ConvertOrderDialogState extends ConsumerState<_ConvertOrderDialog> {
   @override
   void initState() {
     super.initState();
-    _cashController =
-        TextEditingController(text: _formatTlInput(_total.round()));
+    // BUG FIX: _total.round() kuruşları yuvarlıyordu (105.55 → 106) ve
+    // backend "sum != total" diye 400 dönüyordu. Kuruş-korumalı format.
+    _cashController = TextEditingController(text: _formatTlAmount(_total));
     _cardController = TextEditingController(text: _formatTlInput(0));
     _debtController = TextEditingController(text: _formatTlInput(0));
   }
@@ -681,9 +694,18 @@ class _ConvertOrderDialogState extends ConsumerState<_ConvertOrderDialog> {
       if (!mounted) return;
       final invoiceId = order['invoice_id']?.toString();
       Navigator.pop(context, invoiceId);
-    } catch (_) {
+    } on DioException catch (e) {
       if (!mounted) return;
-      _showError('Fatura oluşturulamadı');
+      String msg = 'Fatura oluşturulamadı';
+      final data = e.response?.data;
+      if (data is Map && data['detail'] is String) {
+        msg = data['detail'] as String;
+      }
+      _showError(msg);
+      setState(() => _submitting = false);
+    } catch (e) {
+      if (!mounted) return;
+      _showError('Fatura oluşturulamadı: $e');
       setState(() => _submitting = false);
     }
   }
@@ -762,6 +784,14 @@ class _AmountPad extends StatelessWidget {
 
 String _formatTlInput(int value) {
   return _normalizeTlInput(value.toString());
+}
+
+/// Kuruşları KORUR — 105.55 → "105,55 ₺".
+/// _formatTlInput(int) kuruşları kaybediyordu, default ödeme tutarı
+/// sipariş toplamı ile eşit olmadığı için backend 400 dönüyordu.
+String _formatTlAmount(double value) {
+  final asTr = value.toStringAsFixed(2).replaceAll('.', ',');
+  return _normalizeTlInput(asTr);
 }
 
 String _normalizeTlInput(String raw) {
