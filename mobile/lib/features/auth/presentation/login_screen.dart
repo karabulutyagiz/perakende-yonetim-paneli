@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/auth_controller.dart';
 
@@ -122,6 +123,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   CircularProgressIndicator(strokeWidth: 2.5),
                             )
                           : const Text('Giriş yap'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed:
+                          _loading ? null : () => context.push('/signup'),
+                      child: const Text(
+                        'Hesabın yok mu? · İşletme hesabı aç',
+                      ),
                     ),
                   ],
                 ),

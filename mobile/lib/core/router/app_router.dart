@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../auth/auth_controller.dart';
 import '../../features/auth/presentation/account_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/signup_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
 import '../../features/debts/presentation/debts_screen.dart';
 import '../../features/invoices/presentation/invoice_create_screen.dart';
@@ -24,7 +25,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: _AuthListenable(ref),
     redirect: (ctx, state) {
       final loc = state.matchedLocation;
-      final isPublic = loc == '/login';
+      final isPublic = loc == '/login' || loc == '/signup';
       if (auth.status == AuthStatus.loading) {
         return null;
       }
@@ -47,6 +48,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/signup', builder: (_, __) => const SignupScreen()),
       GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
       GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
       GoRoute(

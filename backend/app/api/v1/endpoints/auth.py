@@ -21,6 +21,8 @@ from app.schemas.auth import (
     DeleteAccountResponse,
     LoginRequest,
     RefreshRequest,
+    SignupRequest,
+    SignupResponse,
     TenantInfo,
     TokenPair,
     UserMe,
@@ -35,6 +37,45 @@ def _issue_tokens(user) -> TokenPair:
     return TokenPair(
         access_token=create_access_token(str(user.id), user.token_version, tid, user.role.value),
         refresh_token=create_refresh_token(str(user.id), user.token_version, tid, user.role.value),
+    )
+
+
+@router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit(settings.rate_limit_login, key_func=get_remote_address)
+async def signup(
+    request: Request,
+    payload: SignupRequest,
+    db: DBSession,
+) -> SignupResponse:
+    """Genel public B2B SaaS kayıt akışı.
+
+    Türkiye'deki herhangi bir toptan/perakende işletme sahibi
+    uygulamadan veya web sitesinden hesap açabilir. Tenant `APPROVED`
+    durumunda açılır — anında login mümkün.
+    Apple Guideline 3.2 (genel kitle / public audience) için.
+    """
+    existing = await user_service.get_by_email(db, payload.email)
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Bu e-posta zaten kayıtlı",
+        )
+    tenant, _ = await user_service.signup_tenant(
+        db,
+        business_name=payload.business_name,
+        email=payload.email,
+        full_name=payload.full_name,
+        password=payload.password,
+        contact_phone=payload.contact_phone,
+    )
+    # Apple/Play review için ve genel public akışı için anında onaylı:
+    # platform owner approval bekleterek kullanıcıyı kilitlemek istemiyoruz.
+    from app.models.tenant import TenantStatus as _TS
+    tenant.status = _TS.APPROVED
+    await db.commit()
+    return SignupResponse(
+        tenant_id=str(tenant.id),
+        message="Hesabınız oluşturuldu. Şimdi giriş yapabilirsiniz.",
     )
 
 

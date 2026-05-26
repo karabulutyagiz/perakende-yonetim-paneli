@@ -81,6 +81,42 @@ async def test_logout_invalidates_old_tokens(app_client, user):
 
 
 @pytest.mark.asyncio
+async def test_signup_creates_tenant_and_allows_login(app_client):
+    resp = await app_client.post(
+        "/api/v1/auth/signup",
+        json={
+            "business_name": "Test Toptan Public",
+            "full_name": "Test User",
+            "email": "signup+public@example.com",
+            "password": "Str0ngPub!Pass",
+        },
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["tenant_id"]
+
+    # Anında login mümkün (tenant otomatik APPROVED)
+    login = await app_client.post(
+        "/api/v1/auth/login",
+        json={"email": "signup+public@example.com", "password": "Str0ngPub!Pass"},
+    )
+    assert login.status_code == 200, login.text
+
+
+@pytest.mark.asyncio
+async def test_signup_rejects_duplicate_email(app_client, user):
+    resp = await app_client.post(
+        "/api/v1/auth/signup",
+        json={
+            "business_name": "X",
+            "full_name": "Y",
+            "email": "admin@example.com",  # `user` fixture'ı bu emaille açtı
+            "password": "Str0ngPub!Pass",
+        },
+    )
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
 async def test_delete_account_requires_password_and_confirm(auth_client):
     # Yanlış onay
     bad_confirm = await auth_client.request(

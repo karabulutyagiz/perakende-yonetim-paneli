@@ -103,6 +103,38 @@ class AuthController extends StateNotifier<AuthState> {
     );
   }
 
+  /// Yeni işletme + tenant_owner hesabı yaratır (Apple 3.2 genel public akışı).
+  /// Başarıda otomatik login yapar.
+  Future<({bool ok, String? error})> signup({
+    required String businessName,
+    required String fullName,
+    required String email,
+    required String password,
+    String? contactPhone,
+  }) async {
+    try {
+      await _dio().post('/auth/signup', data: {
+        'business_name': businessName,
+        'full_name': fullName,
+        'email': email,
+        'password': password,
+        if (contactPhone != null && contactPhone.isNotEmpty)
+          'contact_phone': contactPhone,
+      });
+      final loginOk = await login(email, password);
+      return (ok: loginOk, error: loginOk ? null : 'Otomatik giriş başarısız');
+    } on DioException catch (e) {
+      String msg = 'Kayıt başarısız';
+      final data = e.response?.data;
+      if (data is Map && data['detail'] is String) {
+        msg = data['detail'] as String;
+      }
+      return (ok: false, error: msg);
+    } catch (e) {
+      return (ok: false, error: 'Sunucuya ulaşılamadı');
+    }
+  }
+
   Future<bool> login(String email, String password) async {
     try {
       final resp = await _dio().post(

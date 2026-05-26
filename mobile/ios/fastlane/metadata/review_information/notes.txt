@@ -1,12 +1,39 @@
-ParaSende is a B2B wholesale order-management app for Turkish retail businesses.
+ParaSende is a B2B wholesale order-management app for Turkish retail
+business owners (wholesalers and small shops). The app is in Turkish.
+No in-app purchases, no ads, no third-party tracking SDKs.
 
 HOW TO TEST
-1. Launch the app and sign in with the demo account below (a wholesale business owner account).
-   Email: review@parasende.app
-   Password: ParaSendeDemo2026
-2. After login you can browse the product catalog, build a cart, create an invoice, track customer debts (color-coded by due date) and view sales reports.
-3. The demo tenant is pre-populated with sample products, customers and invoices.
+1. Launch the app. The login screen shows "ParaSende" with our logo.
+2. Sign in with the demo account below — a wholesale business owner
+   (tenant_owner) account on our production backend:
+   Email:    playreview@toptanpanel.com
+   Password: pZ4S7MikKv81soRO
+3. After login you reach the Products screen. The top bar has icons
+   for: Gelen Siparişler (incoming orders), Faturalar (invoices),
+   Raporlar (reports), Borçlar (debts), Hesabım (account).
+4. Add items to the cart (right-side cart panel on iPad / floating
+   cart FAB on iPhone). Tap "Faturayı oluştur" to open the invoice
+   flow, pick a customer (or tap "Yeni müşteri ekle" to create one
+   in-app), pick payment method, send the invoice. The invoice
+   appears under Faturalar.
+5. Tap the receipt icon on any invoice to view a PDF that can be
+   saved to Photos.
+6. Reports tab shows daily/weekly/monthly sales charts.
 
-The app talks to our production backend over HTTPS (https://toptanperakende.online). The app is in Turkish. There are no in-app purchases and no ads.
+HOW TO TEST IN-APP ACCOUNT DELETION (Guideline 5.1.1(v))
+1. From the Products screen, tap the "Hesabım" (Account) icon at the
+   top right (person silhouette).
+2. Scroll to the red "Tehlikeli bölge" (Danger zone) section.
+3. Tap "Hesabımı sil" (Delete my account).
+4. A confirmation dialog asks for the account password and the word
+   "SİL" (Turkish for DELETE) as a typed confirmation.
+5. Submitting calls DELETE /auth/account on the backend, which
+   permanently deletes the user account, the tenant business, all
+   customers, products, orders, invoices, debts and payments. The
+   user is logged out and routed back to the login screen.
 
-Support: destek@toptanperakende.online
+A web fallback for account deletion is also available at
+https://toptanperakende.online/legal/delete-account.html
+
+The app talks to our production backend over HTTPS only
+(https://toptanperakende.online). Support: destek@toptanperakende.online
