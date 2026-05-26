@@ -59,7 +59,9 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
       ref.invalidate(productsProvider);
       ref.invalidate(invoicesProvider);
       if (!mounted) return;
-      context.go('/invoices/${invoice['id']}');
+      // pushReplacement: fatura ekranından geri tuşuyla burası yerine
+      // doğal akışta önceki ekrana (home/cart) dönülsün.
+      context.pushReplacement('/invoices/${invoice['id']}');
     } on DioException catch (e) {
       if (!mounted) return;
       String msg = 'Fatura oluşturulamadı. Lütfen tekrar deneyin.';

@@ -104,8 +104,9 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   /// Yeni işletme + tenant_owner hesabı yaratır (Apple 3.2 genel public akışı).
-  /// Başarıda otomatik login yapar.
-  Future<({bool ok, String? error})> signup({
+  /// Tenant PENDING durumunda açılır — platform owner onaylayana kadar
+  /// giriş yapılamaz; bu yüzden otomatik login YAPMAZ.
+  Future<({bool ok, String? error})> signupOnly({
     required String businessName,
     required String fullName,
     required String email,
@@ -121,8 +122,7 @@ class AuthController extends StateNotifier<AuthState> {
         if (contactPhone != null && contactPhone.isNotEmpty)
           'contact_phone': contactPhone,
       });
-      final loginOk = await login(email, password);
-      return (ok: loginOk, error: loginOk ? null : 'Otomatik giriş başarısız');
+      return (ok: true, error: null);
     } on DioException catch (e) {
       String msg = 'Kayıt başarısız';
       final data = e.response?.data;

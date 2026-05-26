@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -49,6 +50,17 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Colors.black,
         surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Geri',
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/invoices');
+            }
+          },
+        ),
         title: Text(
           'Fatura dekontu',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -134,7 +146,8 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
     try {
       final allowed = await _ensureGalleryPermission();
       if (!allowed) {
-        _showMessage('Galeri izni verilmedi. Ayarlardan izin verin.');
+        _showMessage(
+            'Fotoğraf izni reddedildi. Ayarlar → ParaSende → Fotoğraflar.');
         return;
       }
       final pngBytes = await _captureReceiptPng();
@@ -151,12 +164,29 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
       if (_saveSucceeded(result)) {
         _showMessage('Dekont fotoğraflara kaydedildi');
       } else {
-        _showMessage('Dekont kaydedilemedi');
+        // Galeri kaydetme başarısız oldu — yedek olarak PDF'i tmp'ye yazıp
+        // sistem paylaş arayüzünü aç (kullanıcı oradan kaydet'e dokunabilir).
+        await _shareImageFallback(pngBytes, orderNumber);
       }
-    } catch (_) {
-      _showMessage('Dekont kaydedilemedi');
+    } catch (e) {
+      _showMessage('Dekont kaydedilemedi: $e');
     } finally {
       if (mounted) setState(() => _savingImage = false);
+    }
+  }
+
+  Future<void> _shareImageFallback(Uint8List pngBytes, String orderNumber) async {
+    try {
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/fatura-$orderNumber.png');
+      await file.writeAsBytes(pngBytes, flush: true);
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'Sipariş #$orderNumber dekontu',
+        sharePositionOrigin: _shareOriginRect(),
+      );
+    } catch (e) {
+      _showMessage('Dekont kaydedilemedi: $e');
     }
   }
 
@@ -191,8 +221,8 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
         text: 'Sipariş #$orderNumber faturası',
         sharePositionOrigin: shareOrigin,
       );
-    } catch (_) {
-      _showMessage('PDF paylaşılamadı');
+    } catch (e) {
+      _showMessage('PDF paylaşılamadı: $e');
     } finally {
       if (mounted) setState(() => _sharingPdf = false);
     }
@@ -222,10 +252,7 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
         return true;
       }
       final fullStatus = await Permission.photos.request();
-      if (fullStatus.isGranted || fullStatus.isLimited) {
-        return true;
-      }
-      return true;
+      return fullStatus.isGranted || fullStatus.isLimited;
     }
     if (Platform.isAndroid) {
       final sdk = await _androidSdkInt();

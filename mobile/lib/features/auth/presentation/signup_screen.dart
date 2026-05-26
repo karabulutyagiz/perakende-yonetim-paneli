@@ -42,7 +42,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       return;
     }
     setState(() => _loading = true);
-    final res = await ref.read(authControllerProvider.notifier).signup(
+    final res = await ref
+        .read(authControllerProvider.notifier)
+        .signupOnly(
           businessName: _businessName.text.trim(),
           fullName: _fullName.text.trim(),
           email: _email.text.trim(),
@@ -52,10 +54,32 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     if (!mounted) return;
     setState(() => _loading = false);
     if (res.ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hesabınız oluşturuldu. Hoş geldiniz!')),
+      // PENDING tenant — login mümkün değil, kullanıcıya "onay bekleniyor"
+      // diyalogu göster + login ekranına dön.
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) {
+          final theme = Theme.of(ctx);
+          return AlertDialog(
+            icon: Icon(Icons.hourglass_top_rounded,
+                color: theme.colorScheme.primary, size: 48),
+            title: const Text('Başvurunuz alındı'),
+            content: const Text(
+              'İşletme hesabınız platform yöneticisi tarafından '
+              'onaylandıktan sonra giriş yapabilirsiniz.\n\n'
+              'Onay genellikle aynı gün içinde tamamlanır.',
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Tamam'),
+              ),
+            ],
+          );
+        },
       );
-      context.go('/');
+      if (mounted) context.go('/login');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(res.error ?? 'Kayıt başarısız')),

@@ -81,7 +81,7 @@ async def test_logout_invalidates_old_tokens(app_client, user):
 
 
 @pytest.mark.asyncio
-async def test_signup_creates_tenant_and_allows_login(app_client):
+async def test_signup_creates_pending_tenant(app_client):
     resp = await app_client.post(
         "/api/v1/auth/signup",
         json={
@@ -94,12 +94,12 @@ async def test_signup_creates_tenant_and_allows_login(app_client):
     assert resp.status_code == 201, resp.text
     assert resp.json()["tenant_id"]
 
-    # Anında login mümkün (tenant otomatik APPROVED)
+    # Tenant PENDING durumunda — onay öncesi login REDDEDİLİR.
     login = await app_client.post(
         "/api/v1/auth/login",
         json={"email": "signup+public@example.com", "password": "Str0ngPub!Pass"},
     )
-    assert login.status_code == 200, login.text
+    assert login.status_code == 403, login.text
 
 
 @pytest.mark.asyncio

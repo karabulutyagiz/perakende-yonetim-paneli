@@ -68,14 +68,16 @@ async def signup(
         password=payload.password,
         contact_phone=payload.contact_phone,
     )
-    # Apple/Play review için ve genel public akışı için anında onaylı:
-    # platform owner approval bekleterek kullanıcıyı kilitlemek istemiyoruz.
-    from app.models.tenant import TenantStatus as _TS
-    tenant.status = _TS.APPROVED
-    await db.commit()
+    # Tenant PENDING durumunda açılır — platform owner sudo panelden
+    # manuel onaylayana kadar giriş yapamaz. Apple reviewer için NOT:
+    # demo hesap (playreview@toptanpanel.com) zaten APPROVED, onunla test
+    # edebilirler (review notes'ta belirtildi).
     return SignupResponse(
         tenant_id=str(tenant.id),
-        message="Hesabınız oluşturuldu. Şimdi giriş yapabilirsiniz.",
+        message=(
+            "Başvurunuz alındı. Platform yöneticisi tarafından "
+            "onaylandıktan sonra giriş yapabilirsiniz."
+        ),
     )
 
 
