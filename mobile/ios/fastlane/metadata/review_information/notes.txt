@@ -2,11 +2,18 @@ ParaSende is a B2B wholesale order-management app for Turkish retail
 business owners (wholesalers and small shops). The app is in Turkish.
 No in-app purchases, no ads, no third-party tracking SDKs.
 
-⚠️ PLEASE USE THE DEMO ACCOUNT BELOW TO TEST THE APP — do NOT register a
-new account from the sign-up screen. New sign-ups go through a quick
-manual admin approval (typically same business day), so a brand-new
-account cannot log in immediately. The demo account is already approved
-and has full functionality.
+You can test in TWO ways — both give immediate full access:
+
+(A) RECOMMENDED — sign in with the demo account below. It is a wholesale
+    business owner (tenant_owner) account on our production backend that is
+    already approved and populated with sample products, customers, invoices
+    and reports.
+
+(B) Or create a brand-new account from the in-app "İşletme hesabı aç"
+    (Open a business account) screen. New accounts are activated INSTANTLY:
+    after sign-up the app logs you in and opens the Products screen right
+    away — there is no approval wait and no error. This is a free, public
+    B2B app, so anyone can register and use every feature immediately.
 
 HOW TO TEST
 1. Launch the app. The login screen shows "ParaSende" with our logo.
