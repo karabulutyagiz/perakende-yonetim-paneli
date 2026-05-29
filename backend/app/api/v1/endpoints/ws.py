@@ -1,8 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy import select
-
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
+from sqlalchemy import select
 
 from app.core.security import decode_token
 from app.db.session import AsyncSessionLocal

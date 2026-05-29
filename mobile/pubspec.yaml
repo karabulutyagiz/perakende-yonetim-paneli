@@ -1,7 +1,7 @@
 name: gokce_toptan
 description: ParaSende — toptancıdan sipariş ve müşteri yönetim uygulaması
 publish_to: "none"
-version: 1.0.0+9
+version: 1.0.0+11
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

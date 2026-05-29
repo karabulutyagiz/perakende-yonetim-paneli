@@ -119,13 +119,15 @@ async def signup_tenant(
     password: str,
     contact_phone: str | None = None,
 ) -> tuple[Tenant, User]:
-    """Yeni işletme + sahibi kayıt eder. Tenant `pending` statüsünde açılır;
-    platform_owner onaylayana kadar giriş yapılamaz."""
+    """Yeni işletme + sahibi kayıt eder. Tenant `approved` statüsünde açılır;
+    public B2B SaaS akışında (Apple Guideline 3.2) kaydolan kullanıcı uygulamayı
+    anında tam olarak kullanabilmelidir. Kötüye kullanım olursa platform_owner
+    sonradan tenant'ı `suspended` yapabilir."""
     tenant = Tenant(
         name=business_name,
         contact_email=email.lower(),
         contact_phone=contact_phone,
-        status=TenantStatus.PENDING,
+        status=TenantStatus.APPROVED,
         is_active=True,
     )
     db.add(tenant)

@@ -81,7 +81,7 @@ async def test_logout_invalidates_old_tokens(app_client, user):
 
 
 @pytest.mark.asyncio
-async def test_signup_creates_pending_tenant(app_client):
+async def test_signup_auto_approves_and_returns_tokens(app_client):
     resp = await app_client.post(
         "/api/v1/auth/signup",
         json={
@@ -92,14 +92,17 @@ async def test_signup_creates_pending_tenant(app_client):
         },
     )
     assert resp.status_code == 201, resp.text
-    assert resp.json()["tenant_id"]
+    data = resp.json()
+    # Public audience (Apple 3.2): kayıt anında token döner, kullanıcı içeri girer.
+    assert data["access_token"]
+    assert data["refresh_token"]
 
-    # Tenant PENDING durumunda — onay öncesi login REDDEDİLİR.
+    # Tenant APPROVED açıldığı için aynı kimlikle login de hemen geçer.
     login = await app_client.post(
         "/api/v1/auth/login",
         json={"email": "signup+public@example.com", "password": "Str0ngPub!Pass"},
     )
-    assert login.status_code == 403, login.text
+    assert login.status_code == 200, login.text
 
 
 @pytest.mark.asyncio
@@ -107,8 +110,8 @@ async def test_signup_rejects_duplicate_email(app_client, user):
     resp = await app_client.post(
         "/api/v1/auth/signup",
         json={
-            "business_name": "X",
-            "full_name": "Y",
+            "business_name": "Çakışan Toptan",
+            "full_name": "Çakışan Sahibi",
             "email": "admin@example.com",  # `user` fixture'ı bu emaille açtı
             "password": "Str0ngPub!Pass",
         },
@@ -126,11 +129,11 @@ async def test_delete_account_requires_password_and_confirm(auth_client):
     )
     assert bad_confirm.status_code == 400
 
-    # Yanlış parola
+    # Yanlış parola (min_length=6 doğrulamasını geçecek ama parola yanlış → 400)
     bad_pw = await auth_client.request(
         "DELETE",
         "/api/v1/auth/account",
-        json={"password": "wrong", "confirm": "SİL"},
+        json={"password": "wrongpass", "confirm": "SİL"},
     )
     assert bad_pw.status_code == 400
 

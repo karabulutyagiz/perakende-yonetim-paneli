@@ -23,6 +23,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Apple Distribution sertifikası + App Store provisioning profili oluştur
 
+### ios build
+
+```sh
+[bundle exec] fastlane ios build
+```
+
+Flutter ile imzalı App Store IPA üret (prod API_BASE gömülü)
+
 ### ios beta
 
 ```sh
@@ -30,6 +38,22 @@ Apple Distribution sertifikası + App Store provisioning profili oluştur
 ```
 
 Build + TestFlight'a yükle
+
+### ios download_metadata
+
+```sh
+[bundle exec] fastlane ios download_metadata
+```
+
+App Store'dan mevcut metadata'yı çek (yedek için)
+
+### ios update_review_info
+
+```sh
+[bundle exec] fastlane ios update_review_info
+```
+
+Sadece review information (notes + demo creds + iletişim) güncelle
 
 ### ios upload_metadata
 

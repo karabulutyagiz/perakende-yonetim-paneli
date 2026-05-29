@@ -104,9 +104,9 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   /// Yeni işletme + tenant_owner hesabı yaratır (Apple 3.2 genel public akışı).
-  /// Tenant PENDING durumunda açılır — platform owner onaylayana kadar
-  /// giriş yapılamaz; bu yüzden otomatik login YAPMAZ.
-  Future<({bool ok, String? error})> signupOnly({
+  /// Tenant APPROVED açılır ve backend access/refresh token döndürür; kullanıcı
+  /// kaydın hemen ardından otomatik giriş yapıp uygulamayı kullanmaya başlar.
+  Future<({bool ok, String? error})> signup({
     required String businessName,
     required String fullName,
     required String email,
@@ -114,7 +114,7 @@ class AuthController extends StateNotifier<AuthState> {
     String? contactPhone,
   }) async {
     try {
-      await _dio().post('/auth/signup', data: {
+      final resp = await _dio().post('/auth/signup', data: {
         'business_name': businessName,
         'full_name': fullName,
         'email': email,
@@ -122,6 +122,10 @@ class AuthController extends StateNotifier<AuthState> {
         if (contactPhone != null && contactPhone.isNotEmpty)
           'contact_phone': contactPhone,
       });
+      await applyTokens(
+        access: resp.data['access_token'] as String,
+        refresh: resp.data['refresh_token'] as String,
+      );
       return (ok: true, error: null);
     } on DioException catch (e) {
       String msg = 'Kayıt başarısız';

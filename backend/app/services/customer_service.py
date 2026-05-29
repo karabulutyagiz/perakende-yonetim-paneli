@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.customer import Customer
-from app.models.user import User
 from app.schemas.customer import CustomerCreate, CustomerUpdate
 from app.services import user_service
 

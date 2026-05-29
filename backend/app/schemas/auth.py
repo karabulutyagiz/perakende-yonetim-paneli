@@ -54,11 +54,6 @@ class SignupRequest(BaseModel):
     contact_phone: str | None = Field(default=None, max_length=32)
 
 
-class SignupResponse(BaseModel):
-    tenant_id: str
-    message: str = "Kayıt alındı. Platform yöneticisi onayından sonra giriş yapabilirsiniz."
-
-
 class DeleteAccountRequest(BaseModel):
     """Apple 5.1.1(v) ve Google Play hesap silme zorunluluğu için.
     Şifre + 'SİL' onayı ile kullanıcı kendi hesabını kalıcı siler."""

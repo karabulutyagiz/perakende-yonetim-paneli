@@ -37,10 +37,26 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# Alembic migration'ları auto-generated; bunları lint'lemek standart değil.
+extend-exclude = ["app/db/migrations"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "RUF"]
-ignore = ["E501"]
+ignore = [
+    "E501",
+    # RUF001/002/003: Türkçe metinlerdeki "ı/İ/ş/ç" gibi karakterler Latin
+    # harflere benziyor diye "ambiguous unicode" uyarısı veriyor. Kod tabanı
+    # baştan sona Türkçe olduğu için bunlar kasıtlı.
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    # UP042: str+Enum miras alan enum'lar DB enum değerlerine values_callable ile
+    # map'leniyor; StrEnum'a çevirmek davranışı değiştirebilir, kasıtlı bırakıldı.
+    "UP042",
+    # RUF012: Pydantic model alanlarındaki list/dict default'ları için yanlış
+    # pozitif (Pydantic zaten default'ları kopyalar); ClassVar önerisi yanlış.
+    "RUF012",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

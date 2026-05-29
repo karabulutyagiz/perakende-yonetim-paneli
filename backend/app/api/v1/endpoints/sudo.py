@@ -209,11 +209,11 @@ async def list_tenants(
     if status_filter:
         try:
             stmt = stmt.where(Tenant.status == TenantStatus(status_filter))
-        except ValueError:
+        except ValueError as exc:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"geçersiz statü: {status_filter}",
-            )
+            ) from exc
     rows = (await db.execute(stmt)).scalars().all()
     return [_to_out(t) for t in rows]
 

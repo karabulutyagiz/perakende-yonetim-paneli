@@ -62,7 +62,7 @@ async def test_customer_can_create_order(app_client, db, user):
 
 @pytest.mark.asyncio
 async def test_convert_order_to_invoice_reduces_stock(app_client, auth_client, db, user):
-    customer, product, _ = await _seed_customer_account(db, user)
+    _customer, product, _ = await _seed_customer_account(db, user)
     login = await app_client.post(
         "/api/v1/auth/login",
         json={"email": "musteri@example.com", "password": "StrongPass123!"},
@@ -137,7 +137,7 @@ async def test_convert_order_to_invoice_with_partial_payment_creates_debt(
 async def test_convert_order_to_invoice_rejects_payment_above_order_total(
     app_client, auth_client, db, user
 ):
-    customer, product, _ = await _seed_customer_account(db, user)
+    _customer, product, _ = await _seed_customer_account(db, user)
     login = await app_client.post(
         "/api/v1/auth/login",
         json={"email": "musteri@example.com", "password": "StrongPass123!"},
@@ -169,7 +169,7 @@ async def test_convert_order_to_invoice_rejects_payment_above_order_total(
 
 @pytest.mark.asyncio
 async def test_invoice_response_uses_real_order_number(app_client, auth_client, db, user):
-    customer, product, _ = await _seed_customer_account(db, user)
+    _customer, product, _ = await _seed_customer_account(db, user)
     login = await app_client.post(
         "/api/v1/auth/login",
         json={"email": "musteri@example.com", "password": "StrongPass123!"},

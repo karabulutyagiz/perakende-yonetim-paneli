@@ -1,5 +1,5 @@
 """JWT + Argon2id tabanlı güvenlik yardımcıları."""
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 from uuid import uuid4
 
@@ -43,7 +43,7 @@ def _create_token(
     tenant_id: str | None,
     role: str,
 ) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "sub": subject,
         "iat": int(now.timestamp()),

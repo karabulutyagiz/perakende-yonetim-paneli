@@ -22,7 +22,6 @@ from app.schemas.auth import (
     LoginRequest,
     RefreshRequest,
     SignupRequest,
-    SignupResponse,
     TenantInfo,
     TokenPair,
     UserMe,
@@ -40,19 +39,19 @@ def _issue_tokens(user) -> TokenPair:
     )
 
 
-@router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/signup", response_model=TokenPair, status_code=status.HTTP_201_CREATED)
 @limiter.limit(settings.rate_limit_login, key_func=get_remote_address)
 async def signup(
     request: Request,
     payload: SignupRequest,
     db: DBSession,
-) -> SignupResponse:
+) -> TokenPair:
     """Genel public B2B SaaS kayıt akışı.
 
-    Türkiye'deki herhangi bir toptan/perakende işletme sahibi
-    uygulamadan veya web sitesinden hesap açabilir. Tenant `APPROVED`
-    durumunda açılır — anında login mümkün.
-    Apple Guideline 3.2 (genel kitle / public audience) için.
+    Türkiye'deki herhangi bir toptan/perakende işletme sahibi uygulamadan
+    veya web sitesinden hesap açabilir. Tenant `APPROVED` durumunda açılır ve
+    yanıtta access/refresh token döner — kullanıcı kaydın hemen ardından
+    uygulamayı tam olarak kullanmaya başlar (Apple Guideline 3.2 / public audience).
     """
     existing = await user_service.get_by_email(db, payload.email)
     if existing is not None:
@@ -60,7 +59,7 @@ async def signup(
             status_code=status.HTTP_409_CONFLICT,
             detail="Bu e-posta zaten kayıtlı",
         )
-    tenant, _ = await user_service.signup_tenant(
+    _, user = await user_service.signup_tenant(
         db,
         business_name=payload.business_name,
         email=payload.email,
@@ -68,17 +67,7 @@ async def signup(
         password=payload.password,
         contact_phone=payload.contact_phone,
     )
-    # Tenant PENDING durumunda açılır — platform owner sudo panelden
-    # manuel onaylayana kadar giriş yapamaz. Apple reviewer için NOT:
-    # demo hesap (playreview@toptanpanel.com) zaten APPROVED, onunla test
-    # edebilirler (review notes'ta belirtildi).
-    return SignupResponse(
-        tenant_id=str(tenant.id),
-        message=(
-            "Başvurunuz alındı. Platform yöneticisi tarafından "
-            "onaylandıktan sonra giriş yapabilirsiniz."
-        ),
-    )
+    return _issue_tokens(user)
 
 
 @router.post("/login", response_model=TokenPair)

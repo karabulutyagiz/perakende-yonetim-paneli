@@ -28,7 +28,9 @@ def _client():
 
 
 def _local_base_url() -> str:
-    """Backend host'u (CORS origin'lerden ya da default 8000)."""
+    """Backend host'u — production'da PUBLIC_API_BASE env'inden gelir."""
+    if settings.public_api_base:
+        return settings.public_api_base.rstrip("/")
     return f"http://localhost:{settings.backend_port}/api/v1"
 
 

@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     s3_presign_expires: int = 600
     aws_access_key_id: str | None = None
     aws_secret_access_key: str | None = None
+    # Public URL the browser uses to talk to this API; falls back to
+    # localhost which only works in dev. In prod set:
+    #   PUBLIC_API_BASE=https://toptanperakende.online/api/v1
+    public_api_base: str | None = None
 
     rate_limit_login: str = "5/minute"
     rate_limit_refresh: str = "30/minute"

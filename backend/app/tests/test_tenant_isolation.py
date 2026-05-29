@@ -7,7 +7,6 @@ import pytest
 
 from app.models import Customer, Debt, DebtStatus, Invoice, PaymentMethod, Product
 
-
 # auth_client → tenant A (admin@example.com)
 # auth_client_b → tenant B (other@example.com)
 

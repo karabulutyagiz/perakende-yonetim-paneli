@@ -128,8 +128,10 @@ def _ensure_local_path(key: str) -> Path:
     # Path traversal koruması
     try:
         target.resolve().relative_to(_LOCAL_UPLOAD_DIR.resolve())
-    except (ValueError, OSError):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Geçersiz key")
+    except (ValueError, OSError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Geçersiz key"
+        ) from exc
     target.parent.mkdir(parents=True, exist_ok=True)
     return target
 

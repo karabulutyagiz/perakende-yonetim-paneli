@@ -1,0 +1,87 @@
+====================================================
+RESPONSE TO 2.1(b) — Business model clarification
+====================================================
+
+Thank you for the questions. Direct answers to all five — each is
+also documented publicly on our website:
+
+  • Pricing:  https://toptanperakende.online/en/pricing
+  • Support:  https://toptanperakende.online/support
+  • FAQ:      https://toptanperakende.online/en/faq
+  • Privacy:  https://toptanperakende.online/privacy
+  • Terms:    https://toptanperakende.online/terms
+
+1. Who uses paid features?
+   Nobody. The app has ZERO paid features. No in-app purchases,
+   no subscriptions, no per-user fees, no ads.
+
+2. Where can users purchase features?
+   Nowhere. The app is not sold through any channel — web, store,
+   enterprise sales, distributor. Every feature is free.
+
+3. What previously-purchased features can a user access?
+   None. ParaSende has never been sold in any form.
+
+4. What paid content/subscriptions/features bypass IAP?
+   None. No content is unlocked from any external store, web
+   payment or organizational subscription.
+
+5. Enterprise — single user, consumer, family?
+   Free PUBLIC B2B SaaS for small/medium wholesale-retail
+   business owners in Türkiye. Anyone downloads the app and
+   applies for an account from the in-app "Open a business
+   account" screen. No invite, no contract, no partnership
+   required. NOT an enterprise product.
+
+====================================================
+APP OVERVIEW
+====================================================
+B2B wholesale/retail order-management app for Turkish business
+owners. UI is Turkish. NO in-app purchases, NO ads, NO third-
+party tracking SDKs. Public B2B, free of charge.
+
+⚠️ PLEASE USE THE DEMO ACCOUNT BELOW — do NOT register a new
+account from the sign-up screen. New sign-ups require admin
+approval (typical: same business day), so a fresh account
+cannot log in immediately. The demo account is already approved
+and has full functionality.
+
+====================================================
+HOW TO TEST
+====================================================
+1. Launch the app. Login screen shows "ParaSende" with logo.
+2. Sign in with the demo account in the fields below.
+3. Products screen opens. Top bar icons: Gelen Siparişler
+   (orders), Faturalar (invoices), Raporlar (reports),
+   Borçlar (debts), Hesabım (account).
+4. Add items to cart (right panel on iPad / FAB on iPhone).
+   Tap "Faturayı oluştur" to open invoice flow, pick a customer
+   (or "Yeni müşteri ekle" to create one in-app), pick payment,
+   send the invoice. The invoice appears under Faturalar.
+5. Tap the receipt icon on any invoice → PDF preview, savable
+   to Photos.
+6. Reports tab shows daily/weekly/monthly sales charts.
+
+====================================================
+IN-APP ACCOUNT DELETION (Guideline 5.1.1(v))
+====================================================
+1. From the Products screen, tap "Hesabım" (Account) icon top
+   right (person silhouette).
+2. Scroll to the red "Tehlikeli bölge" (Danger zone) section.
+3. Tap "Hesabımı sil" (Delete my account).
+4. Confirmation dialog asks for password and typed "SİL"
+   (Turkish for DELETE).
+5. Submitting calls DELETE /auth/account → permanently deletes
+   the user account, the tenant business, all customers,
+   products, orders, invoices, debts and payments. The user is
+   logged out and routed back to the login screen.
+
+Web fallback: https://toptanperakende.online/delete-account
+
+====================================================
+INFRASTRUCTURE & SUPPORT
+====================================================
+The app talks to our production backend over HTTPS only
+(https://toptanperakende.online).
+Support email:  destek@toptanperakende.online
+Support center: https://toptanperakende.online/support

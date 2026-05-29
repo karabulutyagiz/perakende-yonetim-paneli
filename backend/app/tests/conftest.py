@@ -10,8 +10,7 @@ os.environ.setdefault("RATE_LIMIT_LOGIN", "10000/minute")
 os.environ.setdefault("RATE_LIMIT_REFRESH", "10000/minute")
 os.environ.setdefault("RATE_LIMIT_UPLOAD", "10000/minute")
 
-from collections.abc import AsyncGenerator
-from typing import AsyncIterator
+from collections.abc import AsyncGenerator, AsyncIterator
 
 import pytest
 import pytest_asyncio
@@ -19,7 +18,6 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from app.api.deps import get_current_user
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import create_app
