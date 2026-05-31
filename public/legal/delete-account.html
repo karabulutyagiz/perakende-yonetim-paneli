@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hesap ve Veri Silme — ParaSende</title>
+  <meta name="description" content="ParaSende hesabınızı ve verilerinizi nasıl sileceğinize dair tam kapsamlı rehber: uygulama içi yöntem, web panel yöntemi, e-posta yöntemi.">
+  <link rel="stylesheet" href="/legal/_styles.css">
+</head>
+<body>
+  <header class="brand">
+    <a href="/"><img src="/app-icon.png" alt=""></a>
+    <a href="/">ParaSende</a>
+    <span class="lang">
+      <a href="/legal/delete-account.html" class="active">TR</a>·
+      <a href="/legal/en/delete-account.html">EN</a>
+    </span>
+  </header>
+
+  <h1>Hesap ve Veri Silme</h1>
+  <p class="muted">Yürürlük tarihi: 27.05.2026 · Son güncelleme: 27.05.2026</p>
+
+  <p>Bu sayfa, ParaSende hesabınızın ve işletmenize ait verilerin nasıl silineceğini, hangi verilerin silindiğini ve sürecin ne kadar sürdüğünü adım adım açıklar. Apple App Store ve Google Play politikalarına uygun olarak hesap silme talebi <strong>üç ayrı kanaldan</strong> başlatılabilir.</p>
+
+  <h2>1. Hesabınızı silebileceğiniz üç yöntem</h2>
+
+  <h3>A. Mobil uygulama üzerinden (önerilen — App Store ve Google Play politikalarına uygun)</h3>
+  <ol>
+    <li>ParaSende mobil uygulamasını açın ve hesabınıza giriş yapın.</li>
+    <li>Alt menüden <strong>"Hesabım"</strong> sekmesine girin.</li>
+    <li>Sayfanın altındaki <strong>"Hesabımı sil"</strong> bağlantısına dokunun.</li>
+    <li>Açılan onay ekranında talebinizi onayladıktan sonra çıkış yapılır.</li>
+    <li>Sunucu tarafında talebiniz işleme alınır; e-postanıza onay maili gelir.</li>
+  </ol>
+
+  <h3>B. Web admin paneli üzerinden</h3>
+  <ol>
+    <li>Tarayıcıdan <a href="/#/y/giris">toptanperakende.online/#/y/giris</a> adresine gidin.</li>
+    <li>Mobil uygulamadaki e-posta ve parolanızla giriş yapın.</li>
+    <li>Sol menüden <strong>"Hesabım"</strong> bölümüne girin.</li>
+    <li>Sayfanın altındaki <strong>"Hesabımı ve tüm verilerimi sil"</strong> bağlantısına tıklayın.</li>
+    <li>Açılan onay penceresinde e-postanızı yazıp talebi onaylayın.</li>
+  </ol>
+
+  <h3>C. E-posta ile</h3>
+  <ol>
+    <li><a href="mailto:destek@toptanpanel.com">destek@toptanpanel.com</a> adresine e-posta gönderin.</li>
+    <li>Konu satırına: <strong>ParaSende Hesap Silme Talebi</strong></li>
+    <li>E-postada şu bilgileri verin: hesabınızda kullandığınız e-posta, işletme adınızı, varsa ek talepleriniz (ör. veri dışa aktarımı).</li>
+    <li>Talebi doğrulamak için kayıtlı e-posta adresinden göndermenizi öneririz; gerekirse ikinci bir doğrulama maili gönderilir.</li>
+    <li>Onay sonrası silme süreci başlatılır.</li>
+  </ol>
+
+  <h2>2. Silinen veriler — neyin ne zaman silindiği</h2>
+  <table>
+    <thead><tr><th>Veri</th><th>Silinme zamanı (aktif kayıt)</th><th>Yedeklerden silinme</th></tr></thead>
+    <tbody>
+      <tr><td>Kullanıcı hesabı (ad, e-posta, hashlenmiş parola)</td><td>En geç <strong>14 gün</strong></td><td>En geç <strong>30 gün</strong></td></tr>
+      <tr><td>İşletme kaydı</td><td>En geç 14 gün</td><td>En geç 30 gün</td></tr>
+      <tr><td>Ürün ve kategori kayıtları</td><td>En geç 14 gün</td><td>En geç 30 gün</td></tr>
+      <tr><td>Müşteri kayıtları</td><td>En geç 14 gün</td><td>En geç 30 gün</td></tr>
+      <tr><td>Fatura ve sipariş kayıtları</td><td>En geç 14 gün</td><td>En geç 30 gün</td></tr>
+      <tr><td>Borç ve ödeme kayıtları</td><td>En geç 14 gün</td><td>En geç 30 gün</td></tr>
+      <tr><td>Yüklenen ürün görselleri (S3)</td><td>En geç 14 gün</td><td>En geç 30 gün</td></tr>
+      <tr><td>Oturum / cihaz kayıtları</td><td>En geç 14 gün</td><td>En geç 30 gün</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. İstisnalar — silinmeyen şeyler</h2>
+  <ul>
+    <li>Yasal saklama yükümlülüğü olan kayıtlar (örn. ödeme uyuşmazlıklarına dair iletişim) ilgili mevzuat süresince saklanabilir.</li>
+    <li>Tamamen anonimleştirilmiş, kişiyle ilişkilendirilemeyen toplu istatistikler (sayısal raporlar) saklanabilir.</li>
+    <li>Sahteciliği veya kötüye kullanımı önlemek için zorunlu olan minimum log kayıtları kısa süreyle saklanabilir.</li>
+  </ul>
+
+  <h2>4. Veriyi dışa aktarma (silmeden önce)</h2>
+  <p>Hesabınızı silmeden önce verilerinizin bir kopyasını isteyebilirsiniz. <a href="mailto:destek@toptanpanel.com">destek@toptanpanel.com</a> adresine "Veri Dışa Aktarım Talebi" konusuyla yazmanız yeterlidir. Verileriniz CSV / JSON formatında size iletilir (genellikle 3 iş günü içinde).</p>
+
+  <h2>5. Silme sonrası geri alma</h2>
+  <p>Silme talebi geri alınabilir bir adımdır; yalnızca aktif veriler silinmeden önceki <strong>ilk 24 saat</strong> içinde aynı e-posta yoluyla "İptal" bildiriminde bulunarak süreci durdurabilirsiniz. 24 saat sonrasında veriler kalıcı olarak işleme alınır ve geri yüklenemez.</p>
+
+  <h2>6. Tek hesabı silmek mi, sadece çıkış yapmak mı?</h2>
+  <ul>
+    <li><strong>Çıkış yapmak:</strong> Sadece bu cihazdan oturumu kapatır; verileriniz sunucuda kalmaya devam eder.</li>
+    <li><strong>Hesap silmek:</strong> Tüm cihazlarda otomatik çıkış yapılır ve sunucudaki tüm veriler yukarıdaki sürelere uygun şekilde silinir.</li>
+  </ul>
+
+  <h2>7. İletişim</h2>
+  <p>Süreç hakkında her türlü soru için <a href="mailto:destek@toptanpanel.com">destek@toptanpanel.com</a>.</p>
+
+  <footer class="foot">
+    <a href="/legal/privacy.html">Gizlilik Politikası</a>
+    <a href="/legal/terms.html">Kullanım Koşulları</a>
+    <a href="/legal/cookies.html">Çerez Politikası</a>
+    <a href="/legal/kvkk.html">KVKK Aydınlatma Metni</a>
+    <a href="/destek/">Destek Merkezi</a>
+    <a href="/">Ana sayfa</a>
+  </footer>
+</body>
+</html>

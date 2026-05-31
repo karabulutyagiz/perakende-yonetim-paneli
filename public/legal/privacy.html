@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gizlilik Politikası — ParaSende</title>
+  <meta name="description" content="ParaSende uygulamasının kişisel verileri nasıl topladığı, sakladığı, işlediği ve nasıl silinebileceğine dair gizlilik politikası.">
+  <link rel="stylesheet" href="/legal/_styles.css">
+</head>
+<body>
+  <header class="brand">
+    <a href="/"><img src="/app-icon.png" alt=""></a>
+    <a href="/">ParaSende</a>
+    <span class="lang">
+      <a href="/legal/privacy.html" class="active">TR</a>·
+      <a href="/legal/en/privacy.html">EN</a>
+    </span>
+  </header>
+
+  <h1>Gizlilik Politikası</h1>
+  <p class="muted">Yürürlük tarihi: 27.05.2026 · Son güncelleme: 27.05.2026</p>
+
+  <p>ParaSende ("biz", "uygulama"), toptan ve perakende küçük/orta ölçekli işletmelerin stok, müşteri, fatura, borç ve raporlama süreçlerini yönetmesi için sunulan ücretsiz bir mobil + web yazılımıdır. Bu Gizlilik Politikası; uygulamayı kullanırken hangi kişisel verilerin işlendiğini, neden işlendiğini, ne kadar süreyle saklandığını, kimlerle paylaşıldığını ve bu veriler üzerindeki haklarınızı açıklar.</p>
+
+  <h2>1. Veri sorumlusu</h2>
+  <div class="card">
+    <p><strong>Veri sorumlusu:</strong> Yağız Karabulut (bireysel geliştirici)<br>
+    <strong>Ülke:</strong> Türkiye<br>
+    <strong>İletişim:</strong> <a href="mailto:destek@toptanpanel.com">destek@toptanpanel.com</a><br>
+    <strong>Web:</strong> <a href="https://toptanperakende.online">toptanperakende.online</a></p>
+  </div>
+
+  <h2>2. Toplanan veri kategorileri</h2>
+  <table>
+    <thead><tr><th>Kategori</th><th>Veri</th><th>Kaynak</th></tr></thead>
+    <tbody>
+      <tr><td>Hesap</td><td>Ad-soyad, e-posta, isteğe bağlı telefon, işletme adı, hashlenmiş parola</td><td>Kullanıcının uygulamadaki kayıt ekranı</td></tr>
+      <tr><td>Oturum</td><td>Cihaz tipi (örn. iPhone / Android / web), son giriş zamanı, oturum kimliği</td><td>Otomatik (oturum açma sırasında)</td></tr>
+      <tr><td>İş verileri</td><td>Ürünler, müşteriler, faturalar, borçlar, ödeme kayıtları, kategori bilgileri</td><td>Kullanıcı tarafından uygulama içinde oluşturulur</td></tr>
+      <tr><td>Yüklenen dosyalar</td><td>Ürün görselleri, işletme logosu</td><td>Kullanıcının kendi cihazından yüklediği dosyalar</td></tr>
+      <tr><td>Teknik loglar</td><td>İstek kimliği, HTTP yöntemi, yanıt durum kodu, süre (ms), hata yığını</td><td>Backend tarafından otomatik üretilir</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>Toplamadığımız veriler:</strong> Konum, kişiler/rehber, mikrofon, kamera (sürekli erişim), sağlık verisi, takvim, App Tracking Transparency kapsamındaki reklam izleme tanımlayıcıları, üçüncü taraf reklam ağı verileri — bunların hiçbirini istemiyor ve toplamıyoruz.</p>
+
+  <h2>3. Verilerin işlenme amaçları ve hukuki dayanağı</h2>
+  <ul>
+    <li><strong>Hizmetin sunulması</strong> (KVKK 5/2-c, GDPR 6(1)(b) — sözleşmenin ifası): hesabınızı oluşturmak ve oturum açmanızı sağlamak, ürün/fatura/borç verilerinizi saklamak ve sunmak.</li>
+    <li><strong>Güvenlik ve kötüye kullanımı önleme</strong> (KVKK 5/2-f, GDPR 6(1)(f) — meşru menfaat): yeni hesapları onaylamadan önce kontrol etmek, oturum loglarıyla anormal aktiviteyi tespit etmek, parola hashleme ile sızıntı riskini azaltmak.</li>
+    <li><strong>Hizmetin sürekliliği</strong>: günlük yedek alma, hata ayıklama, performans takibi.</li>
+    <li><strong>Yasal yükümlülükler</strong> (KVKK 5/2-a, GDPR 6(1)(c)): yetkili kamu kurumlarının yasaya uygun talepleri.</li>
+  </ul>
+
+  <h2>4. Verilerin saklanma süresi</h2>
+  <ul>
+    <li>Aktif hesap verileri: hesap aktif olduğu sürece.</li>
+    <li>Hesap silme talebinden sonra aktif kayıtlar: en geç <strong>14 gün</strong> içinde silinir.</li>
+    <li>Yedekler (S3 / EBS snapshot): en geç <strong>30 gün</strong> içinde döngüsel olarak kaldırılır.</li>
+    <li>Yasal saklama yükümlülüğü olan kayıtlar (ör. ödeme uyuşmazlıklarına dair iletişim) ilgili mevzuat süresince saklanabilir.</li>
+    <li>Teknik loglar: en fazla 90 gün.</li>
+  </ul>
+
+  <h2>5. Verilerin paylaşılması</h2>
+  <p>Verileriniz reklam veya pazarlama amacıyla <strong>satılmaz, paylaşılmaz veya kiralanmaz</strong>. Paylaşımın söz konusu olduğu tek durumlar şunlardır:</p>
+  <ul>
+    <li><strong>Altyapı sağlayıcıları</strong>: Amazon Web Services (AWS, Frankfurt — eu-central-1) — sunucu (EC2), veritabanı (PostgreSQL on EC2), nesne depolama (S3), yedekleme. Aktarım sırasında TLS, depolama sırasında AWS-yönetilen şifreleme kullanılır.</li>
+    <li><strong>Yasal zorunluluk</strong>: Yetkili Türk veya AB kamu kurumlarının yasaya uygun yazılı talepleri halinde.</li>
+  </ul>
+  <p>Üçüncü taraf reklam ağı, analitik (Google Analytics, Facebook Pixel vb.), CRM veya marketing automation hizmeti kullanılmamaktadır.</p>
+
+  <h2>6. Verilerin saklandığı yer ve güvenlik önlemleri</h2>
+  <ul>
+    <li>Tüm veriler AWS Frankfurt bölgesinde (eu-central-1) saklanır — KVKK ve GDPR uyumlu bir konum.</li>
+    <li>Parolalar <strong>Argon2id</strong> (time_cost=3, memory=64MB, parallelism=4) ile geri döndürülemez biçimde hashlenir; düz metin parola hiçbir yerde tutulmaz.</li>
+    <li>Oturumlar <strong>JWT access + refresh rotation</strong> ile yönetilir; parola değiştiğinde tüm cihazlardaki oturumlar otomatik geçersizleşir.</li>
+    <li>Veritabanı public erişime kapalı, izole bir alt ağda çalışır.</li>
+    <li>Görsel dosyalar S3 private bucket'ta tutulur, kısa süreli presigned URL ile geçici erişim sağlanır.</li>
+    <li>Her işletme için <strong>tenant izolasyonu</strong>: bir işletmenin kullanıcısı diğer bir işletmenin verisini hiçbir koşulda göremez.</li>
+    <li>Sunucu erişimi yalnızca SSH anahtarıyla yapılır; fail2ban ile brute force koruması açıktır.</li>
+    <li>Trafik tamamen HTTPS (Let's Encrypt sertifikasıyla, otomatik yenileme) üzerinden iletilir.</li>
+  </ul>
+
+  <h2>7. Çocuklar</h2>
+  <p>ParaSende 18 yaş üstü işletme sahiplerine yöneliktir. Çocuklara veya öğrencilere yönelik içerik veya pazarlama yapılmamakta; çocuklardan bilerek veri toplanmamaktadır. 18 yaş altı birinin verilerinin hatalı olarak toplandığını fark edersek talep üzerine derhal sileriz.</p>
+
+  <h2>8. Çerezler ve benzer teknolojiler</h2>
+  <p>Pazarlama, izleme veya analitik amaçlı çerez/SDK kullanılmamaktadır. Yalnızca uygulamanın çalışması için zorunlu teknik depolama (örn. oturum tokenının saklanması) kullanılır. Detay için <a href="/legal/cookies.html">Çerez Politikası</a> sayfasına bakın.</p>
+
+  <h2>9. Kullanıcı hakları</h2>
+  <p>KVKK madde 11 ve GDPR madde 12-22 kapsamında aşağıdaki haklara sahipsiniz:</p>
+  <ul>
+    <li>İşlenen kişisel verilerinizi <strong>öğrenme</strong> ve <strong>erişme</strong>,</li>
+    <li>İşlenme amaçlarını öğrenme,</li>
+    <li>Aktarılan üçüncü kişileri bilme,</li>
+    <li><strong>Düzeltme</strong> talep etme,</li>
+    <li><strong>Silme</strong> veya <strong>anonimleştirme</strong> talep etme,</li>
+    <li><strong>Veri taşınabilirliği</strong> (dışa aktarma) talep etme,</li>
+    <li>Otomatik karar verme süreçlerine karşı çıkma (uygulamada otomatik karar verme yapılmamaktadır),</li>
+    <li>Zarar halinde tazminat talep etme.</li>
+  </ul>
+  <p>Talepleriniz için <a href="mailto:destek@toptanpanel.com">destek@toptanpanel.com</a> adresine yazabilirsiniz. Aynı iş günü içinde dönüş yapmaya çalışıyoruz; KVKK çerçevesinde yasal yanıt süremiz 30 gündür.</p>
+
+  <h2>10. Politika güncellemeleri</h2>
+  <p>Bu politika güncellendiğinde "Yürürlük tarihi" ve "Son güncelleme" alanları değiştirilir. Önemli değişiklikler (örn. yeni veri kategorisi eklenmesi) uygulama içinden ve bu sayfada duyurulur.</p>
+
+  <h2>11. İletişim</h2>
+  <p>Bu politika veya kişisel verileriniz hakkında her türlü soru, talep ve şikâyet için:<br>
+  <a href="mailto:destek@toptanpanel.com">destek@toptanpanel.com</a></p>
+
+  <footer class="foot">
+    <a href="/legal/terms.html">Kullanım Koşulları</a>
+    <a href="/legal/cookies.html">Çerez Politikası</a>
+    <a href="/legal/kvkk.html">KVKK Aydınlatma Metni</a>
+    <a href="/legal/delete-account.html">Hesap ve Veri Silme</a>
+    <a href="/destek/">Destek Merkezi</a>
+    <a href="/">Ana sayfa</a>
+  </footer>
+</body>
+</html>

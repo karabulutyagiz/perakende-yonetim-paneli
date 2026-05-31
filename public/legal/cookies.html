@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Çerez Politikası — ParaSende</title>
+  <meta name="description" content="ParaSende uygulama ve web sitesinde kullanılan çerezler, yerel depolama ve benzer teknolojilere dair detaylı açıklama.">
+  <link rel="stylesheet" href="/legal/_styles.css">
+</head>
+<body>
+  <header class="brand">
+    <a href="/"><img src="/app-icon.png" alt=""></a>
+    <a href="/">ParaSende</a>
+    <span class="lang">
+      <a href="/legal/cookies.html" class="active">TR</a>·
+      <a href="/legal/en/cookies.html">EN</a>
+    </span>
+  </header>
+
+  <h1>Çerez Politikası</h1>
+  <p class="muted">Yürürlük tarihi: 27.05.2026 · Son güncelleme: 27.05.2026</p>
+
+  <p>Bu Çerez Politikası, ParaSende mobil uygulaması, web admin paneli ve <a href="/">toptanperakende.online</a> web sitesinde çerezlerin, yerel depolamanın (localStorage / sessionStorage) ve benzer teknolojilerin nasıl kullanıldığını açıklar.</p>
+
+  <h2>1. Özet</h2>
+  <div class="card">
+    <p><strong>Pazarlama veya izleme amaçlı çerez kullanmıyoruz.</strong> Google Analytics, Facebook Pixel, reklam yeniden hedefleme (retargeting) gibi üçüncü taraf izleme teknolojileri tarafımızca yüklenmez. Yalnızca hizmetin çalışması için zorunlu birkaç teknik öğe kullanılır.</p>
+  </div>
+
+  <h2>2. Çerez nedir?</h2>
+  <p>Çerez, ziyaret ettiğiniz bir web sitesinin tarayıcınız aracılığıyla cihazınıza yerleştirdiği küçük bir veri parçasıdır. Çerezler bir sonraki ziyaretinizde sizi tanımak veya tercihlerinizi hatırlamak için kullanılır. Mobil uygulamalarda benzer rol "yerel depolama" tarafından üstlenilir.</p>
+
+  <h2>3. Hangi teknolojileri kullanıyoruz?</h2>
+  <table>
+    <thead><tr><th>Teknoloji</th><th>Amaç</th><th>Tür</th><th>Süre</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Oturum tokenı (JWT)</td>
+        <td>Oturumunuzu açık tutmak için JWT access &amp; refresh token'ları cihazınızda güvenli yerel depolamada saklanır.</td>
+        <td>Zorunlu — uygulamanın çalışması için</td>
+        <td>Access token: 30 dakika · Refresh token: 14 gün</td>
+      </tr>
+      <tr>
+        <td>Tercih ayarı</td>
+        <td>Dil seçimi ve karanlık tema gibi UI tercihleri yerel depolamada saklanır.</td>
+        <td>Zorunlu — kullanıcı deneyimi için</td>
+        <td>Kullanıcı temizleyene kadar</td>
+      </tr>
+      <tr>
+        <td>Flutter service worker (web admin)</td>
+        <td>Web admin panelinin Flutter dosyalarının önbelleğe alınması (offline-first değil; sadece daha hızlı tekrar açılış).</td>
+        <td>Zorunlu — performans</td>
+        <td>Tarayıcı önbellek politikasına bağlı</td>
+      </tr>
+      <tr>
+        <td>Caddy / HTTPS oturum çerezi</td>
+        <td>HTTP/2 ve TLS bağlantısının yönetimi için sunucu tarafından otomatik olarak kullanılabilir.</td>
+        <td>Zorunlu</td>
+        <td>Oturum süresi</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Kullanmadığımız çerezler</h2>
+  <ul>
+    <li><strong>Reklam çerezleri</strong> (DoubleClick, Facebook Pixel, TikTok, Google Ads, AdSense vb.) — kullanılmaz.</li>
+    <li><strong>Analitik çerezleri</strong> (Google Analytics, Mixpanel, Amplitude, Hotjar, Plausible, Segment vb.) — kullanılmaz.</li>
+    <li><strong>Sosyal medya çerezleri</strong> (Facebook beğen butonu, Twitter butonu vb.) — kullanılmaz.</li>
+    <li><strong>CRM / Re-marketing izleyicileri</strong> — kullanılmaz.</li>
+  </ul>
+
+  <h2>5. Üçüncü taraf çerezler</h2>
+  <p>ParaSende, üçüncü tarafların çerez yüklemesine izin vermez. Mobil uygulama tarafında ise üçüncü taraf reklam SDK'sı / izleme SDK'sı bulunmaz.</p>
+
+  <h2>6. Çerez tercihlerinin yönetimi</h2>
+  <ul>
+    <li><strong>Tarayıcıdan</strong>: Çerezleri tarayıcı ayarlarınızdan silebilir veya devre dışı bırakabilirsiniz. Bunu yaparsanız oturumunuz kapanır ve tekrar giriş yapmanız gerekir.</li>
+    <li><strong>Mobil uygulamadan</strong>: Cihaz sistem ayarlarınızdan ParaSende'nin depolama alanını temizleyebilirsiniz. Bu, kayıtlı oturumu temizler — tekrar giriş yapmanız gerekir.</li>
+    <li><strong>Hesabınızdan</strong>: Hesabınızı sildiğinizde tüm sunucu tarafı veri 14 gün içinde, yedeklerde 30 gün içinde kaldırılır. Detay: <a href="/legal/delete-account.html">Hesap ve Veri Silme</a>.</li>
+  </ul>
+
+  <h2>7. Politika güncellemeleri</h2>
+  <p>Bu Çerez Politikası güncellendiğinde "Son güncelleme" tarihi değişir. Yeni bir teknoloji eklenmesi gerekirse (ör. opt-in analitik), kullanmadan önce bu sayfada duyurulur ve sizden izin istenir.</p>
+
+  <h2>8. İletişim</h2>
+  <p><a href="mailto:destek@toptanpanel.com">destek@toptanpanel.com</a></p>
+
+  <footer class="foot">
+    <a href="/legal/privacy.html">Gizlilik Politikası</a>
+    <a href="/legal/terms.html">Kullanım Koşulları</a>
+    <a href="/legal/kvkk.html">KVKK Aydınlatma Metni</a>
+    <a href="/legal/delete-account.html">Hesap ve Veri Silme</a>
+    <a href="/destek/">Destek Merkezi</a>
+    <a href="/">Ana sayfa</a>
+  </footer>
+</body>
+</html>

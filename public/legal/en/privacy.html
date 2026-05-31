@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy — ParaSende</title>
+  <meta name="description" content="How ParaSende collects, stores, processes and deletes personal data.">
+  <link rel="stylesheet" href="/legal/_styles.css">
+</head>
+<body>
+  <header class="brand">
+    <a href="/en/"><img src="/app-icon.png" alt=""></a>
+    <a href="/en/">ParaSende</a>
+    <span class="lang">
+      <a href="/legal/privacy.html">TR</a>·
+      <a href="/legal/en/privacy.html" class="active">EN</a>
+    </span>
+  </header>
+
+  <h1>Privacy Policy</h1>
+  <p class="muted">Effective date: 2026-05-27 · Last updated: 2026-05-27</p>
+
+  <p>ParaSende ("we", "the app") is a free mobile + web software for small and medium wholesale/retail businesses to manage inventory, customers, invoices, credit-sales debt and reports. This Privacy Policy explains what personal data we process, why, how long we keep it, who we share it with and your rights regarding that data.</p>
+
+  <h2>1. Data controller</h2>
+  <div class="card">
+    <p><strong>Controller:</strong> Yağız Karabulut (individual developer)<br>
+    <strong>Country:</strong> Türkiye<br>
+    <strong>Contact:</strong> <a href="mailto:destek@toptanpanel.com">destek@toptanpanel.com</a><br>
+    <strong>Website:</strong> <a href="https://toptanperakende.online">toptanperakende.online</a></p>
+  </div>
+
+  <h2>2. Categories of data we collect</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Data</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>Account</td><td>Full name, email, optional phone, business name, hashed password</td><td>User's in-app sign-up screen</td></tr>
+      <tr><td>Session</td><td>Device type (iPhone / Android / web), last sign-in time, session ID</td><td>Automatic (on sign-in)</td></tr>
+      <tr><td>Business data</td><td>Products, customers, invoices, debts, payment records, categories</td><td>Created by user inside the app</td></tr>
+      <tr><td>Uploaded files</td><td>Product images, business logo</td><td>Files uploaded by user</td></tr>
+      <tr><td>Technical logs</td><td>Request ID, HTTP method, status code, duration (ms), error trace</td><td>Generated automatically by the backend</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>Data we do not collect:</strong> location, contacts, microphone, persistent camera, health data, calendar, App Tracking Transparency identifiers, third-party advertising-network data — we do not request or collect any of these.</p>
+
+  <h2>3. Why we process data and our legal basis</h2>
+  <ul>
+    <li><strong>Service delivery</strong> (GDPR 6(1)(b), Turkish DPL 5/2-c — performance of a contract): create your account and let you sign in, store and serve your product/invoice/debt records.</li>
+    <li><strong>Security and abuse prevention</strong> (GDPR 6(1)(f) — legitimate interests): approve new accounts before activation, detect anomalies in session logs, hash passwords to limit breach risk.</li>
+    <li><strong>Service continuity</strong>: daily backups, debugging, performance monitoring.</li>
+    <li><strong>Legal obligations</strong> (GDPR 6(1)(c)): lawful requests from competent authorities.</li>
+  </ul>
+
+  <h2>4. How long we keep your data</h2>
+  <ul>
+    <li>Active account data: as long as the account is active.</li>
+    <li>After an account-deletion request, active records are deleted within <strong>14 days</strong>.</li>
+    <li>Backups (S3 / EBS snapshots) are rotated out within <strong>30 days</strong>.</li>
+    <li>Records subject to legal retention obligations are kept for the period required by law.</li>
+    <li>Technical logs: at most 90 days.</li>
+  </ul>
+
+  <h2>5. Who we share data with</h2>
+  <p>Your data is <strong>never sold, shared or rented</strong> for advertising or marketing. The only data sharing is:</p>
+  <ul>
+    <li><strong>Infrastructure providers</strong>: Amazon Web Services (AWS, Frankfurt — eu-central-1) — server (EC2), database (PostgreSQL on EC2), object storage (S3), backups. TLS in transit; AWS-managed encryption at rest.</li>
+    <li><strong>Legal obligations</strong>: lawful written requests from Turkish or EU authorities.</li>
+  </ul>
+  <p>No third-party advertising network, analytics (Google Analytics, Facebook Pixel, etc.), CRM or marketing-automation service is used.</p>
+
+  <h2>6. Where data is stored and security measures</h2>
+  <ul>
+    <li>All data is stored in AWS Frankfurt (eu-central-1) — a GDPR-compliant region.</li>
+    <li>Passwords are irreversibly hashed with <strong>Argon2id</strong> (time_cost=3, memory=64MB, parallelism=4); plaintext passwords are not stored anywhere.</li>
+    <li>Sessions use <strong>JWT access + refresh rotation</strong>; password changes invalidate every session on every device.</li>
+    <li>The database runs in a private, isolated subnet with no public access.</li>
+    <li>Images are stored in a private S3 bucket and only ever exposed via short-lived presigned URLs.</li>
+    <li><strong>Tenant isolation</strong>: a user from one business can never see another business's data.</li>
+    <li>Server access is SSH-key-only; fail2ban protects against brute force.</li>
+    <li>All traffic is HTTPS (Let's Encrypt with auto-renewal).</li>
+  </ul>
+
+  <h2>7. Children</h2>
+  <p>ParaSende targets business owners 18+. We do not market to or knowingly collect data from children. If we discover that data from a minor has been collected in error, we will delete it upon request.</p>
+
+  <h2>8. Cookies and similar technologies</h2>
+  <p>We use no marketing, tracking or analytics cookies/SDKs. Only the technical storage strictly required to run the app (e.g. storing the session token) is used. Details: <a href="/legal/en/cookies.html">Cookie Policy</a>.</p>
+
+  <h2>9. Your rights</h2>
+  <p>Under GDPR articles 12–22 (and Turkish DPL article 11) you have the right to:</p>
+  <ul>
+    <li>be informed and access your personal data,</li>
+    <li>know the purposes of processing,</li>
+    <li>know the third parties to whom data is transferred,</li>
+    <li>request <strong>rectification</strong>,</li>
+    <li>request <strong>erasure</strong> or <strong>anonymization</strong>,</li>
+    <li>request <strong>data portability</strong> (export),</li>
+    <li>object to automated decision-making (we use none in the app),</li>
+    <li>seek compensation in case of damages.</li>
+  </ul>
+  <p>To exercise these rights, email <a href="mailto:destek@toptanpanel.com">destek@toptanpanel.com</a>. We aim to respond the same business day; statutory deadline is 30 days.</p>
+
+  <h2>10. Policy updates</h2>
+  <p>When this policy is updated, the "Effective date" and "Last updated" fields change. Significant changes (e.g. a new data category) are announced inside the app and on this page.</p>
+
+  <h2>11. Contact</h2>
+  <p>For any question, request or complaint about this policy or your personal data:<br>
+  <a href="mailto:destek@toptanpanel.com">destek@toptanpanel.com</a></p>
+
+  <footer class="foot">
+    <a href="/legal/en/terms.html">Terms of Use</a>
+    <a href="/legal/en/cookies.html">Cookie Policy</a>
+    <a href="/legal/en/delete-account.html">Account &amp; Data Deletion</a>
+    <a href="/en/support/">Support Center</a>
+    <a href="/en/">Home</a>
+  </footer>
+</body>
+</html>

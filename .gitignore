@@ -18,6 +18,10 @@ htmlcov/
 # Node / Flutter
 node_modules/
 .next/
+# Next.js static export çıktısı + TS build cache (üretilmiş, repoya girmez)
+/out/
+next-env.d.ts
+tsconfig.tsbuildinfo
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies

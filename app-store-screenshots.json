@@ -1,0 +1,145 @@
+{
+  "appName": "ParaSende",
+  "themeId": "warm-editorial",
+  "locales": [
+    "tr"
+  ],
+  "locale": "tr",
+  "device": "iphone",
+  "orientation": "portrait",
+  "appIcon": "/app-icon.png",
+  "slidesByDevice": {
+    "iphone": [
+      {
+        "id": "iphone-01",
+        "layout": "hero",
+        "label": {
+          "tr": "PARASENDE"
+        },
+        "headline": {
+          "tr": "Toptan satış\ntek ekranda."
+        },
+        "screenshot": "/screenshots/apple/iphone/tr/01.png"
+      },
+      {
+        "id": "iphone-02",
+        "layout": "device-bottom",
+        "label": {
+          "tr": "ÜRÜNLER"
+        },
+        "headline": {
+          "tr": "Ürünlerini\nhızlı bul."
+        },
+        "screenshot": "/screenshots/apple/iphone/tr/01.png"
+      },
+      {
+        "id": "iphone-03",
+        "layout": "two-devices",
+        "label": {
+          "tr": "SİPARİŞ"
+        },
+        "headline": {
+          "tr": "Sepeti hazırla,\nsatışı tamamla."
+        },
+        "screenshot": "/screenshots/apple/iphone/tr/02.png",
+        "screenshotSecondary": "/screenshots/apple/iphone/tr/03.png"
+      },
+      {
+        "id": "iphone-04",
+        "layout": "device-top",
+        "label": {
+          "tr": "FATURA"
+        },
+        "headline": {
+          "tr": "Faturayı anında\noluştur."
+        },
+        "screenshot": "/screenshots/apple/iphone/tr/03.png",
+        "inverted": true
+      },
+      {
+        "id": "iphone-05",
+        "layout": "device-bottom",
+        "label": {
+          "tr": "RAPORLAR"
+        },
+        "headline": {
+          "tr": "Kazancını\nnet gör."
+        },
+        "screenshot": "/screenshots/apple/iphone/tr/04.png"
+      }
+    ],
+    "android": [
+      {
+        "id": "android-01",
+        "layout": "hero",
+        "label": {
+          "tr": "PARASENDE"
+        },
+        "headline": {
+          "tr": "Toptan satış\ntek ekranda."
+        },
+        "screenshot": "/screenshots/android/phone/tr/01.png"
+      },
+      {
+        "id": "android-02",
+        "layout": "device-bottom",
+        "label": {
+          "tr": "ÜRÜNLER"
+        },
+        "headline": {
+          "tr": "Ürünlerini\nhızlı bul."
+        },
+        "screenshot": "/screenshots/android/phone/tr/01.png"
+      },
+      {
+        "id": "android-03",
+        "layout": "two-devices",
+        "label": {
+          "tr": "SİPARİŞ"
+        },
+        "headline": {
+          "tr": "Sepeti hazırla,\nsatışı tamamla."
+        },
+        "screenshot": "/screenshots/android/phone/tr/02.png",
+        "screenshotSecondary": "/screenshots/android/phone/tr/03.png"
+      },
+      {
+        "id": "android-04",
+        "layout": "device-top",
+        "label": {
+          "tr": "FATURA"
+        },
+        "headline": {
+          "tr": "Faturayı anında\noluştur."
+        },
+        "screenshot": "/screenshots/android/phone/tr/03.png",
+        "inverted": true
+      },
+      {
+        "id": "android-05",
+        "layout": "device-bottom",
+        "label": {
+          "tr": "RAPORLAR"
+        },
+        "headline": {
+          "tr": "Kazancını\nnet gör."
+        },
+        "screenshot": "/screenshots/android/phone/tr/04.png"
+      }
+    ],
+    "ipad": [],
+    "android-7": [],
+    "android-10": [],
+    "feature-graphic": [
+      {
+        "id": "feature-graphic-01",
+        "layout": "feature-graphic",
+        "label": {},
+        "headline": {
+          "tr": "ParaSende ile toptan satış daha hızlı."
+        },
+        "screenshot": ""
+      }
+    ]
+  }
+}
