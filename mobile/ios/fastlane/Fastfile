@@ -68,7 +68,7 @@ platform :ios do
     api_key = asc_api_key
     upload_to_testflight(
       api_key: api_key,
-      ipa: "../build/ios/ipa/ParaSende.ipa",
+      ipa: "../build/ios/ipa/Zirve Toptan.ipa",
       skip_waiting_for_build_processing: true,
       distribute_external: false,
     )

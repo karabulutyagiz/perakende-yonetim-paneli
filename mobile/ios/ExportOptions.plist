@@ -2,22 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>destination</key>
+	<string>export</string>
 	<key>method</key>
 	<string>app-store</string>
-	<key>teamID</key>
-	<string>5C2NRK938T</string>
-	<key>signingStyle</key>
-	<string>manual</string>
 	<key>provisioningProfiles</key>
 	<dict>
 		<key>com.parasende.app</key>
-		<string>ParaSende App Store</string>
+		<string>ParaSende App Store 1787845190</string>
 	</dict>
+	<key>signingStyle</key>
+	<string>manual</string>
 	<key>stripSwiftSymbols</key>
 	<true/>
+	<key>teamID</key>
+	<string>5C2NRK938T</string>
 	<key>uploadSymbols</key>
 	<true/>
-	<key>destination</key>
-	<string>export</string>
 </dict>
 </plist>
