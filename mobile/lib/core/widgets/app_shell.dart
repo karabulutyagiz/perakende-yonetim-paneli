@@ -60,7 +60,7 @@ class AppDrawer extends ConsumerWidget {
                   _DrawerLogo(logoUrl: me?.tenantLogoUrl),
                   const SizedBox(height: 12),
                   Text(
-                    me?.tenantName ?? 'ParaSende',
+                    me?.tenantName ?? 'Zirve Toptan',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

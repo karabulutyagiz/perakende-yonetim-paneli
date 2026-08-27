@@ -138,7 +138,7 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
       final allowed = await _ensureGalleryPermission();
       if (!allowed) {
         _showMessage(
-            'Fotoğraf izni reddedildi. Ayarlar → ParaSende → Fotoğraflar.');
+            'Fotoğraf izni reddedildi. Ayarlar → Zirve Toptan → Fotoğraflar.');
         return;
       }
       final pngBytes = await _captureReceiptPng();

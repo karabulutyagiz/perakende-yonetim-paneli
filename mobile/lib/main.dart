@@ -27,7 +27,7 @@ class ToptanApp extends ConsumerWidget {
     }
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
-      title: 'ParaSende',
+      title: 'Zirve Toptan',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       themeMode: ThemeMode.light,
