@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/app_shell.dart';
 import '../data/report_repository.dart';
 
 final _rangeDateFormat = DateFormat('dd.MM.yyyy', 'tr_TR');
@@ -60,14 +61,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final isTablet = MediaQuery.of(context).size.width >= 900;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: Colors.black,
-        surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Colors.black, size: 32),
-        titleSpacing: 4,
-        title: const _SectionHeaderTitle(title: 'Raporlar'),
-      ),
+      drawer: const AppDrawer(current: '/reports'),
+      appBar: const PsAppBar(title: 'Raporlar'),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => const Center(
@@ -472,26 +467,6 @@ class _RangeFilterBar extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SectionHeaderTitle extends StatelessWidget {
-  const _SectionHeaderTitle({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      title,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.titleLarge?.copyWith(
-        color: Colors.black,
-        fontWeight: FontWeight.w800,
       ),
     );
   }

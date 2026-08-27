@@ -17,6 +17,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _password = TextEditingController();
   bool _loading = false;
   bool _obscure = true;
+  bool _rememberMe = true;
 
   @override
   void dispose() {
@@ -30,7 +31,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _loading = true);
     final ok = await ref
         .read(authControllerProvider.notifier)
-        .login(_email.text.trim(), _password.text);
+        .login(_email.text.trim(), _password.text, rememberMe: _rememberMe);
     if (!mounted) return;
     setState(() => _loading = false);
     if (!ok) {
@@ -112,7 +113,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? 'En az 6 karakter'
                           : null,
                     ),
-                    SizedBox(height: isPhone ? 18 : 24),
+                    SizedBox(height: isPhone ? 4 : 8),
+                    CheckboxListTile(
+                      value: _rememberMe,
+                      onChanged: _loading
+                          ? null
+                          : (v) => setState(() => _rememberMe = v ?? true),
+                      title: const Text('Beni hatırla'),
+                      subtitle: const Text(
+                        'Uygulamayı açtığında doğrudan panele gir',
+                      ),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      dense: isPhone,
+                    ),
+                    SizedBox(height: isPhone ? 10 : 16),
                     FilledButton(
                       onPressed: _loading ? null : _submit,
                       child: _loading

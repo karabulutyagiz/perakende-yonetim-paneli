@@ -70,12 +70,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final width = MediaQuery.of(context).size.width;
     final isPhone = width < 600;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hesap aç'),
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: Colors.black,
-        surfaceTintColor: Colors.transparent,
-      ),
+      appBar: AppBar(title: const Text('Hesap aç')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

@@ -268,11 +268,12 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
             ),
           ),
           if (customers.value?.isEmpty ?? false)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text(
-                'Henüz müşteri yok. Web admin panelinden müşteri ekleyin.',
-                style: TextStyle(color: Colors.orange),
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: FilledButton.tonalIcon(
+                icon: const Icon(Icons.person_add_alt_1),
+                label: const Text('İlk müşterini ekle'),
+                onPressed: () => _showQuickAddCustomer(context),
               ),
             ),
           const SizedBox(height: 24),

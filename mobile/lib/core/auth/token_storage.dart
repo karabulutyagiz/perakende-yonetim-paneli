@@ -5,12 +5,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _kAccess = 'gokce.access_token';
 const _kRefresh = 'gokce.refresh_token';
+const _kRemember = 'gokce.remember_me';
 
 abstract class TokenStorage {
   Future<String?> readAccessToken();
   Future<String?> readRefreshToken();
   Future<void> saveTokens({required String access, required String refresh});
   Future<void> clear();
+
+  /// Kullanıcı "Beni hatırla"yı seçtiyse true. Seçmediyse uygulama bir sonraki
+  /// açılışta kayıtlı oturumu kullanmaz, login ekranına düşer.
+  Future<bool> readRememberMe();
+  Future<void> saveRememberMe(bool value);
 }
 
 class _SecureTokenStorage implements TokenStorage {
@@ -31,6 +37,18 @@ class _SecureTokenStorage implements TokenStorage {
     await _storage.delete(key: _kAccess);
     await _storage.delete(key: _kRefresh);
   }
+
+  // Kayıt yoksa true: bu ayar eklenmeden önce giriş yapmış kullanıcıların
+  // oturumu güncellemeden sonra da açık kalsın.
+  @override
+  Future<bool> readRememberMe() async {
+    final value = await _storage.read(key: _kRemember);
+    return value == null ? true : value == 'true';
+  }
+
+  @override
+  Future<void> saveRememberMe(bool value) =>
+      _storage.write(key: _kRemember, value: value ? 'true' : 'false');
 }
 
 class _WebTokenStorage implements TokenStorage {
@@ -69,6 +87,18 @@ class _WebTokenStorage implements TokenStorage {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kAccess);
     await prefs.remove(_kRefresh);
+  }
+
+  @override
+  Future<bool> readRememberMe() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_kRemember) ?? true;
+  }
+
+  @override
+  Future<void> saveRememberMe(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kRemember, value);
   }
 }
 

@@ -4,11 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/auth_controller.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/app_shell.dart';
 import '../../cart/providers/cart_provider.dart';
 import '../data/product.dart';
 import '../data/product_repository.dart';
 
+/// Ana ekran — ürün kataloğu. Getir tarzı: arama, kategori çipleri,
+/// 2 kolonlu kartlar, altta yapışkan sepet çubuğu.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -17,498 +21,234 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  bool _showTabletCartPanel = false;
+  final _search = TextEditingController();
+  String? _selectedCategory; // null = Tümü
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  List<Product> _applyFilters(List<Product> products) {
+    var out = products;
+    final q = _search.text.trim().toLowerCase();
+    if (q.isNotEmpty) {
+      out = out.where((p) => p.name.toLowerCase().contains(q)).toList();
+    }
+    if (_selectedCategory != null) {
+      out = out.where((p) => p.categoryName == _selectedCategory).toList();
+    }
+    return out;
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
-    final cart = ref.watch(cartProvider);
-    final width = MediaQuery.of(context).size.width;
-    final isTablet = width >= 900;
-    final isPhone = width < 600;
-
     final async = ref.watch(productsProvider);
 
-    if (!isTablet && _showTabletCartPanel) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          setState(() => _showTabletCartPanel = false);
-        }
-      });
-    }
-
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        foregroundColor: Colors.black,
-        surfaceTintColor: Colors.transparent,
-        iconTheme: IconThemeData(color: Colors.black, size: isPhone ? 20 : 24),
-        title: Row(
-          children: [
-            Icon(Icons.storefront_rounded,
-                size: isPhone ? 22 : 28, color: Colors.black),
-            SizedBox(width: isPhone ? 6 : 10),
-            const Expanded(child: _SectionTitleBlock(title: 'Ürünler')),
-          ],
-        ),
-        actions: [
-          if (auth.isTenantOwner)
-            _TopActionButton(
-              icon: const Icon(Icons.shopping_bag_outlined),
-              tooltip: 'Gelen siparişler',
-              onPressed: () => context.push('/orders'),
-            ),
-          if (auth.isTenantOwner)
-            _TopActionButton(
-              icon: const Icon(Icons.receipt_rounded),
-              tooltip: 'Faturalar',
-              onPressed: () => context.push('/invoices'),
-            ),
-          if (auth.isTenantOwner)
-            _TopActionButton(
-              icon: const Icon(Icons.insights_rounded),
-              tooltip: 'Raporlar',
-              onPressed: () => context.push('/reports'),
-            ),
-          if (auth.isTenantOwner)
-            _TopActionButton(
-              icon: const Icon(Icons.receipt_long_rounded),
-              tooltip: 'Borçlar',
-              onPressed: () => context.push('/debts'),
-            ),
-          if (auth.isCustomer)
-            _TopActionButton(
-              icon: const Icon(Icons.shopping_bag_outlined),
-              tooltip: 'Siparişlerim',
-              onPressed: () => context.push('/orders'),
-            ),
-          _TopActionButton(
-            icon: const Icon(Icons.account_circle_rounded),
-            tooltip: 'Hesabım',
-            onPressed: () => context.push('/account'),
-          ),
-        ],
-      ),
-      floatingActionButton: isTablet || cart.isEmpty
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => context.push('/cart'),
-              icon: const Icon(Icons.shopping_cart_rounded),
-              label: Text(
-                '${cart.itemCount} ürün · ${formatCurrency(cart.total)}',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+      drawer: const AppDrawer(current: '/'),
+      appBar: const PsAppBar(title: 'Ürünler', showCartAction: true),
+      floatingActionButton: auth.isTenantOwner
+          ? FloatingActionButton.extended(
+              heroTag: 'add-product',
+              onPressed: () => context.push('/products/new'),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text(
+                'Ürün ekle',
+                style: TextStyle(fontWeight: FontWeight.w800),
               ),
-            ),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: const CartStickyBar(),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, size: 64),
-                const SizedBox(height: 12),
-                const Text(
-                  'Ürünler yüklenemedi. Lütfen tekrar deneyin.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: () => ref.invalidate(productsProvider),
-                  child: const Text('Tekrar dene'),
-                ),
-              ],
-            ),
-          ),
+        error: (e, _) => ErrorState(
+          message: 'Ürünler yüklenemedi. Lütfen tekrar deneyin.',
+          onRetry: () => ref.invalidate(productsProvider),
         ),
-        data: (products) => isTablet
-            ? Row(
+        data: (products) {
+          final categories = products
+              .map((p) => p.categoryName)
+              .whereType<String>()
+              .toSet()
+              .toList()
+            ..sort();
+          final filtered = _applyFilters(products);
+
+          if (products.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: () async => ref.invalidate(productsProvider),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                          child: _TabletTopBar(
-                            auth: auth,
-                            cart: cart,
-                            showSummary: _showTabletCartPanel,
-                            onToggleSummary: () {
-                              if (auth.isTenantOwner) {
-                                context.push('/orders');
-                                return;
-                              }
-                              setState(
-                                () => _showTabletCartPanel =
-                                    !_showTabletCartPanel,
-                              );
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: RefreshIndicator(
-                            onRefresh: () async =>
-                                ref.invalidate(productsProvider),
-                            child: _ProductsGrid(
-                              products: products,
-                              onAdd: (product) {
-                                ref.read(cartProvider.notifier).add(product);
-                              },
-                              maxCrossAxisExtent: 260,
-                              padding: const EdgeInsets.all(16),
-                            ),
-                          ),
-                        ),
-                      ],
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: EmptyState(
+                      icon: Icons.inventory_2_outlined,
+                      title: auth.isTenantOwner
+                          ? 'Henüz ürün eklemedin'
+                          : 'Henüz ürün yok',
+                      subtitle: auth.isTenantOwner
+                          ? 'İlk ürününü ekle, kataloğun burada görünsün.'
+                          : 'Toptancın ürün ekleyince burada görünecek.',
+                      actionLabel:
+                          auth.isTenantOwner ? 'İlk ürünü ekle' : null,
+                      onAction: auth.isTenantOwner
+                          ? () => context.push('/products/new')
+                          : null,
                     ),
-                  ),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    child: _showTabletCartPanel
-                        ? _TabletCartPanel(auth: auth, cart: cart)
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              )
-            : RefreshIndicator(
-                onRefresh: () async => ref.invalidate(productsProvider),
-                child: _ProductsGrid(
-                  products: products,
-                  onAdd: (product) {
-                    ref.read(cartProvider.notifier).add(product);
-                  },
-                  maxCrossAxisExtent: 220,
-                  padding: const EdgeInsets.all(12),
-                ),
-              ),
-      ),
-    );
-  }
-
-}
-
-class _TopActionButton extends StatelessWidget {
-  const _TopActionButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  final Widget icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final isPhone = MediaQuery.of(context).size.width < 600;
-    return Padding(
-      padding: EdgeInsets.only(right: isPhone ? 2 : 8),
-      child: IconButton(
-        onPressed: onPressed,
-        tooltip: tooltip,
-        icon: IconTheme(
-          data: IconThemeData(
-            size: isPhone ? 22 : 40,
-            color: Colors.black,
-          ),
-          child: icon,
-        ),
-        iconSize: isPhone ? 22 : 40,
-        padding: EdgeInsets.all(isPhone ? 8 : 16),
-        constraints: BoxConstraints(
-          minWidth: isPhone ? 40 : 76,
-          minHeight: isPhone ? 40 : 76,
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionTitleBlock extends StatelessWidget {
-  const _SectionTitleBlock({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: Colors.black,
-            fontWeight: FontWeight.w800,
-          ),
-    );
-  }
-}
-
-class _TabletTopBar extends StatelessWidget {
-  const _TabletTopBar({
-    required this.auth,
-    required this.cart,
-    required this.showSummary,
-    required this.onToggleSummary,
-  });
-
-  final AuthState auth;
-  final Cart cart;
-  final bool showSummary;
-  final VoidCallback onToggleSummary;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    auth.isCustomer ? 'Sipariş yönetimi' : 'Satış yönetimi',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    cart.isEmpty
-                        ? 'Henüz seçili ürün yok'
-                        : '${cart.itemCount} ürün seçildi · ${formatCurrency(cart.total)}',
-                    style: theme.textTheme.bodyMedium,
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: 16),
-            FilledButton.icon(
-              onPressed: onToggleSummary,
-              icon: Icon(
-                auth.isTenantOwner
-                    ? Icons.shopping_bag_rounded
-                    : Icons.shopping_cart_rounded,
-              ),
-              label: Text(auth.isTenantOwner ? 'Gelen Siparişler' : 'Sepetim'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+            );
+          }
 
-class _ProductsGrid extends StatelessWidget {
-  const _ProductsGrid({
-    required this.products,
-    required this.onAdd,
-    required this.maxCrossAxisExtent,
-    required this.padding,
-  });
-
-  final List<Product> products;
-  final ValueChanged<Product> onAdd;
-  final double maxCrossAxisExtent;
-  final EdgeInsets padding;
-
-  @override
-  Widget build(BuildContext context) {
-    if (products.isEmpty) {
-      return ListView(
-        padding: padding,
-        children: const [
-          SizedBox(height: 120),
-          Icon(Icons.inventory_2_outlined, size: 72),
-          SizedBox(height: 16),
-          Center(child: Text('Henüz ürün eklenmedi')),
-        ],
-      );
-    }
-
-    return GridView.builder(
-      padding: padding,
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: maxCrossAxisExtent,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.62,
-      ),
-      itemCount: products.length,
-      itemBuilder: (_, i) => _ProductCard(
-        product: products[i],
-        onAdd: () => onAdd(products[i]),
-      ),
-    );
-  }
-}
-
-class _TabletCartPanel extends ConsumerWidget {
-  const _TabletCartPanel({required this.auth, required this.cart});
-
-  final AuthState auth;
-  final Cart cart;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    return Container(
-      width: 360,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border:
-            Border(left: BorderSide(color: theme.colorScheme.outlineVariant)),
-      ),
-      child: SafeArea(
-        left: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Sepet Özeti',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
+          return RefreshIndicator(
+            onRefresh: () async => ref.invalidate(productsProvider),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                // Arama
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                    child: TextField(
+                      controller: _search,
+                      onChanged: (_) => setState(() {}),
+                      textInputAction: TextInputAction.search,
+                      decoration: InputDecoration(
+                        hintText: 'Ürün ara',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: _search.text.isEmpty
+                            ? null
+                            : IconButton(
+                                icon: const Icon(Icons.close_rounded),
+                                onPressed: () {
+                                  _search.clear();
+                                  setState(() {});
+                                },
+                              ),
                       ),
                     ),
                   ),
-                  if (!cart.isEmpty)
-                    IconButton(
-                      tooltip: 'Sepeti boşalt',
-                      onPressed: () => ref.read(cartProvider.notifier).clear(),
-                      icon: const Icon(Icons.delete_outline),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (cart.isEmpty)
-                Expanded(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                ),
+                // Kategori çipleri
+                if (categories.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 48,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 6),
                         children: [
-                          const Icon(Icons.shopping_cart_outlined, size: 64),
-                          const SizedBox(height: 12),
-                          Text(
-                            auth.isCustomer
-                                ? 'Sipariş vermek için ürün ekleyin'
-                                : 'Fatura oluşturmak için ürün ekleyin',
-                            textAlign: TextAlign.center,
+                          _CategoryChip(
+                            label: 'Tümü',
+                            selected: _selectedCategory == null,
+                            onTap: () =>
+                                setState(() => _selectedCategory = null),
                           ),
+                          for (final c in categories)
+                            _CategoryChip(
+                              label: c,
+                              selected: _selectedCategory == c,
+                              onTap: () => setState(() =>
+                                  _selectedCategory =
+                                      _selectedCategory == c ? null : c),
+                            ),
                         ],
                       ),
                     ),
                   ),
-                )
-              else ...[
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: cart.lines.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) {
-                      final line = cart.lines[i];
-                      return Card(
-                        margin: EdgeInsets.zero,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                line.product.name,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${formatCurrency(line.product.price)} / ${line.product.unit}',
-                                style: theme.textTheme.bodySmall,
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      formatCurrency(line.total),
-                                      style:
-                                          theme.textTheme.titleSmall?.copyWith(
-                                        color: theme.colorScheme.primary,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                  _TabletQtyStepper(
-                                    value: line.quantity,
-                                    onChanged: (v) => ref
-                                        .read(cartProvider.notifier)
-                                        .updateQty(line.product.id, v),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                if (filtered.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: EmptyState(
+                      icon: Icons.search_off_rounded,
+                      title: 'Aradığın ürün bulunamadı',
+                      subtitle: 'Farklı bir arama ya da kategori dene.',
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 220,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 0.70,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (_, i) => ProductCard(
+                          product: filtered[i],
+                          canEdit: auth.isTenantOwner,
+                          onAdd: () {
+                            ref
+                                .read(cartProvider.notifier)
+                                .add(filtered[i]);
+                          },
+                          onEdit: auth.isTenantOwner
+                              ? () => context.push(
+                                    '/products/${filtered[i].id}/edit',
+                                    extra: filtered[i],
+                                  )
+                              : null,
                         ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Text('Toplam', style: theme.textTheme.titleMedium),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        formatCurrency(cart.total),
-                        textAlign: TextAlign.end,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        childCount: filtered.length,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      if (auth.isCustomer) {
-                        context.push('/cart');
-                        return;
-                      }
-                      context.push('/cart');
-                    },
-                    icon: Icon(
-                      auth.isCustomer
-                          ? Icons.shopping_bag_outlined
-                          : Icons.receipt_long_rounded,
-                    ),
-                    label: Text(
-                      auth.isCustomer ? 'Siparişi tamamla' : 'Sepeti aç',
-                    ),
                   ),
-                ),
               ],
-            ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Material(
+        color: selected ? AppColors.primary : AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: selected ? AppColors.primary : AppColors.line,
+              ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : AppColors.text,
+                fontWeight: FontWeight.w700,
+                fontSize: 13.5,
+              ),
+            ),
           ),
         ),
       ),
@@ -516,109 +256,206 @@ class _TabletCartPanel extends ConsumerWidget {
   }
 }
 
-class _TabletQtyStepper extends StatelessWidget {
-  const _TabletQtyStepper({required this.value, required this.onChanged});
+/// Getir tarzı ürün kartı: kare görsel, ad, fiyat, köşede yuvarlak + butonu.
+class ProductCard extends StatelessWidget {
+  const ProductCard({
+    super.key,
+    required this.product,
+    required this.onAdd,
+    this.canEdit = false,
+    this.onEdit,
+  });
 
-  final double value;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton.filledTonal(
-          icon: const Icon(Icons.remove),
-          onPressed: () => onChanged(value - 1),
-        ),
-        SizedBox(
-          width: 42,
-          child: Text(
-            value.toStringAsFixed(value == value.roundToDouble() ? 0 : 2),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-          ),
-        ),
-        IconButton.filledTonal(
-          icon: const Icon(Icons.add),
-          onPressed: () => onChanged(value + 1),
-        ),
-      ],
-    );
-  }
-}
-
-class _ProductCard extends StatelessWidget {
-  const _ProductCard({required this.product, required this.onAdd});
   final Product product;
   final VoidCallback onAdd;
+  final bool canEdit;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    final outOfStock = product.stock <= 0;
+    final lowStock = !outOfStock && product.stock <= 5;
+
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: product.imageUrl == null
-                ? Container(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: const Icon(Icons.image_outlined, size: 40),
-                  )
-                : CachedNetworkImage(
-                    imageUrl: product.imageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) => const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2)),
-                    errorWidget: (_, __, ___) => Container(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: const Icon(Icons.broken_image_outlined, size: 40),
+      child: InkWell(
+        onTap: canEdit ? onEdit : (outOfStock ? null : onAdd),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Görsel + üzerine ekle butonu
+            AspectRatio(
+              aspectRatio: 1.15,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ColoredBox(
+                    color: const Color(0xFFF0F2F1),
+                    child: product.imageUrl == null
+                        ? const Icon(
+                            Icons.image_outlined,
+                            size: 38,
+                            color: AppColors.textMuted,
+                          )
+                        : CachedNetworkImage(
+                            imageUrl: product.imageUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => const Center(
+                              child: SizedBox(
+                                width: 22,
+                                height: 22,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                            errorWidget: (_, __, ___) => const Icon(
+                              Icons.broken_image_outlined,
+                              size: 38,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                  ),
+                  if (outOfStock)
+                    Container(
+                      color: Colors.white.withValues(alpha: 0.72),
+                      alignment: Alignment.center,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppColors.text.withValues(alpha: 0.82),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Tükendi',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (lowStock)
+                    Positioned(
+                      left: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Son ${product.stock.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF3D2E00),
+                          ),
+                        ),
+                      ),
+                    ),
+                  // Sepete ekle — Getir tarzı köşe butonu
+                  Positioned(
+                    right: 8,
+                    bottom: 8,
+                    child: Material(
+                      color:
+                          outOfStock ? AppColors.line : AppColors.primary,
+                      shape: const CircleBorder(),
+                      elevation: outOfStock ? 0 : 2,
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: outOfStock ? null : onAdd,
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.add_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  product.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Stok: ${product.stock.toStringAsFixed(0)} ${product.unit}',
-                  style: theme.textTheme.bodySmall,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  formatCurrency(product.price),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.tonal(
-              onPressed: product.stock > 0 ? onAdd : null,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(36),
-                shape: const RoundedRectangleBorder(),
+                  if (canEdit)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Material(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: onEdit,
+                          child: const Padding(
+                            padding: EdgeInsets.all(6),
+                            child: Icon(
+                              Icons.edit_rounded,
+                              size: 17,
+                              color: AppColors.text,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-              child: Text(product.stock > 0 ? 'Sepete ekle' : 'Stokta yok'),
             ),
-          ),
-        ],
+            // Bilgiler
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      formatCurrency(product.price),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Expanded(
+                      child: Text(
+                        product.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          height: 1.25,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      outOfStock
+                          ? 'Stokta yok'
+                          : '${product.stock.toStringAsFixed(0)} ${product.unit}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: outOfStock
+                            ? AppColors.danger
+                            : AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

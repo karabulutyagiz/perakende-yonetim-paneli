@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/auth/auth_controller.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/app_shell.dart';
 import '../../invoices/data/invoice_repository.dart';
 import '../../orders/data/order_repository.dart';
 
@@ -20,14 +22,12 @@ class OrdersScreen extends ConsumerStatefulWidget {
 }
 
 class _OrdersScreenState extends ConsumerState<OrdersScreen> {
-  String? _selectedOrderId;
   final _searchController = TextEditingController();
-  final _searchFocusNode = FocusNode();
+  String? _statusFilter; // null = tümü
 
   @override
   void dispose() {
     _searchController.dispose();
-    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -37,103 +37,43 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     final async = ref.watch(
       auth.isTenantOwner ? allOrdersProvider : myOrdersProvider,
     );
-    final isTablet = MediaQuery.of(context).size.width >= 900;
     final search = _searchController.text.trim();
 
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 4,
-        leading: Navigator.of(context).canPop()
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded),
-                tooltip: 'Geri',
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : IconButton(
-                icon: const Icon(Icons.home_rounded),
-                tooltip: 'Ana sayfa',
-                onPressed: () => context.go('/'),
-              ),
-        title: _SectionHeaderTitle(
-          title: auth.isTenantOwner ? 'Gelen Siparişler' : 'Siparişlerim',
-        ),
-        actions: [
-          if (auth.isCustomer)
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: TextButton.icon(
-                onPressed: () => context.go('/'),
-                icon: const Icon(Icons.home_rounded),
-                label: const Text('Ana sayfa'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  backgroundColor: Colors.black.withValues(alpha: 0.06),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  minimumSize: const Size(0, 56),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ),
-        ],
+      drawer: const AppDrawer(current: '/orders'),
+      appBar: PsAppBar(
+        title: auth.isTenantOwner ? 'Gelen Siparişler' : 'Siparişlerim',
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => const Center(
-          child: Text('Siparişler yüklenemedi. Lütfen tekrar deneyin.'),
+        error: (e, _) => ErrorState(
+          message: 'Siparişler yüklenemedi. Lütfen tekrar deneyin.',
+          onRetry: () => ref.invalidate(
+            auth.isTenantOwner ? allOrdersProvider : myOrdersProvider,
+          ),
         ),
         data: (orders) {
-          final filtered = search.isEmpty
+          var filtered = search.isEmpty
               ? orders
               : orders
                   .where((order) => _orderNo(order).startsWith(search))
                   .toList();
-
-          if (orders.isEmpty) {
-            return const Center(child: Text('Henüz siparişiniz yok'));
+          if (_statusFilter != null) {
+            filtered = filtered
+                .where((o) =>
+                    (o['status'] as String? ?? 'pending') == _statusFilter)
+                .toList();
           }
 
-          final selected = filtered.isEmpty
-              ? null
-              : filtered.firstWhere(
-                  (order) => order['id'].toString() == _selectedOrderId,
-                  orElse: () {
-                    _selectedOrderId = filtered.first['id'].toString();
-                    return filtered.first;
-                  },
-                );
-
-          if (!isTablet) {
-            return RefreshIndicator(
-              onRefresh: () async => ref.invalidate(
-                auth.isTenantOwner ? allOrdersProvider : myOrdersProvider,
-              ),
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _OrdersSearchField(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 12),
-                  if (filtered.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 24),
-                      child: Center(child: Text('Aranan sipariş bulunamadı')),
-                    )
-                  else
-                    for (final order in filtered) ...[
-                      _OrderExpansionCard(
-                        order: order,
-                        onCreateInvoice: _openInvoiceDialog,
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                ],
-              ),
+          if (orders.isEmpty) {
+            return EmptyState(
+              icon: Icons.shopping_bag_outlined,
+              title: auth.isTenantOwner
+                  ? 'Henüz sipariş gelmedi'
+                  : 'Henüz siparişin yok',
+              subtitle: auth.isTenantOwner
+                  ? 'Müşterilerin sipariş verince burada görünecek.'
+                  : 'Ürünlerden sepete ekleyip sipariş oluşturabilirsin.',
             );
           }
 
@@ -141,68 +81,93 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
             onRefresh: () async => ref.invalidate(
               auth.isTenantOwner ? allOrdersProvider : myOrdersProvider,
             ),
-            child: LayoutBuilder(
-                builder: (context, constraints) => Row(
-                      children: [
-                        SizedBox(
-                          width: 360,
-                          child: ListView(
-                            padding: const EdgeInsets.all(16),
-                            children: [
-                              _OrdersSearchField(
-                                controller: _searchController,
-                                focusNode: _searchFocusNode,
-                                onChanged: (_) => setState(() {}),
-                              ),
-                              const SizedBox(height: 12),
-                              if (filtered.isEmpty)
-                                const Padding(
-                                  padding: EdgeInsets.only(top: 24),
-                                  child: Center(
-                                    child: Text('Aranan sipariş bulunamadı'),
-                                  ),
-                                )
-                              else
-                                for (final order in filtered) ...[
-                                  _OrderListCard(
-                                    order: order,
-                                    selected: order['id'].toString() ==
-                                        _selectedOrderId,
-                                    onTap: () => setState(() {
-                                      _selectedOrderId = order['id'].toString();
-                                    }),
-                                  ),
-                                  const SizedBox(height: 12),
-                                ],
-                            ],
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              children: [
+                TextField(
+                  controller: _searchController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(8),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: 'Sipariş no ara',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: search.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {});
+                            },
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final f in const [
+                        (null, 'Tümü'),
+                        ('pending', 'Bekliyor'),
+                        ('converted', 'Faturalandı'),
+                        ('cancelled', 'İptal'),
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(f.$2),
+                            selected: _statusFilter == f.$1,
+                            onSelected: (_) =>
+                                setState(() => _statusFilter = f.$1),
                           ),
                         ),
-                        const VerticalDivider(width: 1),
-                        Expanded(
-                          child: SizedBox(
-                            height: constraints.maxHeight,
-                            child: selected == null
-                                ? const Center(
-                                    child: Text('Aranan sipariş bulunamadı'),
-                                  )
-                                : _OrderDetailCard(
-                                    order: selected,
-                                    onCreateInvoice: _openInvoiceDialog,
-                                  ),
-                          ),
-                        ),
-                      ],
-                    )),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (filtered.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 32),
+                    child: Center(child: Text('Aranan sipariş bulunamadı')),
+                  )
+                else
+                  for (final order in filtered) ...[
+                    _OrderCard(
+                      order: order,
+                      onTap: () => _openDetail(order),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+              ],
+            ),
           );
         },
       ),
     );
   }
 
-  Future<void> _openInvoiceDialog(Map<String, dynamic> order) async {
-    final invoiceId = await showDialog<String?>(
+  void _openDetail(Map<String, dynamic> order) {
+    showModalBottomSheet<void>(
       context: context,
-      builder: (_) => _ConvertOrderDialog(order: order),
+      isScrollControlled: true,
+      builder: (_) => _OrderDetailSheet(
+        order: order,
+        onCreateInvoice: _openInvoiceSheet,
+      ),
+    );
+  }
+
+  Future<void> _openInvoiceSheet(Map<String, dynamic> order) async {
+    final invoiceId = await showModalBottomSheet<String?>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _ConvertOrderSheet(order: order),
     );
     if (invoiceId != null && mounted) {
       ref.invalidate(allOrdersProvider);
@@ -210,39 +175,6 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       ref.invalidate(invoicesProvider);
       context.push('/invoices/$invoiceId');
     }
-  }
-}
-
-class _OrdersSearchField extends StatelessWidget {
-  const _OrdersSearchField({
-    required this.controller,
-    required this.focusNode,
-    required this.onChanged,
-  });
-
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      key: const ValueKey('orders-search-field'),
-      controller: controller,
-      focusNode: focusNode,
-      autofocus: true,
-      keyboardType: TextInputType.number,
-      onChanged: onChanged,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(8),
-      ],
-      decoration: const InputDecoration(
-        labelText: 'Sipariş no ara',
-        hintText: 'Örn. 12345678',
-        prefixIcon: Icon(Icons.search_rounded),
-      ),
-    );
   }
 }
 
@@ -256,120 +188,54 @@ String _orderNo(Map<String, dynamic> order) {
   return digits.padLeft(8, '0');
 }
 
-class _SectionHeaderTitle extends StatelessWidget {
-  const _SectionHeaderTitle({required this.title});
+(Color, Color, String) _statusStyle(String status) => switch (status) {
+      'pending' => (
+          const Color(0xFFFFF4D6),
+          const Color(0xFF8A6D00),
+          'Bekliyor'
+        ),
+      'converted' => (
+          AppColors.primaryContainer,
+          AppColors.primaryDark,
+          'Faturalandı'
+        ),
+      'cancelled' => (
+          const Color(0xFFFBE1DF),
+          const Color(0xFF9C2119),
+          'İptal edildi'
+        ),
+      _ => (const Color(0xFFEDEFEE), AppColors.textMuted, 'Bilinmiyor'),
+    };
 
-  final String title;
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.status});
+  final String status;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      title,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.titleLarge?.copyWith(
-        fontWeight: FontWeight.w800,
+    final (bg, fg, label) = _statusStyle(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: fg,
+          fontSize: 11.5,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
 }
 
-class _OrderExpansionCard extends ConsumerWidget {
-  const _OrderExpansionCard({
-    required this.order,
-    required this.onCreateInvoice,
-  });
+class _OrderCard extends StatelessWidget {
+  const _OrderCard({required this.order, required this.onTap});
 
   final Map<String, dynamic> order;
-  final Future<void> Function(Map<String, dynamic> order) onCreateInvoice;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(authControllerProvider);
-    final customer = order['customer'] as Map<String, dynamic>?;
-    final contactName = customer?['account_full_name'] as String?;
-    final createdAt = DateTime.tryParse(order['created_at'] as String? ?? '');
-    final items =
-        (order['items'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
-    final total = (order['total'] as num).toDouble();
-
-    return Card(
-      child: ExpansionTile(
-        title: Text(
-          customer?['name'] as String? ?? 'Sipariş #${_orderNo(order)}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          [
-            if (contactName != null && contactName.isNotEmpty) contactName,
-            'Sipariş #${_orderNo(order)}',
-            if (createdAt != null) _dt.format(createdAt.toLocal()),
-            _statusLabel(order['status'] as String? ?? 'pending'),
-          ].join(' · '),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 110),
-          child: Text(
-            formatCurrency(total),
-            textAlign: TextAlign.end,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        children: [
-          if (auth.isTenantOwner &&
-              (order['status'] as String? ?? 'pending') == 'pending')
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: FilledButton.icon(
-                  onPressed: () => onCreateInvoice(order),
-                  icon: const Icon(Icons.receipt_long_rounded),
-                  label: const Text('Fatura oluştur'),
-                ),
-              ),
-            ),
-          for (final item in items)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                item['product_name'] as String? ?? '—',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Text('${item['quantity']} ${item['unit']}'),
-              trailing: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 110),
-                child: Text(
-                  formatCurrency((item['line_total'] as num).toDouble()),
-                  textAlign: TextAlign.end,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OrderListCard extends StatelessWidget {
-  const _OrderListCard({
-    required this.order,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final Map<String, dynamic> order;
-  final bool selected;
   final VoidCallback onTap;
 
   @override
@@ -378,43 +244,67 @@ class _OrderListCard extends StatelessWidget {
     final customer = order['customer'] as Map<String, dynamic>?;
     final contactName = customer?['account_full_name'] as String?;
     final createdAt = DateTime.tryParse(order['created_at'] as String? ?? '');
-    return Card(
-      color: selected
-          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4)
-          : null,
+    final items =
+        (order['items'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
+    final status = order['status'] as String? ?? 'pending';
+
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                customer?['name'] as String? ?? 'Sipariş #${_orderNo(order)}',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      customer?['name'] as String? ??
+                          'Sipariş #${_orderNo(order)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _StatusBadge(status: status),
+                ],
               ),
               const SizedBox(height: 6),
               Text(
                 [
+                  '#${_orderNo(order)}',
                   if (contactName != null && contactName.isNotEmpty)
                     contactName,
-                  'Sipariş #${_orderNo(order)}',
                   if (createdAt != null) _dt.format(createdAt.toLocal()),
-                  _statusLabel(order['status'] as String? ?? 'pending'),
                 ].join(' · '),
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: AppColors.textMuted),
               ),
               const SizedBox(height: 10),
-              Text(
-                formatCurrency((order['total'] as num).toDouble()),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w800,
-                ),
+              Row(
+                children: [
+                  Text(
+                    '${items.length} kalem',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: AppColors.textMuted),
+                  ),
+                  const Spacer(),
+                  Text(
+                    formatCurrency((order['total'] as num).toDouble()),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -424,8 +314,8 @@ class _OrderListCard extends StatelessWidget {
   }
 }
 
-class _OrderDetailCard extends ConsumerWidget {
-  const _OrderDetailCard({
+class _OrderDetailSheet extends ConsumerWidget {
+  const _OrderDetailSheet({
     required this.order,
     required this.onCreateInvoice,
   });
@@ -442,122 +332,155 @@ class _OrderDetailCard extends ConsumerWidget {
     final customer = order['customer'] as Map<String, dynamic>?;
     final contactName = customer?['account_full_name'] as String?;
     final createdAt = DateTime.tryParse(order['created_at'] as String? ?? '');
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),
-      color: theme.colorScheme.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Sipariş ayrıntısı',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Sipariş no: ${_orderNo(order)}',
-            style: theme.textTheme.titleMedium,
-          ),
-          if (customer?['name'] != null) ...[
-            const SizedBox(height: 4),
-            Text('Dükkan: ${customer!['name']}'),
-          ],
-          if (contactName != null && contactName.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text('Yetkili: $contactName'),
-          ],
-          if (createdAt != null) ...[
-            const SizedBox(height: 4),
-            Text('Tarih: ${_dt.format(createdAt.toLocal())}'),
-          ],
-          const SizedBox(height: 4),
-          Text(
-            'Durum: ${_statusLabel(order['status'] as String? ?? 'pending')}',
-          ),
-          if (auth.isTenantOwner &&
-              (order['status'] as String? ?? 'pending') == 'pending') ...[
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => onCreateInvoice(order),
-              icon: const Icon(Icons.receipt_long_rounded),
-              label: const Text('Bu siparişten fatura oluştur'),
-            ),
-          ],
-          const SizedBox(height: 20),
-          Text(
-            'Ürünler',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
+    final status = order['status'] as String? ?? 'pending';
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.72,
+      maxChildSize: 0.95,
+      minChildSize: 0.5,
+      builder: (ctx, scrollCtl) => SafeArea(
+        top: false,
+        child: ListView(
+          controller: scrollCtl,
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+          children: [
+            Row(
               children: [
-                for (final item in items)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(item['product_name'] as String? ?? '—'),
-                    subtitle: Text('${item['quantity']} ${item['unit']}'),
-                    trailing: Text(
-                      formatCurrency((item['line_total'] as num).toDouble()),
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                Expanded(
+                  child: Text(
+                    customer?['name'] as String? ?? 'Sipariş',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                _StatusBadge(status: status),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              [
+                'Sipariş #${_orderNo(order)}',
+                if (contactName != null && contactName.isNotEmpty)
+                  contactName,
+                if (createdAt != null) _dt.format(createdAt.toLocal()),
+              ].join(' · '),
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.bg,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              child: Column(
+                children: [
+                  for (final item in items)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item['product_name'] as String? ?? '—',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  '${item['quantity']} ${item['unit'] ?? ''}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            formatCurrency(
+                              ((item['line_total'] ??
+                                          ((item['unit_price'] as num?) ?? 0) *
+                                              ((item['quantity'] as num?) ??
+                                                  0)) as num)
+                                  .toDouble(),
+                            ),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.primaryContainer,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  const Text(
+                    'Toplam',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const Spacer(),
+                  Text(
+                    formatCurrency((order['total'] as num).toDouble()),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: AppColors.primaryDark,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Toplam',
-                  style: theme.textTheme.titleMedium,
-                ),
-                const Spacer(),
-                Text(
-                  formatCurrency((order['total'] as num).toDouble()),
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+            if (auth.isTenantOwner && status == 'pending') ...[
+              const SizedBox(height: 14),
+              FilledButton.icon(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await onCreateInvoice(order);
+                },
+                icon: const Icon(Icons.receipt_long_rounded),
+                label: const Text('Bu siparişten fatura oluştur'),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
-String _statusLabel(String status) => switch (status) {
-      'pending' => 'Bekliyor',
-      'converted' => 'Faturaya dönüştü',
-      'cancelled' => 'İptal edildi',
-      _ => 'Durum bilinmiyor',
-    };
+// ---------------------------------------------------------------------------
+// Siparişi faturaya çevirme — tuş takımlı ödeme dağıtımı (alttan açılır).
+// ---------------------------------------------------------------------------
 
-class _ConvertOrderDialog extends ConsumerStatefulWidget {
-  const _ConvertOrderDialog({required this.order});
+class _ConvertOrderSheet extends ConsumerStatefulWidget {
+  const _ConvertOrderSheet({required this.order});
 
   final Map<String, dynamic> order;
 
   @override
-  ConsumerState<_ConvertOrderDialog> createState() =>
-      _ConvertOrderDialogState();
+  ConsumerState<_ConvertOrderSheet> createState() =>
+      _ConvertOrderSheetState();
 }
 
-class _ConvertOrderDialogState extends ConsumerState<_ConvertOrderDialog> {
+class _ConvertOrderSheetState extends ConsumerState<_ConvertOrderSheet> {
   late final TextEditingController _cashController;
   late final TextEditingController _cardController;
   late final TextEditingController _debtController;
@@ -570,8 +493,7 @@ class _ConvertOrderDialogState extends ConsumerState<_ConvertOrderDialog> {
   @override
   void initState() {
     super.initState();
-    // BUG FIX: _total.round() kuruşları yuvarlıyordu (105.55 → 106) ve
-    // backend "sum != total" diye 400 dönüyordu. Kuruş-korumalı format.
+    // Kuruş-korumalı format: 105.55 → "105,55 ₺" (yuvarlama bug'ı düzeltilmişti).
     _cashController = TextEditingController(text: _formatTlAmount(_total));
     _cardController = TextEditingController(text: _formatTlInput(0));
     _debtController = TextEditingController(text: _formatTlInput(0));
@@ -588,71 +510,99 @@ class _ConvertOrderDialogState extends ConsumerState<_ConvertOrderDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Sipariş #${_orderNo(widget.order)} için fatura'),
-      content: SizedBox(
-        width: 420,
+    final theme = Theme.of(context);
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Toplam: ${formatCurrency(_total)}'),
+              Text(
+                'Sipariş #${_orderNo(widget.order)} için fatura',
+                style: theme.textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Toplam: ${formatCurrency(_total)}',
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: AppColors.textMuted),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _AmountBox(
+                      label: 'Nakit',
+                      controller: _cashController,
+                      active: _activeField == _AmountField.cash,
+                      onTap: () =>
+                          setState(() => _activeField = _AmountField.cash),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _AmountBox(
+                      label: 'Kart',
+                      controller: _cardController,
+                      active: _activeField == _AmountField.card,
+                      onTap: () =>
+                          setState(() => _activeField = _AmountField.card),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _AmountBox(
+                      label: 'Borç',
+                      controller: _debtController,
+                      active: _activeField == _AmountField.debt,
+                      onTap: () =>
+                          setState(() => _activeField = _AmountField.debt),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: _cashController,
-                readOnly: true,
-                showCursor: false,
-                onTap: () => setState(() => _activeField = _AmountField.cash),
-                decoration: const InputDecoration(labelText: 'Nakit ödeme'),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _cardController,
-                readOnly: true,
-                showCursor: false,
-                onTap: () => setState(() => _activeField = _AmountField.card),
-                decoration: const InputDecoration(labelText: 'Kart ödeme'),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _debtController,
-                readOnly: true,
-                showCursor: false,
-                onTap: () => setState(() => _activeField = _AmountField.debt),
-                decoration: const InputDecoration(labelText: 'Borç tutarı'),
-              ),
-              const SizedBox(height: 12),
-              _AmountPad(
-                activeLabel: switch (_activeField) {
-                  _AmountField.cash => 'Nakit ödeme',
-                  _AmountField.card => 'Kart ödeme',
-                  _AmountField.debt => 'Borç tutarı',
-                },
-                onKeyTap: _handlePadKey,
-              ),
+              _AmountPad(onKeyTap: _handlePadKey),
               const SizedBox(height: 10),
               TextField(
                 controller: _noteController,
-                maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Not'),
+                maxLines: 2,
+                decoration: const InputDecoration(labelText: 'Not (opsiyonel)'),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed:
+                          _submitting ? null : () => Navigator.pop(context),
+                      child: const Text('Vazgeç'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: _submitting ? null : _submit,
+                      child: Text(
+                        _submitting ? 'Oluşturuluyor...' : 'Fatura oluştur',
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _submitting ? null : () => Navigator.pop(context),
-          child: const Text('Vazgeç'),
-        ),
-        FilledButton(
-          onPressed: _submitting ? null : _submit,
-          child: Text(_submitting ? 'Oluşturuluyor...' : 'Fatura oluştur'),
-        ),
-      ],
     );
   }
 
@@ -745,39 +695,110 @@ class _ConvertOrderDialogState extends ConsumerState<_ConvertOrderDialog> {
 
 enum _AmountField { cash, card, debt }
 
-class _AmountPad extends StatelessWidget {
-  const _AmountPad({required this.activeLabel, required this.onKeyTap});
+class _AmountBox extends StatelessWidget {
+  const _AmountBox({
+    required this.label,
+    required this.controller,
+    required this.active,
+    required this.onTap,
+  });
 
-  final String activeLabel;
+  final String label;
+  final TextEditingController controller;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primaryContainer : AppColors.bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: active ? AppColors.primary : AppColors.line,
+            width: active ? 1.6 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color:
+                    active ? AppColors.primaryDark : AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                controller.text,
+                maxLines: 1,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AmountPad extends StatelessWidget {
+  const _AmountPad({required this.onKeyTap});
+
   final ValueChanged<String> onKeyTap;
 
   @override
   Widget build(BuildContext context) {
     final keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', 'sil'];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Aktif alan: $activeLabel'),
-        const SizedBox(height: 10),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: keys.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 1.9,
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: keys.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 2.2,
+      ),
+      itemBuilder: (context, index) {
+        final key = keys[index];
+        final isDelete = key == 'sil';
+        return Material(
+          color: isDelete ? const Color(0xFFFBE1DF) : AppColors.bg,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => onKeyTap(key),
+            child: Center(
+              child: isDelete
+                  ? const Icon(
+                      Icons.backspace_outlined,
+                      size: 20,
+                      color: Color(0xFF9C2119),
+                    )
+                  : Text(
+                      key,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+            ),
           ),
-          itemBuilder: (context, index) {
-            final key = keys[index];
-            return FilledButton(
-              onPressed: () => onKeyTap(key),
-              child: Text(key == 'sil' ? 'Sil' : key),
-            );
-          },
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -787,8 +808,6 @@ String _formatTlInput(int value) {
 }
 
 /// Kuruşları KORUR — 105.55 → "105,55 ₺".
-/// _formatTlInput(int) kuruşları kaybediyordu, default ödeme tutarı
-/// sipariş toplamı ile eşit olmadığı için backend 400 dönüyordu.
 String _formatTlAmount(double value) {
   final asTr = value.toStringAsFixed(2).replaceAll('.', ',');
   return _normalizeTlInput(asTr);

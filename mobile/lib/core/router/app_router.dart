@@ -12,7 +12,9 @@ import '../../features/invoices/presentation/invoice_create_screen.dart';
 import '../../features/invoices/presentation/invoice_receipt_screen.dart';
 import '../../features/invoices/presentation/invoices_screen.dart';
 import '../../features/orders/presentation/orders_screen.dart';
+import '../../features/products/data/product.dart';
 import '../../features/products/presentation/home_screen.dart';
+import '../../features/products/presentation/product_form_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -51,6 +53,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/signup', builder: (_, __) => const SignupScreen()),
       GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
       GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
+      GoRoute(
+        path: '/products/new',
+        builder: (_, __) => const ProductFormScreen(),
+      ),
+      GoRoute(
+        path: '/products/:productId/edit',
+        builder: (_, state) =>
+            ProductFormScreen(product: state.extra as Product?),
+      ),
       GoRoute(
           path: '/invoice/create',
           builder: (_, __) => const InvoiceCreateScreen()),

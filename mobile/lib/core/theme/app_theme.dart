@@ -1,72 +1,124 @@
 import 'package:flutter/material.dart';
 
+/// ParaSende tasarım sistemi — Getir benzeri: canlı marka rengi,
+/// beyaz kartlar, yumuşak köşeler, telefon öncelikli boyutlar.
+class AppColors {
+  static const primary = Color(0xFF0B7A4B); // marka yeşili
+  static const primaryDark = Color(0xFF06603A);
+  static const primaryContainer = Color(0xFFD8F1E4);
+  static const accent = Color(0xFFFFB703); // amber vurgu
+  static const bg = Color(0xFFF3F5F4); // sayfa zemini
+  static const surface = Colors.white;
+  static const text = Color(0xFF15211B);
+  static const textMuted = Color(0xFF66736C);
+  static const line = Color(0xFFE4E9E6);
+  static const danger = Color(0xFFE23D33);
+  static const success = Color(0xFF22A45D);
+}
+
 class AppTheme {
-  static const _seed =
-      Color(0xFF0E6E4E); // zeytin yeşili — toptan/perakende hissi
+  static const _seed = AppColors.primary;
 
   static ThemeData light({bool isTablet = false}) {
     final base = ThemeData(useMaterial3: true);
     final textTheme = _buildTextTheme(base.textTheme, isTablet: isTablet);
-    final inputVerticalPadding = isTablet ? 20.0 : 10.0;
-    final inputHorizontalPadding = isTablet ? 18.0 : 12.0;
-    final buttonHeight = isTablet ? 68.0 : 44.0;
-    final buttonHorizontalPadding = isTablet ? 28.0 : 14.0;
-    final buttonVerticalPadding = isTablet ? 20.0 : 10.0;
-    final textButtonHeight = isTablet ? 58.0 : 38.0;
-    final segmentedHeight = isTablet ? 60.0 : 38.0;
-    final chipVerticalPadding = isTablet ? 12.0 : 6.0;
-    final listTilePadding = isTablet ? 12.0 : 4.0;
-    final appBarTitleSize = isTablet ? 30.0 : 18.0;
-    final iconButtonMinSize = isTablet ? 52.0 : 38.0;
-    final iconButtonIconSize = isTablet ? 24.0 : 20.0;
-    final iconButtonPadding = isTablet ? 12.0 : 8.0;
-    final fabMinHeight = isTablet ? 72.0 : 52.0;
+    final scheme = ColorScheme.fromSeed(
+      seedColor: _seed,
+      brightness: Brightness.light,
+    ).copyWith(
+      primary: AppColors.primary,
+      onPrimary: Colors.white,
+      primaryContainer: AppColors.primaryContainer,
+      onPrimaryContainer: AppColors.primaryDark,
+      secondary: AppColors.accent,
+      onSecondary: const Color(0xFF3D2E00),
+      surface: AppColors.surface,
+      onSurface: AppColors.text,
+      onSurfaceVariant: AppColors.textMuted,
+      outlineVariant: AppColors.line,
+      error: AppColors.danger,
+    );
+
+    final buttonHeight = isTablet ? 60.0 : 52.0;
 
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: _seed,
-        brightness: Brightness.light,
-      ),
+      colorScheme: scheme,
+      scaffoldBackgroundColor: AppColors.bg,
       textTheme: textTheme,
       primaryTextTheme: textTheme,
-      cardTheme: CardThemeData(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
-        ),
-      ),
+      splashFactory: InkSparkle.splashFactory,
       appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         centerTitle: false,
+        iconTheme: const IconThemeData(color: Colors.white, size: 24),
         titleTextStyle: textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w800,
-          fontSize: appBarTitleSize,
+          fontSize: isTablet ? 24 : 19,
           color: Colors.white,
+        ),
+      ),
+      drawerTheme: const DrawerThemeData(
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
+        ),
+      ),
+      cardTheme: const CardThemeData(
+        elevation: 0,
+        color: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
+        fillColor: AppColors.surface,
         contentPadding: EdgeInsets.symmetric(
-          horizontal: inputHorizontalPadding,
-          vertical: inputVerticalPadding,
+          horizontal: 16,
+          vertical: isTablet ? 18 : 14,
         ),
-        labelStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-        hintStyle: textTheme.bodyLarge?.copyWith(color: Colors.black54),
+        labelStyle: textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: AppColors.textMuted,
+        ),
+        hintStyle: textTheme.bodyLarge?.copyWith(color: AppColors.textMuted),
+        prefixIconColor: AppColors.textMuted,
+        suffixIconColor: AppColors.textMuted,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.line),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.line),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.danger),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.6),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: Size(0, buttonHeight),
-          padding: EdgeInsets.symmetric(
-            horizontal: buttonHorizontalPadding,
-            vertical: buttonVerticalPadding,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          textStyle: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w800,
           ),
-          textStyle:
-              textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
@@ -74,63 +126,111 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: Size(0, buttonHeight),
-          padding: EdgeInsets.symmetric(
-            horizontal: buttonHorizontalPadding,
-            vertical: buttonVerticalPadding,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          side: const BorderSide(color: AppColors.line, width: 1.4),
+          foregroundColor: AppColors.text,
+          textStyle: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
           ),
-          textStyle:
-              textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          minimumSize: Size(0, textButtonHeight),
-          padding: EdgeInsets.symmetric(
-            horizontal: isTablet ? 20 : 12,
-            vertical: isTablet ? 16 : 8,
+          minimumSize: const Size(0, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          textStyle: textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
           ),
-          textStyle:
-              textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          minimumSize: Size(iconButtonMinSize, iconButtonMinSize),
-          iconSize: iconButtonIconSize,
-          padding: EdgeInsets.all(iconButtonPadding),
+          minimumSize: const Size(44, 44),
+          iconSize: 22,
         ),
       ),
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        extendedSizeConstraints: BoxConstraints(minHeight: fabMinHeight),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 3,
+        extendedSizeConstraints: BoxConstraints(minHeight: 54),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           textStyle: WidgetStatePropertyAll(
             textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
-          minimumSize: WidgetStatePropertyAll(Size(0, segmentedHeight)),
-          padding: WidgetStatePropertyAll(
-            EdgeInsets.symmetric(
-              horizontal: isTablet ? 18 : 10,
-              vertical: isTablet ? 14 : 6,
-            ),
-          ),
+          minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
+          side: const WidgetStatePropertyAll(BorderSide(color: AppColors.line)),
         ),
       ),
       chipTheme: base.chipTheme.copyWith(
-        labelStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-        padding:
-            EdgeInsets.symmetric(horizontal: 12, vertical: chipVerticalPadding),
+        backgroundColor: AppColors.surface,
+        selectedColor: AppColors.primary,
+        side: const BorderSide(color: AppColors.line),
+        labelStyle: textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: AppColors.text,
+        ),
+        secondaryLabelStyle: textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: AppColors.line),
+        ),
       ),
       listTileTheme: ListTileThemeData(
-        titleTextStyle:
-            textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-        subtitleTextStyle: textTheme.bodyMedium,
-        minVerticalPadding: listTilePadding,
+        titleTextStyle: textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: AppColors.text,
+        ),
+        subtitleTextStyle:
+            textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+        iconColor: AppColors.textMuted,
+        minVerticalPadding: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.line,
+        thickness: 1,
+        space: 1,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        showDragHandle: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.text,
+        contentTextStyle: textTheme.bodyLarge?.copyWith(color: Colors.white),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: AppColors.primary,
+        unselectedLabelColor: AppColors.textMuted,
+        indicatorColor: AppColors.primary,
       ),
     );
   }
@@ -153,36 +253,35 @@ class AppTheme {
     return base
         .copyWith(
           displaySmall: base.displaySmall?.copyWith(
-              fontSize: isTablet ? 48 : 28, fontWeight: FontWeight.w900),
+              fontSize: isTablet ? 44 : 30, fontWeight: FontWeight.w900),
           headlineLarge: base.headlineLarge?.copyWith(
-              fontSize: isTablet ? 44 : 24, fontWeight: FontWeight.w900),
+              fontSize: isTablet ? 38 : 26, fontWeight: FontWeight.w900),
           headlineMedium: base.headlineMedium?.copyWith(
-              fontSize: isTablet ? 40 : 22, fontWeight: FontWeight.w800),
+              fontSize: isTablet ? 34 : 23, fontWeight: FontWeight.w800),
           headlineSmall: base.headlineSmall?.copyWith(
-              fontSize: isTablet ? 36 : 20, fontWeight: FontWeight.w800),
+              fontSize: isTablet ? 30 : 21, fontWeight: FontWeight.w800),
           titleLarge: base.titleLarge?.copyWith(
-              fontSize: isTablet ? 30 : 18, fontWeight: FontWeight.w800),
+              fontSize: isTablet ? 26 : 19, fontWeight: FontWeight.w800),
           titleMedium: base.titleMedium?.copyWith(
-              fontSize: isTablet ? 26 : 15, fontWeight: FontWeight.w700),
+              fontSize: isTablet ? 21 : 16, fontWeight: FontWeight.w700),
           titleSmall: base.titleSmall?.copyWith(
-              fontSize: isTablet ? 23 : 12, fontWeight: FontWeight.w700),
+              fontSize: isTablet ? 18 : 14, fontWeight: FontWeight.w700),
           bodyLarge: base.bodyLarge?.copyWith(
-              fontSize: isTablet ? 23 : 14, fontWeight: FontWeight.w500),
+              fontSize: isTablet ? 19 : 15, fontWeight: FontWeight.w500),
           bodyMedium: base.bodyMedium?.copyWith(
-              fontSize: isTablet ? 21 : 13, fontWeight: FontWeight.w500),
+              fontSize: isTablet ? 17 : 13.5, fontWeight: FontWeight.w500),
           bodySmall: base.bodySmall?.copyWith(
-              fontSize: isTablet ? 19 : 11, fontWeight: FontWeight.w500),
+              fontSize: isTablet ? 15 : 12, fontWeight: FontWeight.w500),
           labelLarge: base.labelLarge?.copyWith(
-              fontSize: isTablet ? 22 : 12, fontWeight: FontWeight.w700),
+              fontSize: isTablet ? 17 : 13, fontWeight: FontWeight.w700),
           labelMedium: base.labelMedium?.copyWith(
-              fontSize: isTablet ? 20 : 11, fontWeight: FontWeight.w700),
+              fontSize: isTablet ? 15 : 12, fontWeight: FontWeight.w700),
           labelSmall: base.labelSmall?.copyWith(
-              fontSize: isTablet ? 18 : 9, fontWeight: FontWeight.w700),
+              fontSize: isTablet ? 13 : 10.5, fontWeight: FontWeight.w700),
         )
         .apply(
-          fontFamily: '.SF Pro Text',
-          bodyColor: const Color(0xFF0A0A0A),
-          displayColor: const Color(0xFF0A0A0A),
+          bodyColor: AppColors.text,
+          displayColor: AppColors.text,
         );
   }
 }

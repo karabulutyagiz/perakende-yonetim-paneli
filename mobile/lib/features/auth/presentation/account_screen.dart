@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/auth_controller.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_shell.dart';
 
 class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
@@ -13,96 +15,163 @@ class AccountScreen extends ConsumerWidget {
     final meAsync = ref.watch(meProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hesabım'),
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: Colors.black,
-        surfaceTintColor: Colors.transparent,
-      ),
+      drawer: const AppDrawer(current: '/account'),
+      appBar: const PsAppBar(title: 'Hesabım'),
       body: meAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(
-          child: Text('Hesap bilgisi yüklenemedi.'),
+        error: (_, __) => ErrorState(
+          message: 'Hesap bilgisi yüklenemedi.',
+          onRetry: () => ref.invalidate(meProvider),
         ),
         data: (me) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Card(
-                    elevation: 0,
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Profil kartı
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [AppColors.primary, AppColors.primaryDark],
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Row(
                         children: [
-                          Text(me?.fullName ?? '—',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              )),
-                          const SizedBox(height: 4),
-                          Text(me?.email ?? '—',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              )),
-                          if (me?.tenantName != null) ...[
-                            const SizedBox(height: 8),
-                            Text('İşletme: ${me!.tenantName}',
-                                style: theme.textTheme.bodyMedium),
-                          ],
+                          Container(
+                            width: 54,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.person_rounded,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  me?.fullName ?? '—',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  me?.email ?? '—',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color:
+                                        Colors.white.withValues(alpha: 0.85),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.logout_rounded),
-                    label: const Text('Çıkış yap'),
-                    onPressed: () async {
-                      await ref
-                          .read(authControllerProvider.notifier)
-                          .logout();
-                      if (context.mounted) context.go('/login');
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  Divider(color: theme.colorScheme.outlineVariant),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Tehlikeli bölge',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.error,
+                    const SizedBox(height: 12),
+                    if (me?.tenantName != null)
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.storefront_rounded,
+                                color: AppColors.primary),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'İşletme',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                  Text(
+                                    me!.tenantName!,
+                                    style:
+                                        theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.logout_rounded),
+                      label: const Text('Çıkış yap'),
+                      onPressed: () async {
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .logout();
+                        if (context.mounted) context.go('/login');
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    me?.role == 'tenant_owner'
-                        ? 'Hesabınızı sildiğinizde işletmeniz, ürünler, müşteriler, '
-                            'siparişler, faturalar, borçlar ve tüm kayıtlar kalıcı '
-                            'olarak silinir. Bu işlem geri alınamaz.'
-                        : 'Hesabınız ve oturum bilgileriniz kalıcı olarak silinir. '
-                            'Bu işlem geri alınamaz.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 32),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Tehlikeli bölge',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.error,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: theme.colorScheme.errorContainer,
-                      foregroundColor: theme.colorScheme.onErrorContainer,
+                    const SizedBox(height: 8),
+                    Text(
+                      me?.role == 'tenant_owner'
+                          ? 'Hesabınızı sildiğinizde işletmeniz, ürünler, müşteriler, '
+                              'siparişler, faturalar, borçlar ve tüm kayıtlar kalıcı '
+                              'olarak silinir. Bu işlem geri alınamaz.'
+                          : 'Hesabınız ve oturum bilgileriniz kalıcı olarak silinir. '
+                              'Bu işlem geri alınamaz.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
                     ),
-                    icon: const Icon(Icons.delete_forever_rounded),
-                    label: const Text('Hesabımı sil'),
-                    onPressed: () => _confirmDelete(context, ref),
-                  ),
-                  const SizedBox(height: 32),
-                ],
+                    const SizedBox(height: 12),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: theme.colorScheme.errorContainer,
+                        foregroundColor: theme.colorScheme.onErrorContainer,
+                      ),
+                      icon: const Icon(Icons.delete_forever_rounded),
+                      label: const Text('Hesabımı sil'),
+                      onPressed: () => _confirmDelete(context, ref),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
             ),
           );

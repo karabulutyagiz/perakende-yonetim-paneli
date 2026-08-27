@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/app_shell.dart';
 import '../../orders/data/order_repository.dart';
 import '../data/invoice_repository.dart';
 
@@ -16,39 +18,34 @@ class InvoicesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(invoicesProvider);
     final asyncOrders = ref.watch(allOrdersProvider);
-    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: Colors.black,
-        surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Colors.black, size: 32),
-        titleSpacing: 4,
-        title: Text(
-          'Faturalar',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: Colors.black,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
+      drawer: const AppDrawer(current: '/invoices'),
+      appBar: const PsAppBar(title: 'Faturalar'),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => const Center(child: Text('Faturalar yüklenemedi.')),
+        error: (e, _) => ErrorState(
+          message: 'Faturalar yüklenemedi.',
+          onRetry: () => ref.invalidate(invoicesProvider),
+        ),
         data: (invoices) {
           final orders =
               asyncOrders.valueOrNull ?? const <Map<String, dynamic>>[];
           if (invoices.isEmpty) {
-            return const Center(
-              child: Text('Henüz siparişten oluşmuş fatura yok'),
+            return const EmptyState(
+              icon: Icons.receipt_long_outlined,
+              title: 'Henüz fatura yok',
+              subtitle:
+                  'Siparişleri faturaya dönüştürdüğünde burada görünecek.',
             );
           }
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(invoicesProvider),
             child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               itemCount: invoices.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (_, i) => _InvoiceCard(
                 invoice: invoices[i],
                 orders: orders,
@@ -69,6 +66,7 @@ class _InvoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final createdAt = DateTime.tryParse(invoice['created_at'] as String? ?? '');
     final customer = invoice['customer'] as Map<String, dynamic>?;
     final contactName = customer?['account_full_name'] as String?;
@@ -78,64 +76,140 @@ class _InvoiceCard extends StatelessWidget {
       invoice['id']?.toString(),
       orders,
     );
+    final cash = (invoice['cash_amount'] as num).toDouble();
+    final card = (invoice['card_amount'] as num).toDouble();
+    final debt = (invoice['debt_amount'] as num).toDouble();
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => context.push('/invoices/${invoice['id']}'),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          customer?['name'] as String? ?? 'Müşteri',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          [
+                            if (orderNo.isNotEmpty) '#$orderNo',
+                            if (contactName != null &&
+                                contactName.isNotEmpty)
+                              contactName,
+                            if (createdAt != null)
+                              _dt.format(createdAt.toLocal()),
+                          ].join(' · '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        customer?['name'] as String? ?? 'Müşteri',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
+                        formatCurrency(
+                            (invoice['total'] as num).toDouble()),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Sipariş #$orderNo',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      const SizedBox(height: 2),
+                      const Row(
+                        children: [
+                          Text(
+                            'Dekont',
+                            style: TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 16,
+                            color: AppColors.textMuted,
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                FilledButton.icon(
-                  onPressed: () => context.push('/invoices/${invoice['id']}'),
-                  icon: const Icon(Icons.receipt_long_rounded),
-                  label: const Text('Dekont görüntüle'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            if (contactName != null && contactName.isNotEmpty)
-              Text('Yetkili: $contactName'),
-            if (createdAt != null)
-              Text('Tarih: ${_dt.format(createdAt.toLocal())}'),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                Text(
-                    'Toplam: ${formatCurrency((invoice['total'] as num).toDouble())}'),
-                Text(
-                    'Nakit: ${formatCurrency((invoice['cash_amount'] as num).toDouble())}'),
-                Text(
-                    'Kart: ${formatCurrency((invoice['card_amount'] as num).toDouble())}'),
-                Text(
-                    'Borç: ${formatCurrency((invoice['debt_amount'] as num).toDouble())}'),
-              ],
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  if (cash > 0)
+                    _PayChip(
+                      label: 'Nakit ${formatCurrency(cash)}',
+                      bg: AppColors.primaryContainer,
+                      fg: AppColors.primaryDark,
+                    ),
+                  if (card > 0)
+                    _PayChip(
+                      label: 'Kart ${formatCurrency(card)}',
+                      bg: const Color(0xFFE0EAFB),
+                      fg: const Color(0xFF1D4F91),
+                    ),
+                  if (debt > 0)
+                    _PayChip(
+                      label: 'Borç ${formatCurrency(debt)}',
+                      bg: const Color(0xFFFFF4D6),
+                      fg: const Color(0xFF8A6D00),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PayChip extends StatelessWidget {
+  const _PayChip({required this.label, required this.bg, required this.fg});
+
+  final String label;
+  final Color bg;
+  final Color fg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: fg,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );

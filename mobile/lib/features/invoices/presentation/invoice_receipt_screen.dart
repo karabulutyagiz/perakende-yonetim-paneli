@@ -47,9 +47,6 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
         const <Map<String, dynamic>>[];
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        foregroundColor: Colors.black,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Geri',
@@ -61,13 +58,7 @@ class _InvoiceReceiptScreenState extends ConsumerState<InvoiceReceiptScreen> {
             }
           },
         ),
-        title: Text(
-          'Fatura dekontu',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.black,
-                fontWeight: FontWeight.w800,
-              ),
-        ),
+        title: const Text('Fatura dekontu'),
       ),
       body: asyncInvoice.when(
         loading: () => const Center(child: CircularProgressIndicator()),

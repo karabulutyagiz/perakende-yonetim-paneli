@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/app_shell.dart';
 import '../data/debt.dart';
 import '../data/debt_repository.dart';
 
-final _debtDt = DateFormat('dd.MM.yyyy HH:mm', 'tr_TR');
+final _debtDt = DateFormat('dd.MM.yyyy', 'tr_TR');
 
 class DebtsScreen extends ConsumerWidget {
   const DebtsScreen({super.key});
@@ -16,61 +18,119 @@ class DebtsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(allDebtsProvider);
     final theme = Theme.of(context);
-    final isTablet = MediaQuery.of(context).size.width >= 900;
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: Colors.black,
-        surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Colors.black, size: 32),
-        titleSpacing: 4,
-        title: const _SectionHeaderTitle(title: 'Borçlar'),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(52),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 6,
-              children: [
-                _LegendDot(color: Color(0xFFE53935), label: '≤3 gün'),
-                _LegendDot(color: Color(0xFFFFB300), label: '≤7 gün'),
-                _LegendDot(color: Color(0xFF43A047), label: '>7 gün'),
-              ],
-            ),
-          ),
-        ),
-      ),
+      drawer: const AppDrawer(current: '/debts'),
+      appBar: const PsAppBar(title: 'Borçlar'),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => const Center(
-          child: Text('Borçlar yüklenemedi. Lütfen tekrar deneyin.'),
+        error: (e, _) => ErrorState(
+          message: 'Borçlar yüklenemedi. Lütfen tekrar deneyin.',
+          onRetry: () => ref.invalidate(allDebtsProvider),
         ),
         data: (list) {
           if (list.isEmpty) {
-            return const Center(child: Text('Açık borç yok'));
+            return const EmptyState(
+              icon: Icons.task_alt_rounded,
+              title: 'Açık borç yok',
+              subtitle: 'Tüm borçlar ödenmiş görünüyor. Harika!',
+            );
           }
+          final totalRemaining =
+              list.fold<double>(0, (a, d) => a + d.remaining);
+          final overdue =
+              list.where((d) => d.status == DebtStatus.gecikti).length;
+
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(allDebtsProvider),
-            child: isTablet
-                ? GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 420,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.18,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Özet kartı
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.primary, AppColors.primaryDark],
                     ),
-                    itemCount: list.length,
-                    itemBuilder: (_, i) => _DebtCard(debt: list[i]),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: list.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) => _DebtCard(debt: list[i]),
+                    borderRadius: BorderRadius.circular(18),
                   ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Toplam kalan borç',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                formatCurrency(totalRemaining),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          _SummaryPill(
+                              label: '${list.length} açık borç',
+                              color: Colors.white.withValues(alpha: 0.18)),
+                          if (overdue > 0) ...[
+                            const SizedBox(height: 6),
+                            _SummaryPill(
+                              label: '$overdue gecikmiş',
+                              color: AppColors.danger,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Renk açıklaması
+                const Wrap(
+                  spacing: 14,
+                  runSpacing: 6,
+                  children: [
+                    _LegendDot(color: AppTheme.debtGreen, label: '8+ gün'),
+                    _LegendDot(color: AppTheme.debtYellow, label: '4–7 gün'),
+                    _LegendDot(color: AppTheme.debtRed, label: '0–3 gün'),
+                    _LegendDot(color: AppTheme.debtOverdue, label: 'Gecikti'),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                for (final debt in list) ...[
+                  _DebtCard(debt: debt),
+                  const SizedBox(height: 10),
+                ],
+                const SizedBox(height: 8),
+                Text(
+                  'Bir borca dokunarak ödeme alabilirsin.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: AppColors.textMuted),
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -78,21 +138,26 @@ class DebtsScreen extends ConsumerWidget {
   }
 }
 
-class _SectionHeaderTitle extends StatelessWidget {
-  const _SectionHeaderTitle({required this.title});
-
-  final String title;
+class _SummaryPill extends StatelessWidget {
+  const _SummaryPill({required this.label, required this.color});
+  final String label;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      title,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.titleLarge?.copyWith(
-        color: Colors.black,
-        fontWeight: FontWeight.w800,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
@@ -113,8 +178,15 @@ class _LegendDot extends StatelessWidget {
           height: 10,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.white)),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
@@ -127,72 +199,107 @@ class _DebtCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final daysLeft = debt.daysLeft < 0 ? 0 : debt.daysLeft;
-    final daysColor = daysLeft >= 8
-        ? const Color(0xFF2E7D32)
-        : daysLeft >= 4
-            ? const Color(0xFFF9A825)
-            : const Color(0xFFC62828);
+    final statusColor = debt.status.color;
+    final isOverdue = debt.status == DebtStatus.gecikti;
+    final progress = debt.totalAmount <= 0
+        ? 0.0
+        : (debt.paidAmount / debt.totalAmount).clamp(0.0, 1.0);
 
-    return Card(
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => _openPayDialog(context, ref),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        onTap: () => _openPaySheet(context, ref),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      debt.customerName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+              // Durum şeridi
+              Container(width: 5, color: statusColor),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              debt.customerName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 9, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              isOverdue
+                                  ? debt.overdueLabel
+                                  : '${debt.daysLeft} gün kaldı',
+                              style: TextStyle(
+                                color: statusColor,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _AmountLabel(
+                              label: 'Kalan',
+                              value: formatCurrency(debt.remaining),
+                              emphasized: true,
+                            ),
+                          ),
+                          Expanded(
+                            child: _AmountLabel(
+                              label: 'Ödenen',
+                              value: formatCurrency(debt.paidAmount),
+                            ),
+                          ),
+                          Expanded(
+                            child: _AmountLabel(
+                              label: 'Toplam',
+                              value: formatCurrency(debt.totalAmount),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 6,
+                          backgroundColor: AppColors.bg,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(statusColor),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Vade: ${_debtDt.format(debt.dueOn.toLocal())}'
+                        '${debt.lastPaymentOn != null ? ' · Son ödeme: ${_debtDt.format(debt.lastPaymentOn!.toLocal())}' : ''}',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: AppColors.textMuted),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '$daysLeft',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: daysColor,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'En baştaki borç: ${formatCurrency(debt.totalAmount)}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Ödenen tutar: ${formatCurrency(debt.paidAmount)}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Kalan borç: ${formatCurrency(debt.remaining)}',
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Son güncelleme tarihi: ${_debtDt.format((debt.lastPaymentOn ?? debt.updatedAt).toLocal())}',
-                style: theme.textTheme.bodyMedium,
               ),
             ],
           ),
@@ -201,7 +308,7 @@ class _DebtCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _openPayDialog(BuildContext context, WidgetRef ref) async {
+  Future<void> _openPaySheet(BuildContext context, WidgetRef ref) async {
     final amountCtl = TextEditingController();
     String? errorText;
     bool submitting = false;
@@ -209,21 +316,20 @@ class _DebtCard extends ConsumerWidget {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => Padding(
           padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 8,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            left: 20,
+            right: 20,
+            top: 4,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Ödeme - ${debt.customerName}',
+                'Ödeme al — ${debt.customerName}',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style:
@@ -232,7 +338,10 @@ class _DebtCard extends ConsumerWidget {
               const SizedBox(height: 4),
               Text(
                 'Kalan: ${formatCurrency(debt.remaining)}',
-                style: const TextStyle(color: Colors.black54),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -247,7 +356,7 @@ class _DebtCard extends ConsumerWidget {
                   helperText: 'En fazla ${formatCurrency(debt.remaining)}',
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -257,7 +366,7 @@ class _DebtCard extends ConsumerWidget {
                       child: const Text('Tümünü doldur'),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: FilledButton(
                       onPressed: submitting
@@ -282,7 +391,8 @@ class _DebtCard extends ConsumerWidget {
                               });
                               try {
                                 await ref.read(debtRepositoryProvider).pay(
-                                    customerId: debt.customerId, amount: value);
+                                    customerId: debt.customerId,
+                                    amount: value);
                                 if (!ctx.mounted) return;
                                 Navigator.of(ctx).pop();
                                 ref.invalidate(allDebtsProvider);
@@ -294,7 +404,8 @@ class _DebtCard extends ConsumerWidget {
                               } on DioException catch (e) {
                                 String msg = 'Ödeme kaydedilemedi';
                                 final data = e.response?.data;
-                                if (data is Map && data['detail'] is String) {
+                                if (data is Map &&
+                                    data['detail'] is String) {
                                   msg = data['detail'] as String;
                                 }
                                 setLocal(() {
@@ -312,7 +423,10 @@ class _DebtCard extends ConsumerWidget {
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Text('Ödemeyi kaydet'),
                     ),
@@ -323,6 +437,47 @@ class _DebtCard extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AmountLabel extends StatelessWidget {
+  const _AmountLabel({
+    required this.label,
+    required this.value,
+    this.emphasized = false,
+  });
+
+  final String label;
+  final String value;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: emphasized ? 15 : 13,
+              fontWeight: emphasized ? FontWeight.w900 : FontWeight.w700,
+              color: emphasized ? AppColors.primary : AppColors.text,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

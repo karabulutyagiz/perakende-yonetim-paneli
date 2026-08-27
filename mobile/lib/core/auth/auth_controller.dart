@@ -61,15 +61,23 @@ class AuthController extends StateNotifier<AuthState> {
     }
     try {
       final storage = _ref!.read(tokenStorageProvider);
-      final token = await storage
-          .readAccessToken()
-          .timeout(const Duration(seconds: 3), onTimeout: () => null);
-      if (_isTokenUsable(token)) {
-        state = AuthState(
-          AuthStatus.authenticated,
-          role: _roleFromToken(token),
-        );
-        return;
+      final remember = await storage
+          .readRememberMe()
+          .timeout(const Duration(seconds: 3), onTimeout: () => false);
+      if (remember) {
+        final token = await storage
+            .readAccessToken()
+            .timeout(const Duration(seconds: 3), onTimeout: () => null);
+        if (_isTokenUsable(token)) {
+          state = AuthState(
+            AuthStatus.authenticated,
+            role: _roleFromToken(token),
+          );
+          return;
+        }
+        // Access token 30 dakikada dolar; yanındaki 14 günlük refresh token
+        // hâlâ geçerliyse kullanıcıyı login ekranına düşürmeden oturumu yenile.
+        if (await _restoreWithRefreshToken(storage)) return;
       }
       try {
         await storage.clear().timeout(const Duration(seconds: 2));
@@ -79,6 +87,26 @@ class AuthController extends StateNotifier<AuthState> {
       // aksi halde app açılışında sonsuza kadar loading'de takılır.
     }
     state = const AuthState(AuthStatus.unauthenticated);
+  }
+
+  Future<bool> _restoreWithRefreshToken(TokenStorage storage) async {
+    final refresh = await storage
+        .readRefreshToken()
+        .timeout(const Duration(seconds: 3), onTimeout: () => null);
+    if (refresh == null || refresh.isEmpty) return false;
+    try {
+      final resp = await _dio().post(
+        '/auth/refresh',
+        data: {'refresh_token': refresh},
+      );
+      await applyTokens(
+        access: resp.data['access_token'] as String,
+        refresh: resp.data['refresh_token'] as String,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> applyTokens({
@@ -122,6 +150,7 @@ class AuthController extends StateNotifier<AuthState> {
         if (contactPhone != null && contactPhone.isNotEmpty)
           'contact_phone': contactPhone,
       });
+      await _ref!.read(tokenStorageProvider).saveRememberMe(true);
       await applyTokens(
         access: resp.data['access_token'] as String,
         refresh: resp.data['refresh_token'] as String,
@@ -139,12 +168,17 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(
+    String email,
+    String password, {
+    bool rememberMe = true,
+  }) async {
     try {
       final resp = await _dio().post(
         '/auth/login',
         data: {'email': email, 'password': password},
       );
+      await _ref!.read(tokenStorageProvider).saveRememberMe(rememberMe);
       await applyTokens(
         access: resp.data['access_token'] as String,
         refresh: resp.data['refresh_token'] as String,
