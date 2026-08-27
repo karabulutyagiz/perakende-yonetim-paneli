@@ -1,7 +1,8 @@
-ParaSende ilk sürümüyle yayında.
+Uygulama yenilendi ve adı Zirve Toptan oldu!
 
-- Toptancınızın canlı ürün kataloğu
-- Tek dokunuşla sipariş gönderme
-- Anlık fatura ve PDF makbuz
-- Renk kodlu borç takibi (15 günlük vade)
-- Günlük ve aylık satış raporları
+- Baştan tasarlanan modern, sade arayüz
+- Soldan açılan menü ile kolay gezinme
+- Uygulama içinden fotoğraflı ürün ekleme ve düzenleme
+- Ürünlerde arama ve kategori filtreleri
+- Yenilenen sepet, sipariş, fatura ve borç ekranları
+- "Beni hatırla" ile hızlı giriş
