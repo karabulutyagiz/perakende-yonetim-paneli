@@ -1,0 +1,90 @@
+name: toptan-panel
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gokce}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-gokce_toptan}
+    volumes:
+      - tp_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - internal
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tp-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: tp-postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-gokce}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      DB_NAME: ${POSTGRES_DB:-gokce_toptan}
+    depends_on:
+      uploads-permissions:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    volumes:
+      - tp_uploads:/app/uploads
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
+    networks:
+      - internal
+      - shared-net
+
+  uploads-permissions:
+    image: alpine:3.20
+    container_name: tp-uploads-permissions
+    command: sh -c "mkdir -p /app/uploads && chown -R 999:999 /app/uploads"
+    volumes:
+      - tp_uploads:/app/uploads
+    network_mode: none
+    restart: "no"
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: tp-web
+    restart: unless-stopped
+    volumes:
+      - ./web-static:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shared-net
+
+volumes:
+  tp_pgdata:
+    name: tp_pgdata
+  tp_uploads:
+    name: tp_uploads
+
+networks:
+  internal:
+    name: tp-internal
+  shared-net:
+    external: true

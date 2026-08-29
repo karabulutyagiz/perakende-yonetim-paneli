@@ -1,0 +1,23 @@
+toptanperakende.online, www.toptanperakende.online, toptanperakende.168-222-180-190.nip.io {
+	redir /support /legal/support.html 308
+	redir /delete-account /legal/delete-account.html 308
+	redir /privacy /legal/privacy.html 308
+
+	handle /api/v1/ws* {
+		reverse_proxy tp-backend:8000
+	}
+
+	handle /api/* {
+		reverse_proxy tp-backend:8000
+	}
+
+	handle /health {
+		reverse_proxy tp-backend:8000
+	}
+
+	handle {
+		reverse_proxy tp-web:80
+	}
+
+	encode gzip
+}

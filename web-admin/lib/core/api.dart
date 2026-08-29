@@ -6,7 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _defaultApi = 'http://localhost:8000/api/v1';
-final apiBase = const String.fromEnvironment('API_BASE', defaultValue: _defaultApi);
+const _configuredApi = String.fromEnvironment('API_BASE', defaultValue: '');
+
+String get apiBase {
+  if (_configuredApi.isNotEmpty) return _configuredApi;
+  if (kIsWeb) return '${Uri.base.origin}/api/v1';
+  return _defaultApi;
+}
 
 String get wsBase {
   // API_BASE http(s)://.../api/v1 → ws(s)://.../api/v1/ws
