@@ -1,70 +1,122 @@
-# Toptan Panel — Production Runbook
+# Zirve Toptan (Toptan Panel) — Production Runbook
 
-> Bu dosya hem sunucuda (`/home/ubuntu/RUNBOOK.md`) hem repo köyünde duruyor.
+> Production tek VPS üzerinde çalışır. Eski AWS EC2 kurulumu (18.197.130.173) **tamamen kapatıldı** —
+> `toptanperakende.pem` ve `ubuntu@` ile başlayan eski komutlar geçersizdir.
 > Acil durumda buradan oku.
 
 ## 🔑 Erişim
 
 | Şey | Değer |
 |---|---|
-| Sunucu | `toptanperakende.online` (IP: `18.197.130.173`) (eu-central-1, EC2 t3.medium) |
-| SSH | `ssh -i ~/.ssh/toptanperakende.pem ubuntu@18.197.130.173` |
-| Web Admin | `https://toptanperakende.online/` |
+| Sunucu | `168.222.180.190` (paylaşımlı VPS, Ubuntu, TZ: Europe/Istanbul) |
+| SSH | `ssh -i ~/.ssh/tuzla_sunucu root@168.222.180.190` |
+| Uygulama dizini | `/root/toptan-panel` |
+| Web Admin | `https://toptanperakende.online/` (kökte doğrudan Flutter admin paneli) |
 | API | `https://toptanperakende.online/api/v1/` |
 | Health | `https://toptanperakende.online/health` |
-| Platform Owner | `admin@toptanpanel.com` / `<ADMIN_PASSWORD>` |
-| S3 backup bucket | `s3://toptanperakende/` (eu-central-1) |
-| IAM Role (EC2) | `ToptanPanelEC2BackupRole` |
+| Test domain (DNS beklemeden) | `https://toptanperakende.168-222-180-190.nip.io` |
+| Platform Owner | `admin@toptanpanel.com` (ilk şifre sunucuda: `/root/toptan-panel/INITIAL_PLATFORM_OWNER.txt`) |
+| DB | container `tp-postgres`, user `gokce`, db `gokce_toptan` |
 
-## 🗄️ Veri kaybı koruması (4 katman)
+> ⚠️ Bu sunucu paylaşımlı: transyol, tuzla-icmeler, pakyokayit, football-intel gibi başka
+> projeler de aynı makinede çalışır. Sunucu genelini etkileyen işlem yaparken (Caddy restart,
+> docker prune, reboot) diğer projeleri de etkilersin.
+
+## 🏗️ Mimari (bu sunucuda)
+
+- Docker Compose projesi `toptan-panel` (`/root/toptan-panel/docker-compose.yml`):
+  - `tp-postgres` — postgres:16-alpine, veri `tp_pgdata` volume'unda
+  - `tp-backend` — FastAPI; ürün fotoğrafları S3 yerine `tp_uploads` volume'unda (AWS keys boş = local mod)
+  - `tp-web` — nginx, `/root/toptan-panel/web-static` içeriğini servis eder (Flutter admin + `legal/` + `download/`)
+- Reverse proxy: **paylaşımlı Caddy**, Docker container `transyol-caddy-1`.
+  Config host'ta: `/root/transyol/Caddyfile` (container içine `/etc/caddy/Caddyfile` mount).
+  `toptanperakende.online` site bloğu `/api/*`, `/api/v1/ws*`, `/health` → `tp-backend:8000`; kalan her şey → `tp-web:80`.
+  Ağ: `shared-net` (external Docker network) — compose port açmaz.
+- HTTPS: Caddy + Let's Encrypt, otomatik renew. fail2ban aktif.
+
+### Caddy değişikliği uygula
+```bash
+# /root/transyol/Caddyfile düzenle, sonra:
+docker exec transyol-caddy-1 caddy reload --config /etc/caddy/Caddyfile
+# (docker restart transyol-caddy-1 de olur ama diğer sitelere kısa kesinti verir)
+```
+
+## 🗄️ Yedekler
 
 | Katman | Frekans | Saklama | Konum |
 |---|---|---|---|
-| L1: EBS | sürekli | EC2 ayakta olduğu sürece | EC2 root volume |
-| L2: pg_dump (yerel) | saatte 1 | 14 gün | `/home/ubuntu/backups/` |
-| L3: S3 dump | saatte 1 | 30 gün | `s3://toptanperakende/` |
-| L4: EBS Snapshot (DLM) | günlük | 7 gün | AWS-managed |
+| pg_dump (`db-*.dump`) | saatte 1 (cron) | 14 gün | `/root/toptan-panel/backups/` |
+| uploads (`uploads-*.tar.gz`) | saatte 1 (cron) | 14 gün | `/root/toptan-panel/backups/` |
 
-L4 setup'ı için: AWS Console → Lifecycle Manager → EBS Snapshot Policy → instance tag `Backup=daily`.
+Cron (root crontab, `# BEGIN TOPTAN PANEL` bloğu):
+- `0 * * * *` → `backup.sh` (log: `backups/cron.log`, `backups/last-run.log`)
+- `0 22 * * *` → `recompute_debts` (borç renk durumları, TRT 22:00)
+
+> 🔴 **BİLİNEN RİSK — offsite yedek YOK.** Tüm yedekler sunucunun kendi diskinde.
+> Disk/sunucu komple giderse veri kurtarılamaz. Eski EC2'deki saatlik S3 katmanı bu
+> sunucuya taşınmadı; sunucudaki genel yedek scriptleri (`/root/yedekler/backup.sh`)
+> toptan-panel'i KAPSAMIYOR. Öncelikli iş: rclone/S3 ile offsite senkron eklemek.
+
+### Manuel yedek tetikle
+```bash
+ssh -i ~/.ssh/tuzla_sunucu root@168.222.180.190 'APP_DIR=/root/toptan-panel /root/toptan-panel/backup.sh'
+```
 
 ## 🚨 Acil durumlar
 
-### Sunucu cevap vermiyor
+### Site/API cevap vermiyor
 ```bash
-ssh -i ~/.ssh/toptanperakende.pem ubuntu@18.197.130.173
-docker compose -f ~/toptan-panel/docker-compose.yml ps
-docker compose -f ~/toptan-panel/docker-compose.yml logs --tail=100 backend
-docker compose -f ~/toptan-panel/docker-compose.yml restart backend
+ssh -i ~/.ssh/tuzla_sunucu root@168.222.180.190
+cd /root/toptan-panel
+docker compose ps
+docker compose logs --tail=100 backend
+docker compose restart backend
+# Caddy tarafı şüpheliyse:
+docker logs --tail=50 transyol-caddy-1
 ```
 
-### Veriyi geri yükle
+### Veriyi geri yükle (DİKKAT: onay sormaz, DB'yi düşürüp yeniden kurar)
 ```bash
-ssh -i ~/.ssh/toptanperakende.pem ubuntu@18.197.130.173
-~/restore.sh list           # mevcut yedekleri listele
-~/restore.sh latest         # en son yedeği geri yükle
-# veya
-~/restore.sh db-20260428-183847.dump
+cd /root/toptan-panel
+ls backups/                              # mevcut yedekler
+./restore.sh backups/db-YYYYMMDDTHHMMSSZ.dump                    # sadece DB
+./restore.sh backups/db-....dump backups/uploads-....tar.gz      # DB + ürün fotoğrafları
 ```
 
-### EC2 silindi / başka makinede yeni kurulum
-1. AWS Console → yeni EC2 launch (t3.medium, Ubuntu 22.04, security group: SSH/HTTP/HTTPS)
-2. IAM Role `ToptanPanelEC2BackupRole`'ü yeni instance'a bağla (S3'e erişsin)
-3. Bu repo'yu rsync et: `rsync -az ./ ubuntu@<yeni-ip>:~/toptan-panel/`
-4. `~/.env` ve `backend/.env` dosyalarını üret (yeni JWT_SECRET ve POSTGRES_PASSWORD)
+### Sunucu komple giderse / yeni makineye kurulum
+1. Yeni VPS: Ubuntu + Docker + (varsa) mevcut Caddy düzeni; `docker network create shared-net`
+2. Repo'dan `infra/vps/` içeriğini `/root/toptan-panel/` altına kopyala, `backend/` kaynağını rsync et
+3. `.env` (POSTGRES_*) ve `backend/.env` (`backend.env.example`'dan; yeni `JWT_SECRET`, `POSTGRES_PASSWORD`) üret
+4. Caddyfile'a `infra/vps/Caddyfile.toptan-panel` bloğunu ekle, DNS A kaydını yeni IP'ye çevir
 5. `docker compose up -d --build`
-6. `~/restore.sh latest` ile S3'ten data geri yükle
-7. DNS / IP'i mobile/web-admin tarafında güncelle
+6. Yedekten dön: `./restore.sh <db-dump> <uploads-tar>` — **offsite yedek olmadığı sürece bu adım imkânsız olabilir**
+7. Cron'ları kur (`# BEGIN TOPTAN PANEL` bloğu, yukarıda)
 
-### Manuel yedekleme tetikle
+## 🚀 Deploy
+
+### Backend
 ```bash
-ssh -i ~/.ssh/toptanperakende.pem ubuntu@18.197.130.173 '~/backup.sh'
+rsync -az --exclude='.env' --exclude='uploads/' --exclude='__pycache__/' --exclude='.pytest_cache/' \
+  backend/ root@168.222.180.190:/root/toptan-panel/backend/ -e 'ssh -i ~/.ssh/tuzla_sunucu'
+ssh -i ~/.ssh/tuzla_sunucu root@168.222.180.190 \
+  'cd /root/toptan-panel && docker compose up -d --build backend'
 ```
+(Alembic migration'lar container başlarken otomatik çalışır: `alembic upgrade head`.)
+
+### Web admin
+```bash
+cd web-admin
+flutter build web --release        # API_BASE define gerekmez; same-origin çalışır
+rsync -az --delete --exclude='download/' --exclude='legal/' \
+  build/web/ root@168.222.180.190:/root/toptan-panel/web-static/ -e 'ssh -i ~/.ssh/tuzla_sunucu'
+```
+(`--exclude download/ legal/` şart: bu klasörler sunucuda yaşar, build'de yoktur; `--delete` onları silmesin.)
 
 ## 🔐 Şifre / secret yönetimi
 
 ### Platform owner şifresi değiştir
 ```bash
-ssh -i ~/.ssh/toptanperakende.pem ubuntu@18.197.130.173 \
+ssh -i ~/.ssh/tuzla_sunucu root@168.222.180.190 \
   'docker exec tp-backend python -c "
 import asyncio
 from app.db.session import AsyncSessionLocal
@@ -77,23 +129,23 @@ async def main():
 asyncio.run(main())"'
 ```
 
-### JWT_SECRET değiştir
+### JWT_SECRET değiştir (tüm oturumları düşürür)
 ```bash
-# Tüm açık session'ları geçersiz kılar (kullanıcılar yeniden login olur)
 NEW_SECRET=$(openssl rand -base64 48 | tr -d '=+/' | head -c 64)
-ssh ... 'sed -i "s|^JWT_SECRET=.*|JWT_SECRET='$NEW_SECRET'|" ~/toptan-panel/backend/.env'
-ssh ... 'docker compose -f ~/toptan-panel/docker-compose.yml restart backend'
+ssh -i ~/.ssh/tuzla_sunucu root@168.222.180.190 \
+  "sed -i 's|^JWT_SECRET=.*|JWT_SECRET=$NEW_SECRET|' /root/toptan-panel/backend/.env && \
+   cd /root/toptan-panel && docker compose up -d backend"
 ```
 
 ### Postgres şifresi değiştir
-1. Önce yeni şifreyi DB'de set et
-2. Sonra `.env` ve `~/.env` dosyalarını güncelle
-3. backend container'ı restart et
+1. Önce DB'de: `docker exec tp-postgres psql -U gokce -d gokce_toptan -c "ALTER USER gokce PASSWORD 'yeni';"`
+2. `/root/toptan-panel/.env` ve `/root/toptan-panel/backend/.env` içindeki değerleri güncelle
+3. `docker compose up -d backend`
 
 ## 🧪 Smoke test (deploy sonrası)
 ```bash
 curl -s https://toptanperakende.online/health
-# {"status":"ok","app":"Toptan Panel","env":"production"}
+# {"status":"ok",...}
 
 curl -s -X POST https://toptanperakende.online/api/v1/auth/login \
   -H 'Content-Type: application/json' \
@@ -102,32 +154,19 @@ curl -s -X POST https://toptanperakende.online/api/v1/auth/login \
 ```
 
 ## 📊 Monitoring
-
 ```bash
-# Backup log
-tail -f /home/ubuntu/backups/last-run.log
-
-# Cron loglar
-tail -f /home/ubuntu/backups/cron.log
-
-# fail2ban
+ssh -i ~/.ssh/tuzla_sunucu root@168.222.180.190
+tail -f /root/toptan-panel/backups/last-run.log     # son yedek özeti
+tail -f /root/toptan-panel/backups/cron.log         # cron logları
 sudo fail2ban-client status sshd
-
-# Disk
-df -h
-du -sh /home/ubuntu/backups
-docker system df
-
-# Container kaynak kullanımı
+df -h && du -sh /root/toptan-panel/backups && docker system df
 docker stats --no-stream
-
-# Postgres bağlantı sayısı
 docker exec tp-postgres psql -U gokce -d gokce_toptan -c "SELECT count(*) FROM pg_stat_activity;"
 ```
 
-## ⚠️ Güvenlik notu
-
-- HTTPS aktif (Caddy + Let's Encrypt, otomatik renew) (domain alınana kadar) — production için ACİL eksik
-- iOS ATS plain-HTTP IP exception ile çalışıyor (geçici)
-- Domain alınınca: Caddy + Let's Encrypt → 30 dakikalık iş
-- Dilediğinde HTTPS açma planı için bana de
+## 📝 Notlar
+- `INITIAL_PLATFORM_OWNER.TXT` ilk kurulum şifresini içerir; şifre değiştirildiyse dosyayı sil.
+- Marketing sitesi (repo kökündeki Next.js, `out/`) şu an bu sunucuya deploy edilmiş DEĞİL;
+  domain kökü doğrudan admin panelini açıyor.
+- Mobil uygulama release build'leri define verilmezse `https://toptanperakende.online`'a bağlanır
+  (`mobile/lib/core/api/api_config.dart`).
