@@ -16,7 +16,7 @@ from app.services import user_service
 
 DEMO_EMAIL = "playreview@toptanpanel.com"
 DEMO_PASSWORD = "pZ4S7MikKv81soRO"
-DEMO_BUSINESS = "ParaSende Demo"
+DEMO_BUSINESS = "Zirve Toptan Demo"
 DEMO_FULL_NAME = "App Review"
 
 

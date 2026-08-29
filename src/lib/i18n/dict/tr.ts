@@ -1,9 +1,9 @@
 export const tr = {
   meta: {
-    brand: "ParaSende",
+    brand: "Zirve Toptan",
     tagline: "Toptan ve perakende işletmeler için stok, fatura, borç ve raporlama paneli.",
     description:
-      "ParaSende; ürün, müşteri, sipariş, fatura ve borç süreçlerini tek panelden yönetmek isteyen küçük ve orta ölçekli toptan/perakende işletmeleri için ücretsiz bir SaaS uygulamasıdır.",
+      "Zirve Toptan; ürün, müşteri, sipariş, fatura ve borç süreçlerini tek panelden yönetmek isteyen küçük ve orta ölçekli toptan/perakende işletmeleri için ücretsiz bir SaaS uygulamasıdır.",
   },
   nav: {
     home: "Ana sayfa",
@@ -20,7 +20,7 @@ export const tr = {
     eyebrow: "Toptan & perakende için yönetim paneli",
     title: "İşletmenizin stok, fatura ve borcunu tek panelden yönetin.",
     subtitle:
-      "ParaSende küçük ve orta ölçekli toptan/perakende işletmeler için tasarlanmış, mobil ve web tabanlı, tamamen ücretsiz bir yönetim panelidir. Ürünleri ekleyin, müşteriye fatura kesin, vadeli borçları takip edin, raporlardan günü kapatın.",
+      "Zirve Toptan küçük ve orta ölçekli toptan/perakende işletmeler için tasarlanmış, mobil ve web tabanlı, tamamen ücretsiz bir yönetim panelidir. Ürünleri ekleyin, müşteriye fatura kesin, vadeli borçları takip edin, raporlardan günü kapatın.",
     primaryCta: "Panele giriş yap",
     secondaryCta: "Özellikleri incele",
     badge: "Tamamen ücretsiz · Reklam yok · Uygulama içi satın alma yok",
@@ -68,7 +68,7 @@ export const tr = {
   },
   pricing: {
     title: "Fiyatlandırma",
-    subtitle: "ParaSende tamamen ücretsizdir.",
+    subtitle: "Zirve Toptan tamamen ücretsizdir.",
     bigStatement: "0 ₺",
     bigCaption: "Aylık · Yıllık · Her zaman",
     description:
@@ -89,7 +89,7 @@ export const tr = {
     ],
     cta: "Panele giriş yap",
     footnote:
-      "ParaSende bireysel bir geliştirici tarafından yürütülen, açık kaynak ilkelerine yakın bir portfolyo + ürün projesidir. Ücretsiz oluşu sürdürülebilirliği etkileyebilecek bir büyüme olursa duyurulur; mevcut özellikler kullanıcılardan ücret talep edilmeden çalışmaya devam eder.",
+      "Zirve Toptan bireysel bir geliştirici tarafından yürütülen, açık kaynak ilkelerine yakın bir portfolyo + ürün projesidir. Ücretsiz oluşu sürdürülebilirliği etkileyebilecek bir büyüme olursa duyurulur; mevcut özellikler kullanıcılardan ücret talep edilmeden çalışmaya devam eder.",
   },
   features: {
     title: "Özellikler",
@@ -186,11 +186,11 @@ export const tr = {
   about: {
     title: "Hakkımızda",
     lead:
-      "ParaSende, gerçek bir ihtiyaçtan doğmuş, bireysel bir geliştirici tarafından yürütülen küçük ve odaklı bir projedir.",
+      "Zirve Toptan, gerçek bir ihtiyaçtan doğmuş, bireysel bir geliştirici tarafından yürütülen küçük ve odaklı bir projedir.",
     paragraphs: [
-      "Türkiye'deki birçok küçük işletme; ürünlerini bir deftere, faturalarını bir başka deftere, vadeli borçlarını ise çoğunlukla akıldan takip ediyor. ParaSende bu üçünü tek bir yerde, telefondan ve bilgisayardan aynı anda erişilebilir şekilde toplamak için tasarlandı.",
+      "Türkiye'deki birçok küçük işletme; ürünlerini bir deftere, faturalarını bir başka deftere, vadeli borçlarını ise çoğunlukla akıldan takip ediyor. Zirve Toptan bu üçünü tek bir yerde, telefondan ve bilgisayardan aynı anda erişilebilir şekilde toplamak için tasarlandı.",
       "Uygulama; mobil tarafta Flutter, web admin tarafında yine Flutter Web, sunucu tarafında Python (FastAPI) ve PostgreSQL ile yazılmıştır. Veriler güvenli bulut altyapısında saklanır; üçüncü taraflara satılmaz, reklam amaçlı işlenmez.",
-      "ParaSende ticari amaçla satılmayan, kullanıcılarından hiçbir ücret talep etmeyen bir uygulamadır. Aynı zamanda geliştirici için ürün geliştirme, mimari kurma ve operasyonel sahiplik anlamında bir öğrenme ve portfolyo çalışmasıdır.",
+      "Zirve Toptan ticari amaçla satılmayan, kullanıcılarından hiçbir ücret talep etmeyen bir uygulamadır. Aynı zamanda geliştirici için ürün geliştirme, mimari kurma ve operasyonel sahiplik anlamında bir öğrenme ve portfolyo çalışmasıdır.",
     ],
     contact: {
       title: "İletişim",
@@ -201,13 +201,13 @@ export const tr = {
   faq: {
     title: "Sıkça Sorulan Sorular",
     subtitle:
-      "Aşağıdaki sorular ParaSende'nin işleyişini, iş modelini, gizlilik yaklaşımını ve teknik altyapısını detaylı şekilde açıklar. Apple App Review veya başka bir denetim mekanizmasının sorabileceği her temel sorunun cevabı bu sayfada vardır.",
+      "Aşağıdaki sorular Zirve Toptan'Ä±n işleyişini, iş modelini, gizlilik yaklaşımını ve teknik altyapısını detaylı şekilde açıklar. Apple App Review veya başka bir denetim mekanizmasının sorabileceği her temel sorunun cevabı bu sayfada vardır.",
     groups: [
       {
         title: "İş modeli ve App Store kuralları",
         items: [
           {
-            q: "ParaSende ücretli mi?",
+            q: "Zirve Toptan ücretli mi?",
             a: "Hayır. Uygulamanın hiçbir özelliği ücretli değildir. Aylık veya yıllık abonelik, paket satışı, kullanıcı/cihaz başına ücret veya uygulama içi satın alma (In-App Purchase) yoktur. Reklam göstermiyoruz, kullanıcı verisi satmıyoruz, sponsorluk göstermiyoruz.",
           },
           {
@@ -216,7 +216,7 @@ export const tr = {
           },
           {
             q: "Daha önce başka bir yerden satın alınmış bir özellik var mı?",
-            a: "Hayır. ParaSende için hiçbir kanalda — web sitesi, mağaza, kurumsal satış, telefon siparişi, distribütör vb. — satış yapılmaz. Uygulamada 'önceden satın alınmış', 'premium aboneliğinizle açılır' veya benzeri bir içerik, özellik veya hizmet yoktur.",
+            a: "Hayır. Zirve Toptan için hiçbir kanalda — web sitesi, mağaza, kurumsal satış, telefon siparişi, distribütör vb. — satış yapılmaz. Uygulamada 'önceden satın alınmış', 'premium aboneliğinizle açılır' veya benzeri bir içerik, özellik veya hizmet yoktur.",
           },
           {
             q: "App Store / Google Play dışından açılan dijital içerik var mı?",
@@ -224,11 +224,11 @@ export const tr = {
           },
           {
             q: "Kurumsal (enterprise) bir hizmet mi? Tek bir şirket için mi yapıldı?",
-            a: "Hayır. ParaSende belirli bir şirket için yazılmış kurumsal bir iç araç değildir. Türkiye'deki herhangi bir küçük/orta ölçekli toptan veya perakende işletme sahibi App Store veya Google Play'den uygulamayı indirip 'İşletme hesabı aç' ekranından kayıt başvurusu gönderebilir. Davet kodu, kurumsal sözleşme, lisans anahtarı veya iş ortaklığı şartı yoktur.",
+            a: "Hayır. Zirve Toptan belirli bir şirket için yazılmış kurumsal bir iç araç değildir. Türkiye'deki herhangi bir küçük/orta ölçekli toptan veya perakende işletme sahibi App Store veya Google Play'den uygulamayı indirip 'İşletme hesabı aç' ekranından kayıt başvurusu gönderebilir. Davet kodu, kurumsal sözleşme, lisans anahtarı veya iş ortaklığı şartı yoktur.",
           },
           {
             q: "Kim ödüyor? Hizmet bedeli kimden alınıyor?",
-            a: "Kimseden. Geliştirici ParaSende'yi hem küçük işletmelere ücretsiz bir araç sağlamak hem de ürün geliştirme ve cloud operasyon deneyimi için yürütmektedir. Altyapı maliyetleri (AWS) geliştirici tarafından karşılanır; son kullanıcıdan hiçbir şekilde ücret istenmez.",
+            a: "Kimseden. Geliştirici Zirve Toptan'Ä± hem küçük işletmelere ücretsiz bir araç sağlamak hem de ürün geliştirme ve cloud operasyon deneyimi için yürütmektedir. Altyapı maliyetleri (AWS) geliştirici tarafından karşılanır; son kullanıcıdan hiçbir şekilde ücret istenmez.",
           },
         ],
       },
@@ -286,7 +286,7 @@ export const tr = {
           },
           {
             q: "Çocuklara yönelik mi?",
-            a: "Hayır. ParaSende 18 yaş üstü işletme sahiplerine yöneliktir; çocuklara veya öğrencilere yönelik içerik veya pazarlama içermez, çocuklardan veri toplamaz.",
+            a: "Hayır. Zirve Toptan 18 yaş üstü işletme sahiplerine yöneliktir; çocuklara veya öğrencilere yönelik içerik veya pazarlama içermez, çocuklardan veri toplamaz.",
           },
           {
             q: "Konum, kişiler, mikrofon gibi hassas izin istiyor mu?",
@@ -299,7 +299,7 @@ export const tr = {
         items: [
           {
             q: "Çalışmak için internet gerekli mi?",
-            a: "Evet, ParaSende canlı senkronizasyon, çoklu cihaz desteği ve güvenli oturum yönetimi sunduğu için aktif bir internet bağlantısı gerektirir. Geçici bağlantı kesintilerinde uygulama yeniden bağlanmayı dener ve son durumu sunucudan tazeler.",
+            a: "Evet, Zirve Toptan canlı senkronizasyon, çoklu cihaz desteği ve güvenli oturum yönetimi sunduğu için aktif bir internet bağlantısı gerektirir. Geçici bağlantı kesintilerinde uygulama yeniden bağlanmayı dener ve son durumu sunucudan tazeler.",
           },
           {
             q: "Hangi cihazlarda çalışıyor?",
@@ -327,7 +327,7 @@ export const tr = {
           },
           {
             q: "Açık kaynak mı?",
-            a: "Repo public olarak yayımlanmıştır ve mimari bir portfolyo projesi olarak incelenebilir. Ticari kullanım, fork edilen versiyonların ParaSende adıyla yayımlanması veya marka kullanımı için iletişime geçilmesi rica edilir.",
+            a: "Repo public olarak yayımlanmıştır ve mimari bir portfolyo projesi olarak incelenebilir. Ticari kullanım, fork edilen versiyonların Zirve Toptan adıyla yayımlanması veya marka kullanımı için iletişime geçilmesi rica edilir.",
           },
         ],
       },
@@ -381,7 +381,7 @@ export const tr = {
   support: {
     title: "Destek Merkezi",
     lead:
-      "ParaSende ile ilgili her türlü hesap, kullanım, hata, gizlilik veya veri silme talebinde size yardımcı oluruz. Aşağıda en sık karşılaşılan sorunların çözümü, doğrudan iletişim yolları ve hata bildirme şablonu vardır.",
+      "Zirve Toptan ile ilgili her türlü hesap, kullanım, hata, gizlilik veya veri silme talebinde size yardımcı oluruz. Aşağıda en sık karşılaşılan sorunların çözümü, doğrudan iletişim yolları ve hata bildirme şablonu vardır.",
     contact: {
       title: "Doğrudan iletişim",
       emailLabel: "Destek e-posta",
@@ -432,7 +432,7 @@ export const tr = {
           steps: [
             "Mobil uygulamada: profil/ayarlar bölümünden 'Hesabımı sil' akışını başlatabilirsiniz.",
             "Web admin panelden: 'Hesabım' alanında silme talebi açabilirsiniz.",
-            "E-posta ile: destek@toptanpanel.com'a 'ParaSende Hesap Silme Talebi' konusuyla yazın, hesap e-postanızı ve işletme adınızı belirtin.",
+            "E-posta ile: destek@toptanpanel.com'a 'Zirve Toptan Hesap Silme Talebi' konusuyla yazın, hesap e-postanızı ve işletme adınızı belirtin.",
             "Aktif veriler 14 gün içinde, yedekler 30 gün içinde tamamen silinir. Detay: /legal/delete-account.html",
           ],
         },
@@ -449,7 +449,7 @@ export const tr = {
           q: "Ürün görseli yüklenmiyor",
           steps: [
             "Görselin 5 MB'tan küçük ve JPG/PNG formatında olduğundan emin olun.",
-            "Uygulama görsel için fotoğraf/galeri izni ister — sistem ayarlarından ParaSende için bu izni açın.",
+            "Uygulama görsel için fotoğraf/galeri izni ister — sistem ayarlarından Zirve Toptan için bu izni açın.",
             "Yavaş bağlantıda yükleme uzayabilir; sayfayı kapatmadan bekleyin.",
             "Hâlâ yükleyemiyorsanız destek e-postasına dosyayı ek olarak gönderin, biz manuel ekleyelim.",
           ],
@@ -475,7 +475,7 @@ export const tr = {
         {
           q: "İki cihazdaki veri farklı görünüyor",
           steps: [
-            "ParaSende WebSocket ile canlı senkronize çalışır; bağlantı kesintisinde geçici olarak gecikme olabilir.",
+            "Zirve Toptan WebSocket ile canlı senkronize çalışır; bağlantı kesintisinde geçici olarak gecikme olabilir.",
             "Cihazı kapatıp internet bağlantısını kontrol edin, uygulamayı tekrar açın.",
             "Pull-to-refresh (aşağı kaydırarak yenileme) ile son veriyi tazeleyebilirsiniz.",
             "Sorun devam ederse bir cihazdan çıkış yapıp tekrar giriş yapın.",

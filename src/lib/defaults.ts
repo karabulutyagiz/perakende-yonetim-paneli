@@ -11,7 +11,7 @@ function makeStarterSlides(): Slide[] {
     {
       id: nid(),
       layout: "hero",
-      label: en("PARASENDE"),
+      label: en("ZÄ°RVE TOPTAN"),
       headline: en("Toptan satış\ntek ekranda."),
       screenshot: "/screenshots/apple/iphone/tr/01.png",
     },
@@ -118,7 +118,7 @@ function fgStarter(): Slide[] {
 }
 
 export const DEFAULT_PROJECT: ProjectState = {
-  appName: "ParaSende",
+  appName: "Zirve Toptan",
   themeId: "warm-editorial",
   locales: [DEFAULT_LOCALE],
   locale: DEFAULT_LOCALE,

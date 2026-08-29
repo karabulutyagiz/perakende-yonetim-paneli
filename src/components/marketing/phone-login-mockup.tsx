@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Mail, Lock, Eye } from "lucide-react";
 
 /**
- * iPhone-shaped frame containing a faithful HTML render of the ParaSende
+ * iPhone-shaped frame containing a faithful HTML render of the Zirve Toptan
  * mobile login screen. Used in the marketing hero so visitors immediately
  * recognize the actual login UI.
  */
@@ -38,7 +38,7 @@ export function PhoneLoginMockup({ className }: { className?: string }) {
                   className="h-[64px] w-[64px] rounded-2xl object-cover"
                 />
                 <p className="mt-3 text-[17px] font-bold text-neutral-900">
-                  ParaSende
+                  Zirve Toptan
                 </p>
                 <p className="mt-0.5 text-[11px] text-neutral-500">
                   Stok ve sipariş yönetimi

@@ -1,11 +1,11 @@
 {
-    "name": "Toptan Panel — Yönetim",
-    "short_name": "Toptan Panel",
+    "name": "Zirve Toptan — Yönetim",
+    "short_name": "Zirve Toptan",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Zirve Toptan yönetim paneli",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

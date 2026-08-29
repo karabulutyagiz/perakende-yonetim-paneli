@@ -9,22 +9,22 @@ const SITE_URL = "https://toptanperakende.online";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "ParaSende — Toptan ve perakende yönetim paneli",
-    template: "%s · ParaSende",
+    default: "Zirve Toptan — Toptan ve perakende yönetim paneli",
+    template: "%s · Zirve Toptan",
   },
   description:
     "Toptan ve perakende küçük/orta ölçekli işletmeler için ücretsiz stok, fatura, borç ve raporlama paneli. Mobil + web admin.",
   openGraph: {
     type: "website",
-    siteName: "ParaSende",
+    siteName: "Zirve Toptan",
     url: SITE_URL,
-    title: "ParaSende — Toptan ve perakende yönetim paneli",
+    title: "Zirve Toptan — Toptan ve perakende yönetim paneli",
     description:
       "Tek panelden ürün, müşteri, fatura ve vadeli borç yönetimi. Mobil + web. Tamamen ücretsiz.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ParaSende",
+    title: "Zirve Toptan",
     description:
       "Toptan & perakende işletmeler için ücretsiz yönetim paneli.",
   },

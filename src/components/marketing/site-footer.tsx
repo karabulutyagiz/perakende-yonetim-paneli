@@ -44,7 +44,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
 
       <div className="border-t border-border/60">
         <div className="container flex flex-col items-start justify-between gap-2 py-4 text-xs text-muted-foreground md:flex-row md:items-center">
-          <p>© {year} ParaSende. {d.footer.rights}</p>
+          <p>© {year} Zirve Toptan. {d.footer.rights}</p>
           <p>destek@toptanpanel.com</p>
         </div>
       </div>

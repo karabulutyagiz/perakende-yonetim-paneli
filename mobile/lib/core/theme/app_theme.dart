@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// ParaSende tasarım sistemi — Getir benzeri: canlı marka rengi,
+/// Zirve Toptan tasarım sistemi — Getir benzeri: canlı marka rengi,
 /// beyaz kartlar, yumuşak köşeler, telefon öncelikli boyutlar.
 class AppColors {
   static const primary = Color(0xFF0B7A4B); // marka yeşili

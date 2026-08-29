@@ -12,7 +12,7 @@ export function Logo({ locale, className }: { locale: Locale; className?: string
         "inline-flex items-center gap-2 font-semibold tracking-tight text-foreground",
         className,
       )}
-      aria-label="ParaSende"
+      aria-label="Zirve Toptan"
     >
       <Image
         src="/app-icon.png"
@@ -22,7 +22,7 @@ export function Logo({ locale, className }: { locale: Locale; className?: string
         priority
         className="h-7 w-7 rounded-md object-cover"
       />
-      <span className="text-base">ParaSende</span>
+      <span className="text-base">Zirve Toptan</span>
     </Link>
   );
 }

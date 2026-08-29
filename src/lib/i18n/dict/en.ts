@@ -2,11 +2,11 @@ import type { Dictionary } from "./tr";
 
 export const en: Dictionary = {
   meta: {
-    brand: "ParaSende",
+    brand: "Zirve Toptan",
     tagline:
       "Inventory, invoicing, debt tracking and reporting for wholesale and retail businesses.",
     description:
-      "ParaSende is a free SaaS app that helps small and medium wholesale/retail businesses manage products, customers, orders, invoices and credit-sales debt — all from a single panel, on mobile and web.",
+      "Zirve Toptan is a free SaaS app that helps small and medium wholesale/retail businesses manage products, customers, orders, invoices and credit-sales debt — all from a single panel, on mobile and web.",
   },
   nav: {
     home: "Home",
@@ -23,7 +23,7 @@ export const en: Dictionary = {
     eyebrow: "Management panel for wholesale & retail",
     title: "Run your stock, invoices and customer debt from one place.",
     subtitle:
-      "ParaSende is a free, mobile + web management panel designed for small and medium wholesale and retail businesses. Add products, invoice customers, track credit sales, close the day with clean reports.",
+      "Zirve Toptan is a free, mobile + web management panel designed for small and medium wholesale and retail businesses. Add products, invoice customers, track credit sales, close the day with clean reports.",
     primaryCta: "Sign in to the panel",
     secondaryCta: "See features",
     badge: "Completely free · No ads · No in-app purchases",
@@ -77,7 +77,7 @@ export const en: Dictionary = {
   },
   pricing: {
     title: "Pricing",
-    subtitle: "ParaSende is completely free.",
+    subtitle: "Zirve Toptan is completely free.",
     bigStatement: "$0",
     bigCaption: "Monthly · Yearly · Always",
     description:
@@ -98,7 +98,7 @@ export const en: Dictionary = {
     ],
     cta: "Sign in to the panel",
     footnote:
-      "ParaSende is a small project run by a single developer, treated as both a real product and a long-form portfolio piece. If sustainability ever changes, we'll announce it; existing features will keep working without charging users.",
+      "Zirve Toptan is a small project run by a single developer, treated as both a real product and a long-form portfolio piece. If sustainability ever changes, we'll announce it; existing features will keep working without charging users.",
   },
   features: {
     title: "Features",
@@ -178,11 +178,11 @@ export const en: Dictionary = {
   about: {
     title: "About",
     lead:
-      "ParaSende is a small, focused project built by a single developer to solve a real, everyday problem.",
+      "Zirve Toptan is a small, focused project built by a single developer to solve a real, everyday problem.",
     paragraphs: [
-      "Many small businesses in Turkey track their products in one notebook, invoices in another and credit-sales debt mostly from memory. ParaSende was built to bring all three into one place, accessible from both phone and computer at the same time.",
+      "Many small businesses in Turkey track their products in one notebook, invoices in another and credit-sales debt mostly from memory. Zirve Toptan was built to bring all three into one place, accessible from both phone and computer at the same time.",
       "The mobile app is built with Flutter, the web admin panel uses Flutter Web, and the backend is written in Python (FastAPI) on top of PostgreSQL. Data is stored on secure cloud infrastructure; it is not sold to third parties and is not processed for advertising.",
-      "ParaSende is not sold commercially and does not charge users. It is also, openly, a learning and portfolio project for the developer behind it — product design, architecture and operational ownership in one piece.",
+      "Zirve Toptan is not sold commercially and does not charge users. It is also, openly, a learning and portfolio project for the developer behind it — product design, architecture and operational ownership in one piece.",
     ],
     contact: {
       title: "Contact",
@@ -193,13 +193,13 @@ export const en: Dictionary = {
   faq: {
     title: "FAQ",
     subtitle:
-      "These answers explain how ParaSende works, who it's for, how the business model is structured, what data is collected and how it is stored. App Store review teams and any future compliance review will find every relevant answer on this page.",
+      "These answers explain how Zirve Toptan works, who it's for, how the business model is structured, what data is collected and how it is stored. App Store review teams and any future compliance review will find every relevant answer on this page.",
     groups: [
       {
         title: "Business model & App Store rules",
         items: [
           {
-            q: "Is ParaSende paid?",
+            q: "Is Zirve Toptan paid?",
             a: "No. None of the app's features are paid. There is no monthly or yearly subscription, no plan tier, no per-user/per-device fee and no in-app purchase. We do not show ads, do not sell user data and do not display sponsorships.",
           },
           {
@@ -208,7 +208,7 @@ export const en: Dictionary = {
           },
           {
             q: "Are there any 'previously purchased' features unlocked in the app?",
-            a: "No. ParaSende is not sold through any channel — no web store, no enterprise sales, no phone orders, no distributors. There is no 'previously purchased', 'unlocked by your premium subscription' or similar content, feature or service in the app.",
+            a: "No. Zirve Toptan is not sold through any channel — no web store, no enterprise sales, no phone orders, no distributors. There is no 'previously purchased', 'unlocked by your premium subscription' or similar content, feature or service in the app.",
           },
           {
             q: "Is any digital content unlocked from outside the App Store / Google Play?",
@@ -216,11 +216,11 @@ export const en: Dictionary = {
           },
           {
             q: "Is this an enterprise service? Was it built for a single company?",
-            a: "No. ParaSende is not an internal enterprise tool built for one specific organization. Any small/medium wholesale or retail business owner in Turkey can download the app from the App Store or Google Play and apply for an account from the in-app 'Open a business account' screen. There is no invite code, enterprise contract, license key or partnership requirement.",
+            a: "No. Zirve Toptan is not an internal enterprise tool built for one specific organization. Any small/medium wholesale or retail business owner in Turkey can download the app from the App Store or Google Play and apply for an account from the in-app 'Open a business account' screen. There is no invite code, enterprise contract, license key or partnership requirement.",
           },
           {
             q: "Who pays for the service?",
-            a: "Nobody. The developer runs ParaSende both to provide a free tool to small businesses and as a long-form product/cloud-ops learning project. AWS infrastructure costs are covered by the developer; no fee is ever requested from end users.",
+            a: "Nobody. The developer runs Zirve Toptan both to provide a free tool to small businesses and as a long-form product/cloud-ops learning project. AWS infrastructure costs are covered by the developer; no fee is ever requested from end users.",
           },
         ],
       },
@@ -278,7 +278,7 @@ export const en: Dictionary = {
           },
           {
             q: "Is the app aimed at children?",
-            a: "No. ParaSende is aimed at business owners 18+; it contains no content or marketing aimed at children or students and collects no data from children.",
+            a: "No. Zirve Toptan is aimed at business owners 18+; it contains no content or marketing aimed at children or students and collects no data from children.",
           },
           {
             q: "Does the app request location, contacts, microphone or other sensitive permissions?",
@@ -291,7 +291,7 @@ export const en: Dictionary = {
         items: [
           {
             q: "Does the app need an internet connection?",
-            a: "Yes. Because ParaSende provides live sync, multi-device usage and secure session management, an active internet connection is required. On temporary network drops the app will retry and resync from the server.",
+            a: "Yes. Because Zirve Toptan provides live sync, multi-device usage and secure session management, an active internet connection is required. On temporary network drops the app will retry and resync from the server.",
           },
           {
             q: "Which devices does it run on?",
@@ -319,7 +319,7 @@ export const en: Dictionary = {
           },
           {
             q: "Is it open source?",
-            a: "The repository is published publicly and can be inspected as a portfolio piece. For commercial use, redistribution under the ParaSende name or brand usage, please get in touch.",
+            a: "The repository is published publicly and can be inspected as a portfolio piece. For commercial use, redistribution under the Zirve Toptan name or brand usage, please get in touch.",
           },
         ],
       },
@@ -373,7 +373,7 @@ export const en: Dictionary = {
   support: {
     title: "Support Center",
     lead:
-      "We help with every ParaSende account, usage, bug, privacy or data-deletion request. Below you'll find self-service answers for the most common issues, the direct contact channels and a bug-report template.",
+      "We help with every Zirve Toptan account, usage, bug, privacy or data-deletion request. Below you'll find self-service answers for the most common issues, the direct contact channels and a bug-report template.",
     contact: {
       title: "Direct contact",
       emailLabel: "Support email",
@@ -424,7 +424,7 @@ export const en: Dictionary = {
           steps: [
             "Mobile app: open profile/settings and start the 'Delete my account' flow.",
             "Web admin panel: open the 'My account' area and start a deletion request.",
-            "Or email destek@toptanpanel.com with subject 'ParaSende Account Deletion' and include your account email and business name.",
+            "Or email destek@toptanpanel.com with subject 'Zirve Toptan Account Deletion' and include your account email and business name.",
             "Active data is removed within 14 days, backups within 30 days. Details: /legal/delete-account.html",
           ],
         },
@@ -441,7 +441,7 @@ export const en: Dictionary = {
           q: "Product image isn't uploading",
           steps: [
             "Make sure the image is under 5 MB and is JPG or PNG.",
-            "The app requests photo/gallery permission — enable it for ParaSende in your system settings.",
+            "The app requests photo/gallery permission — enable it for Zirve Toptan in your system settings.",
             "Uploads may take longer on slow networks; don't close the screen mid-upload.",
             "If it still won't upload, email support with the file attached — we'll add it manually.",
           ],
@@ -467,7 +467,7 @@ export const en: Dictionary = {
         {
           q: "Two devices show different data",
           steps: [
-            "ParaSende syncs live over WebSocket; brief delays during connection drops are normal.",
+            "Zirve Toptan syncs live over WebSocket; brief delays during connection drops are normal.",
             "Toggle device airplane mode off, then reopen the app.",
             "Use pull-to-refresh to fetch the latest state.",
             "If it persists, sign out from one device and sign back in.",
