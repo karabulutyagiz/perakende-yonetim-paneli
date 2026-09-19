@@ -52,6 +52,18 @@ class Invoice(Base, UUIDPKMixin, TimestampMixin):
     def order_number(self) -> str | None:
         return self.order.order_number if self.order is not None else None
 
+    @property
+    def discount_total(self) -> Decimal:
+        """Faturadaki toplam indirim (0 = indirim uygulanmamış)."""
+        return sum(
+            (item.discount_total for item in self.items), Decimal("0")
+        ).quantize(Decimal("0.01"))
+
+    @property
+    def subtotal(self) -> Decimal:
+        """İndirim öncesi ara toplam. total = subtotal - discount_total."""
+        return (Decimal(self.total) + self.discount_total).quantize(Decimal("0.01"))
+
 
 class InvoiceItem(Base, UUIDPKMixin, TimestampMixin):
     """Fatura kalemi — satıldığı an ürünün adı ve birim fiyatı snapshot'lanır."""
@@ -67,7 +79,19 @@ class InvoiceItem(Base, UUIDPKMixin, TimestampMixin):
     product_name: Mapped[str] = mapped_column(String(255), nullable=False)
     unit: Mapped[str] = mapped_column(String(20), nullable=False)
     quantity: Mapped[Decimal] = mapped_column(Numeric(12, 3), nullable=False)
+    # unit_price = müşterinin ödediği (indirimli) fiyat; list_unit_price = indirimsiz
+    # liste fiyatı. list_unit_price NULL ise o satırda indirim uygulanmamıştır.
     unit_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    list_unit_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     line_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
 
     invoice: Mapped["Invoice"] = relationship(back_populates="items")
+
+    @property
+    def discount_total(self) -> Decimal:
+        """Bu satırda yapılan toplam indirim (0 = indirim yok)."""
+        if self.list_unit_price is None:
+            return Decimal("0")
+        return ((self.list_unit_price - self.unit_price) * self.quantity).quantize(
+            Decimal("0.01")
+        )

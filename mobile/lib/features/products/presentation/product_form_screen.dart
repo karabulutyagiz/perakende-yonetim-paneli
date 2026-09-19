@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/formatters.dart';
 import '../data/product.dart';
 import '../data/product_repository.dart';
 
@@ -30,8 +31,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   late final TextEditingController _price;
   late final TextEditingController _stock;
   late final TextEditingController _description;
+  late final TextEditingController _discount;
   late String _unit;
   String? _categoryId;
+  DiscountType? _discountType;
   bool _saving = false;
 
   Uint8List? _pickedImageBytes;
@@ -51,16 +54,42 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       text: p == null ? '' : _trimZeros(p.stock),
     );
     _description = TextEditingController(text: p?.description ?? '');
+    _discountType = p?.discountType;
+    _discount = TextEditingController(
+      text: (p == null || p.discountType == null)
+          ? ''
+          : _trimZeros(p.discountValue),
+    );
     _unit = p?.unit ?? 'adet';
     _categoryId = p?.categoryId;
+    // Fiyat/indirim değiştikçe "satış fiyatı" önizlemesi canlı güncellensin.
+    _price.addListener(_onPricingChanged);
+    _discount.addListener(_onPricingChanged);
   }
+
+  void _onPricingChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Formdaki değerlerden hesaplanan indirimli satış fiyatı.
+  double get _previewPrice => Product.computeEffectivePrice(
+        _parseNum(_price.text),
+        _discountType,
+        _parseNum(_discount.text),
+      );
+
+  static double _parseNum(String raw) =>
+      double.tryParse(raw.trim().replaceAll(',', '.')) ?? 0;
 
   @override
   void dispose() {
+    _price.removeListener(_onPricingChanged);
+    _discount.removeListener(_onPricingChanged);
     _name.dispose();
     _price.dispose();
     _stock.dispose();
     _description.dispose();
+    _discount.dispose();
     super.dispose();
   }
 
@@ -118,6 +147,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         double.tryParse(_price.text.trim().replaceAll(',', '.')) ?? 0;
     final stock =
         double.tryParse(_stock.text.trim().replaceAll(',', '.')) ?? 0;
+    final discountValue = _discountType == null ? 0.0 : _parseNum(_discount.text);
 
     setState(() => _saving = true);
     final repo = ref.read(productRepositoryProvider);
@@ -140,6 +170,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           description: _description.text.trim(),
           categoryId: _categoryId,
           imageKey: imageKey, // null ise mevcut fotoğraf korunur
+          discountType: _discountType,
+          discountValue: discountValue,
         );
       } else {
         await repo.create(
@@ -150,6 +182,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           description: _description.text.trim(),
           categoryId: _categoryId,
           imageKey: imageKey,
+          discountType: _discountType,
+          discountValue: discountValue,
         );
       }
       ref.invalidate(productsProvider);
@@ -385,6 +419,94 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ],
             ),
             const SizedBox(height: 14),
+            // İndirim — ürün kartında tanımlanır, her satışta otomatik uygulanır.
+            Text(
+              'İndirim',
+              style:
+                  theme.textTheme.titleSmall?.copyWith(color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 8),
+            SegmentedButton<int>(
+              segments: const [
+                ButtonSegment(
+                  value: 0,
+                  label: Text('Yok'),
+                  icon: Icon(Icons.block_rounded),
+                ),
+                ButtonSegment(
+                  value: 1,
+                  label: Text('Yüzde'),
+                  icon: Icon(Icons.percent_rounded),
+                ),
+                ButtonSegment(
+                  value: 2,
+                  label: Text('Tutar'),
+                  icon: Icon(Icons.currency_lira_rounded),
+                ),
+              ],
+              selected: {
+                switch (_discountType) {
+                  null => 0,
+                  DiscountType.percent => 1,
+                  DiscountType.amount => 2,
+                }
+              },
+              onSelectionChanged: _saving
+                  ? null
+                  : (sel) {
+                      setState(() {
+                        _discountType = switch (sel.first) {
+                          1 => DiscountType.percent,
+                          2 => DiscountType.amount,
+                          _ => null,
+                        };
+                        if (_discountType == null) _discount.clear();
+                      });
+                      // Tip değişince eski değer geçersiz kalmış olabilir.
+                      _formKey.currentState?.validate();
+                    },
+            ),
+            if (_discountType != null) ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _discount,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: _discountType == DiscountType.percent
+                      ? 'İndirim oranı (%)'
+                      : 'İndirim tutarı (₺)',
+                  prefixIcon: Icon(
+                    _discountType == DiscountType.percent
+                        ? Icons.percent_rounded
+                        : Icons.currency_lira_rounded,
+                  ),
+                  helperText: _discountType == DiscountType.percent
+                      ? 'Liste fiyatının yüzde kaçı düşülecek'
+                      : 'Liste fiyatından düşülecek sabit tutar',
+                ),
+                validator: (v) {
+                  if (_discountType == null) return null;
+                  final d = double.tryParse(
+                      (v ?? '').trim().replaceAll(',', '.'));
+                  if (d == null || d <= 0) return 'İndirim değeri girin';
+                  if (_discountType == DiscountType.percent && d > 100) {
+                    return 'Yüzde 100\'den büyük olamaz';
+                  }
+                  if (_discountType == DiscountType.amount &&
+                      d > _parseNum(_price.text)) {
+                    return 'İndirim fiyattan büyük olamaz';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              _PricePreview(
+                listPrice: _parseNum(_price.text),
+                salePrice: _previewPrice,
+              ),
+            ],
+            const SizedBox(height: 14),
             // Birim seçimi
             Text(
               'Birim',
@@ -503,6 +625,90 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// İndirim girildiğinde "liste fiyatı → satış fiyatı" canlı önizlemesi.
+class _PricePreview extends StatelessWidget {
+  const _PricePreview({required this.listPrice, required this.salePrice});
+
+  final double listPrice;
+  final double salePrice;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final saving = listPrice - salePrice;
+    final active = saving > 0;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: active ? AppColors.primaryContainer : AppColors.bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            active ? Icons.local_offer_rounded : Icons.info_outline_rounded,
+            size: 20,
+            color: active ? AppColors.primaryDark : AppColors.textMuted,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Satış fiyatı',
+                  style: theme.textTheme.labelMedium
+                      ?.copyWith(color: AppColors.textMuted),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        formatCurrency(salePrice),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: active ? AppColors.primaryDark : AppColors.text,
+                        ),
+                      ),
+                    ),
+                    if (active) ...[
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          formatCurrency(listPrice),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textMuted,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (active)
+            Text(
+              '-${formatCurrency(saving)}',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: AppColors.primaryDark,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+        ],
       ),
     );
   }

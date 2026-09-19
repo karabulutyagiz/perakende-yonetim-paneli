@@ -24,7 +24,10 @@ class InvoiceLineInput:
     quantity: Decimal
     product_name: str | None = None
     unit: str | None = None
+    # unit_price verilirse (sipariş → fatura dönüşümü) sipariş anındaki fiyat
+    # korunur; verilmezse ürünün güncel indirimli fiyatı uygulanır.
     unit_price: Decimal | None = None
+    list_unit_price: Decimal | None = None
 
 
 async def list_invoices(
@@ -132,7 +135,17 @@ async def _create_from_lines(
                 f"Yetersiz stok: {product.name} (mevcut {product.stock} {product.unit})",
             )
 
-        unit_price = item_in.unit_price or product.price
+        if item_in.unit_price is not None:
+            unit_price = item_in.unit_price
+            list_unit_price = item_in.list_unit_price
+        else:
+            # Ürün kartındaki indirim satış anında uygulanır; indirimsiz liste
+            # fiyatı dekontta göstermek için satıra snapshot'lanır.
+            unit_price = product.effective_price
+            list_unit_price = Decimal(product.price) if product.has_discount else None
+        if list_unit_price is not None and list_unit_price <= unit_price:
+            list_unit_price = None
+
         product_name = item_in.product_name or product.name
         unit = item_in.unit or product.unit
         line_total = (unit_price * item_in.quantity).quantize(Decimal("0.01"))
@@ -144,6 +157,7 @@ async def _create_from_lines(
             unit=unit,
             quantity=item_in.quantity,
             unit_price=unit_price,
+            list_unit_price=list_unit_price,
             line_total=line_total,
         )
         db.add(item)

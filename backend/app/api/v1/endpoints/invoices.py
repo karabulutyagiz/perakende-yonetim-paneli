@@ -26,6 +26,8 @@ def _to_out(
         order_number=order_number,
         customer_id=invoice.customer_id,
         total=invoice.total,
+        subtotal=invoice.subtotal,
+        discount_total=invoice.discount_total,
         cash_amount=invoice.cash_amount,
         card_amount=invoice.card_amount,
         debt_amount=invoice.debt_amount,

@@ -319,6 +319,21 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
+                          if (l.discountTotal > 0) ...[
+                            Flexible(
+                              child: Text(
+                                formatCurrency(l.listTotal),
+                                textAlign: TextAlign.end,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.outline,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
                           Flexible(
                             child: Text(
                               formatCurrency(l.total),
@@ -331,6 +346,44 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
                       ),
                     ),
                   const Divider(),
+                  if (cart.hasDiscount) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Ara toplam',
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: theme.colorScheme.outline),
+                        ),
+                        Text(
+                          formatCurrency(cart.subtotal),
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: theme.colorScheme.outline),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'İndirim',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '-${formatCurrency(cart.discountTotal)}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

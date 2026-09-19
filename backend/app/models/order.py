@@ -61,7 +61,9 @@ class OrderItem(Base, UUIDPKMixin, TimestampMixin):
     product_name: Mapped[str] = mapped_column(String(255), nullable=False)
     unit: Mapped[str] = mapped_column(String(20), nullable=False)
     quantity: Mapped[Decimal] = mapped_column(Numeric(12, 3), nullable=False)
+    # unit_price = indirimli satış fiyatı, list_unit_price = indirimsiz liste fiyatı.
     unit_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    list_unit_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     line_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
 
     order: Mapped["Order"] = relationship(back_populates="items")

@@ -33,6 +33,8 @@ class OrderItemOut(IDMixin):
     unit: str
     quantity: MoneyDecimal
     unit_price: MoneyDecimal
+    # İndirimsiz liste fiyatı; None = bu satırda indirim yok.
+    list_unit_price: MoneyDecimal | None = None
     line_total: MoneyDecimal
 
 

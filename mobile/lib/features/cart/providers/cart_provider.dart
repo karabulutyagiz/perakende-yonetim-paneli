@@ -6,7 +6,15 @@ class CartLine {
   const CartLine(this.product, this.quantity);
   final Product product;
   final double quantity;
-  double get total => product.price * quantity;
+
+  /// Müşterinin ödeyeceği satır tutarı (ürün indirimi düşülmüş).
+  double get total => product.effectivePrice * quantity;
+
+  /// İndirim uygulanmamış liste tutarı.
+  double get listTotal => product.price * quantity;
+
+  /// Bu satırda yapılan indirim (0 = indirim yok).
+  double get discountTotal => listTotal - total;
 
   CartLine copyWith({double? quantity}) =>
       CartLine(product, quantity ?? this.quantity);
@@ -17,6 +25,14 @@ class Cart {
   final List<CartLine> lines;
 
   double get total => lines.fold(0, (a, b) => a + b.total);
+
+  /// İndirim öncesi ara toplam.
+  double get subtotal => lines.fold(0, (a, b) => a + b.listTotal);
+
+  /// Sepetteki toplam indirim.
+  double get discountTotal => subtotal - total;
+  bool get hasDiscount => discountTotal > 0;
+
   int get itemCount => lines.length;
   bool get isEmpty => lines.isEmpty;
 }

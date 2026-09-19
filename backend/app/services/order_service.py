@@ -101,7 +101,11 @@ async def create_for_customer(
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND, f"Ürün bulunamadı: {item_in.product_id}"
             )
-        line_total = (product.price * item_in.quantity).quantize(Decimal("0.01"))
+        # Müşteri sipariş verirken de ürün kartındaki indirim uygulanır;
+        # indirimsiz liste fiyatı satırda saklanır.
+        unit_price = product.effective_price
+        list_unit_price = Decimal(product.price) if product.has_discount else None
+        line_total = (unit_price * item_in.quantity).quantize(Decimal("0.01"))
         db.add(
             OrderItem(
                 order_id=order.id,
@@ -109,7 +113,8 @@ async def create_for_customer(
                 product_name=product.name,
                 unit=product.unit,
                 quantity=item_in.quantity,
-                unit_price=product.price,
+                unit_price=unit_price,
+                list_unit_price=list_unit_price,
                 line_total=line_total,
             )
         )
@@ -173,6 +178,7 @@ async def convert_to_invoice(
                 product_name=item.product_name,
                 unit=item.unit,
                 unit_price=item.unit_price,
+                list_unit_price=item.list_unit_price,
             )
             for item in order.items
         ],

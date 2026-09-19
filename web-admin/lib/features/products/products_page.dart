@@ -97,7 +97,33 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                       DataCell(Text(p['name'] as String)),
                       DataCell(Text((p['category'] ?? {})['name'] ?? '—')),
                       DataCell(Text(p['unit'] as String)),
-                      DataCell(Text(_tl.format((p['price'] as num).toDouble()))),
+                      DataCell(Builder(builder: (_) {
+                        final price = (p['price'] as num).toDouble();
+                        final effective =
+                            (p['effective_price'] as num?)?.toDouble() ?? price;
+                        if (effective >= price) {
+                          return Text(_tl.format(price));
+                        }
+                        // İndirimli: satış fiyatı + üstü çizili liste fiyatı.
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _tl.format(effective),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _tl.format(price),
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ],
+                        );
+                      })),
                       DataCell(Text('${p['stock']}')),
                       DataCell(Row(children: [
                         IconButton(
@@ -146,9 +172,12 @@ class _ProductEditorState extends ConsumerState<ProductEditor> {
   final _unit = TextEditingController(text: 'adet');
   final _price = TextEditingController();
   final _stock = TextEditingController();
+  final _discount = TextEditingController();
   String? _categoryId;
   String? _imageKey;
   String? _imagePreviewUrl;
+  /// null = indirim yok, 'percent' = yüzde, 'amount' = sabit TL.
+  String? _discountType;
   bool _saving = false;
 
   @override
@@ -164,7 +193,23 @@ class _ProductEditorState extends ConsumerState<ProductEditor> {
       _categoryId = (e['category'] ?? {})['id'] as String?;
       _imageKey = e['image_key'] as String?;
       _imagePreviewUrl = e['image_url'] as String?;
+      _discountType = e['discount_type'] as String?;
+      if (_discountType != null) {
+        _discount.text = '${e['discount_value']}';
+      }
     }
+  }
+
+  /// Backend'deki compute_effective_price ile aynı kural.
+  double get _previewPrice {
+    final price = _parseNum(_price.text) ?? 0;
+    final value = _parseNum(_discount.text) ?? 0;
+    if (_discountType == null || value <= 0) return price;
+    final discount = _discountType == 'percent'
+        ? price * (value > 100 ? 100 : value) / 100
+        : (value > price ? price : value);
+    final effective = price - discount;
+    return effective < 0 ? 0 : double.parse(effective.toStringAsFixed(2));
   }
 
   Future<void> _uploadImage() async {
@@ -228,6 +273,26 @@ class _ProductEditorState extends ConsumerState<ProductEditor> {
       return;
     }
 
+    // İndirim doğrulaması — backend de aynı kuralları uygular, burada
+    // kullanıcıya daha hızlı geri bildirim veriyoruz.
+    var discountValue = 0.0;
+    if (_discountType != null) {
+      final v = _parseNum(_discount.text);
+      if (v == null || v <= 0) {
+        _snack('İndirim değeri girin');
+        return;
+      }
+      if (_discountType == 'percent' && v > 100) {
+        _snack('Yüzde indirim 100\'den büyük olamaz');
+        return;
+      }
+      if (_discountType == 'amount' && v > price) {
+        _snack('TL indirimi ürün fiyatından büyük olamaz');
+        return;
+      }
+      discountValue = v;
+    }
+
     setState(() => _saving = true);
     try {
       final dio = ref.read(dioProvider);
@@ -241,6 +306,9 @@ class _ProductEditorState extends ConsumerState<ProductEditor> {
         'stock': stock,
         'category_id': _categoryId,
         'image_key': _imageKey,
+        // discount_type null gönderilir → backend indirimi temizler.
+        'discount_type': _discountType,
+        'discount_value': discountValue,
       };
       if (widget.existing == null) {
         await dio.post('/products', data: body);
@@ -337,6 +405,7 @@ class _ProductEditorState extends ConsumerState<ProductEditor> {
                       child: TextField(
                         controller: _price,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (_) => setState(() {}),
                         decoration: const InputDecoration(labelText: 'Fiyat (₺)'),
                       ),
                     ),
@@ -350,6 +419,55 @@ class _ProductEditorState extends ConsumerState<ProductEditor> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                // İndirim — ürün kartında tanımlanır, her satışta uygulanır.
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String?>(
+                        value: _discountType,
+                        decoration: const InputDecoration(labelText: 'İndirim'),
+                        items: const [
+                          DropdownMenuItem(value: null, child: Text('— Yok —')),
+                          DropdownMenuItem(
+                              value: 'percent', child: Text('Yüzde (%)')),
+                          DropdownMenuItem(
+                              value: 'amount', child: Text('Tutar (₺)')),
+                        ],
+                        onChanged: (v) => setState(() {
+                          _discountType = v;
+                          if (v == null) _discount.clear();
+                        }),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _discount,
+                        enabled: _discountType != null,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          labelText: _discountType == 'amount'
+                              ? 'İndirim tutarı (₺)'
+                              : 'İndirim oranı (%)',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_discountType != null) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Satış fiyatı: ${_previewPrice.toStringAsFixed(2)} ₺'
+                      '   (liste: ${(_parseNum(_price.text) ?? 0).toStringAsFixed(2)} ₺)',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 cats.when(
                   loading: () => const LinearProgressIndicator(),

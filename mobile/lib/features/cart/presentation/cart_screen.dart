@@ -238,10 +238,32 @@ class _CartLineCard extends ConsumerWidget {
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    '${formatCurrency(product.price)} / ${product.unit}',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: AppColors.textMuted),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          '${formatCurrency(product.effectivePrice)} / ${product.unit}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textMuted),
+                        ),
+                      ),
+                      if (product.hasDiscount) ...[
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            formatCurrency(product.price),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.textMuted,
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(

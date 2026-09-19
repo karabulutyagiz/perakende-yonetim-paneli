@@ -46,6 +46,10 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Faturayi Bluetooth fis yazicisina basmak icin erisim gerekiyor.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Faturayi Bluetooth fis yazicisina basmak icin erisim gerekiyor.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Fatura dekontlarini fotograflariniza kaydetmek icin erisim gerekiyor.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

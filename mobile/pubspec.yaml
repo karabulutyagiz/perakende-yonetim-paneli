@@ -31,6 +31,16 @@ dependencies:
   pdf: ^3.11.1
   permission_handler: ^11.3.1
   share_plus: ^10.1.2
+  # Sistem yazıcısı (iOS AirPrint / Android Print Framework) + PDF kaydetme.
+  # 5.15+ Flutter 3.41 ister; bu proje 3.27 ile derleniyor.
+  printing: ">=5.14.3 <5.15.0"
+  # Bluetooth termal fiş yazıcısı (ESC/POS). 1.2.2+ Flutter 3.44 (SPM) ister.
+  print_bluetooth_thermal: ">=1.2.1 <1.2.2"
+  esc_pos_utils_plus: ^2.0.4
+  image: ^4.3.0
+  # "PDF kaydet" için sistem kaydet-diyaloğu (Android SAF / iOS Files).
+  # 12+ Flutter 3.38 ister.
+  file_picker: ">=11.0.3 <12.0.0"
 
 dev_dependencies:
   flutter_test:

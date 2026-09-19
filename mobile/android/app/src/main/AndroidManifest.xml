@@ -3,6 +3,13 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <!-- Bluetooth termal fiş yazıcısı. Android 12+ için BLUETOOTH_CONNECT;
+         eski sürümlerde BLUETOOTH/BLUETOOTH_ADMIN. Yalnızca eşleştirilmiş
+         cihazlara bağlanıyoruz, tarama yapmıyoruz — konum izni gerekmez. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
     <application
         android:label="Zirve Toptan"
         android:name="${applicationName}"

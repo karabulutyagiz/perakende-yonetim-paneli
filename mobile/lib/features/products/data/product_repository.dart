@@ -36,6 +36,8 @@ class ProductRepository {
     String? description,
     String? categoryId,
     String? imageKey,
+    DiscountType? discountType,
+    double discountValue = 0,
   }) async {
     final resp = await _dio.post('/products', data: {
       'name': name,
@@ -46,6 +48,8 @@ class ProductRepository {
           (description == null || description.isEmpty) ? null : description,
       'category_id': categoryId,
       'image_key': imageKey,
+      'discount_type': discountType?.apiValue,
+      'discount_value': discountType == null ? 0 : discountValue,
     });
     return Product.fromJson((resp.data as Map).cast<String, dynamic>());
   }
@@ -59,6 +63,8 @@ class ProductRepository {
     String? description,
     String? categoryId,
     String? imageKey,
+    DiscountType? discountType,
+    double discountValue = 0,
   }) async {
     final resp = await _dio.put('/products/$productId', data: {
       if (name != null) 'name': name,
@@ -69,6 +75,9 @@ class ProductRepository {
           (description == null || description.isEmpty) ? null : description,
       'category_id': categoryId,
       if (imageKey != null) 'image_key': imageKey,
+      // discount_type null gönderilir → backend indirimi temizler.
+      'discount_type': discountType?.apiValue,
+      'discount_value': discountType == null ? 0 : discountValue,
     });
     return Product.fromJson((resp.data as Map).cast<String, dynamic>());
   }

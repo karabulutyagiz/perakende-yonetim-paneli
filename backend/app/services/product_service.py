@@ -1,11 +1,13 @@
+from decimal import Decimal
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.product import Product
-from app.schemas.product import ProductCreate, ProductUpdate
+from app.schemas.product import ProductCreate, ProductUpdate, validate_discount
 
 
 async def list_products(
@@ -55,8 +57,23 @@ async def create(
 async def update(
     db: AsyncSession, product: Product, data: ProductUpdate
 ) -> Product:
-    for field, value in data.model_dump(exclude_unset=True).items():
+    changes = data.model_dump(exclude_unset=True)
+    for field, value in changes.items():
         setattr(product, field, value)
+
+    # İndirim tipi temizlendiyse değeri de sıfırla; aksi halde birleşmiş
+    # (yeni fiyat + yeni indirim) hâli üzerinde doğrula.
+    if product.discount_type is None:
+        product.discount_value = Decimal("0")
+    else:
+        try:
+            validate_discount(
+                Decimal(product.price), product.discount_type, Decimal(product.discount_value)
+            )
+        except ValueError as exc:
+            # 422: FastAPI'nin kendi doğrulama hatalarıyla aynı kod.
+            raise HTTPException(422, str(exc)) from exc
+
     await db.commit()
     return await get(db, product.id, product.tenant_id)  # type: ignore[return-value]
 

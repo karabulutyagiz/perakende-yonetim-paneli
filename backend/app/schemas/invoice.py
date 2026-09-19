@@ -29,6 +29,9 @@ class InvoiceItemOut(IDMixin):
     unit: str
     quantity: MoneyDecimal
     unit_price: MoneyDecimal
+    # İndirimsiz liste fiyatı; None = bu satırda indirim yok.
+    list_unit_price: MoneyDecimal | None = None
+    discount_total: MoneyDecimal = Decimal("0")
     line_total: MoneyDecimal
 
 
@@ -37,6 +40,9 @@ class InvoiceOut(IDMixin):
     order_number: str | None = None
     customer_id: UUID
     total: MoneyDecimal
+    # subtotal = indirim öncesi ara toplam, total = subtotal - discount_total
+    subtotal: MoneyDecimal = Decimal("0")
+    discount_total: MoneyDecimal = Decimal("0")
     cash_amount: MoneyDecimal
     card_amount: MoneyDecimal
     debt_amount: MoneyDecimal
